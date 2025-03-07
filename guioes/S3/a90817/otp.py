@@ -37,7 +37,7 @@ def encrypt(fToEncrypted, fKey):
         key = bytes_to_letters(keyB)
     crypted = vigenere(1, key, lines)
     with open(fToEncrypted + '.enc', 'w') as f:
-        f.write(''.join(crypted))  
+        f.write(''.join(crypted))
 
 def decrypt(fToDecrypted, fKey):
     with open(fToDecrypted, 'r') as f:
@@ -47,7 +47,7 @@ def decrypt(fToDecrypted, fKey):
         key = bytes_to_letters(keyB)
     decrypted = vigenere(-1, key, lines)
     with open(fToDecrypted + '.dec', 'w') as f:
-        f.write(''.join(decrypted))  
+        f.write(''.join(decrypted))
 
 def main(args):
     if len(args) < 2:

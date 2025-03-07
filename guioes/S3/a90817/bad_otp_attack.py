@@ -12,7 +12,7 @@ def try_all_seeds(ciphertext, words):
             random.seed(seed)
             generateBytesB1(seed1, 'otp1.key')
             decrypt(ciphertext, 'otp1.key')
-            
+
             with open(ciphertext + '.dec', 'r') as f:
                 decrypted_text = f.read()
 
