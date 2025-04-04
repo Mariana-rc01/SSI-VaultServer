@@ -1,0 +1,20 @@
+[
+    {
+        "id" : "r1",
+        "userid" : "u1",
+        "type" : "read",
+        "args" : ["f1"],
+        "timestamp" : "2023-10-01T12:00:00Z",
+        "status" : "success",
+        "error" : ""
+    },
+    {
+        "id" : "r2",
+        "userid" : "u1",
+        "type" : "group delete-user",
+        "args" : ["g1", "u1"],
+        "timestamp" : "2023-10-01T12:05:00Z",
+        "status" : "failed",
+        "error" : "User not in group"
+    }
+]
