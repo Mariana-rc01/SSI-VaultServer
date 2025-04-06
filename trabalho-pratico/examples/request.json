@@ -1,6 +1,4 @@
 {
-    "id" : "r1",
-    "userid" : "u1",
     "type" : "read",
     "args" : ["f1"]
 }
