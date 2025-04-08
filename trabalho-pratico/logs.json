@@ -1,56 +1,56 @@
 [
   {
     "id": "r1",
-    "userid": "u1",
+    "userid": "User 3 (SSI Vault Client 3)",
     "type": "add",
     "args": [
       "f1"
     ],
-    "timestamp": "2025-04-06T03:05:14.118644Z",
+    "timestamp": "2025-04-08T22:40:38.609174Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r2",
-    "userid": "u1",
+    "userid": "User 3 (SSI Vault Client 3)",
     "type": "read",
     "args": [
-      "f2"
+      "f1"
     ],
-    "timestamp": "2025-04-06T03:05:19.863926Z",
-    "status": "failed",
-    "error": "file not found"
-  },
-  {
-    "id": "r3",
-    "userid": "u2",
-    "type": "add",
-    "args": [
-      "f2"
-    ],
-    "timestamp": "2025-04-06T03:05:26.373643Z",
+    "timestamp": "2025-04-08T22:40:46.781587Z",
     "status": "success",
     "error": ""
   },
   {
-    "id": "r4",
-    "userid": "u2",
+    "id": "r3",
+    "userid": "User 3 (SSI Vault Client 3)",
     "type": "read",
     "args": [
       "f2"
     ],
-    "timestamp": "2025-04-06T03:05:28.407156Z",
+    "timestamp": "2025-04-08T22:40:50.172879Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r4",
+    "userid": "User 1 (SSI Vault Client 1)",
+    "type": "add",
+    "args": [
+      "f2"
+    ],
+    "timestamp": "2025-04-08T22:40:52.754413Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r5",
-    "userid": "u1",
+    "userid": "User 1 (SSI Vault Client 1)",
     "type": "read",
     "args": [
-      "f1"
+      "f2"
     ],
-    "timestamp": "2025-04-06T03:05:32.654748Z",
+    "timestamp": "2025-04-08T22:40:54.868966Z",
     "status": "success",
     "error": ""
   }

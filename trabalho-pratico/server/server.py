@@ -1,9 +1,9 @@
-import asyncio
-import os, json, base64
-from datetime import datetime
+import asyncio, os, json, base64
 
-from utils.utils import generate_derived_key, generate_private_key, generate_public_key, serialize_public_key, deserialize_public_key, generate_shared_key, encrypt, decrypt, build_aesgcm
+from utils.utils import encrypt, decrypt, is_signature_valid, deserialize_public_key, is_certificate_valid, generate_private_key, generate_public_key, serialize_public_key, sign_message_with_rsa, serialize_certificate
+from utils.utils import generate_shared_key, generate_derived_key, build_aesgcm, certificate_create
 from server.utils import log_request, get_file_by_id, add_request
+from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
 conn_port = 7777
@@ -22,16 +22,61 @@ class ServerWorker(object):
         self.aesgcm = None
 
     async def handshake(self, reader, writer) :
-        private_key = generate_private_key()
-        public_key = generate_public_key(private_key)
-        serialized_public_key = serialize_public_key(public_key)
-        writer.write(serialized_public_key)
-        await writer.drain()
+        with open("./certificates/VAULT_SERVER.p12", "rb") as p12_file:
+            p12_data = p12_file.read()
+        rsa_private_key, server_certificate, _ = load_key_and_certificates(p12_data, None)
 
-        serialized_client_public_key = await reader.read(max_msg_size)
+        # Receive client's public key
+        request = await reader.read(max_msg_size)
+        request_data = json.loads(request.decode())
+        serialized_client_public_key = base64.b64decode(request_data["public_key"])
         client_public_key = deserialize_public_key(serialized_client_public_key)
 
-        shared_key = generate_shared_key(private_key, client_public_key)
+        # Generate server's public key and signature
+        dh_private_key = generate_private_key()
+        dh_public_key = generate_public_key(dh_private_key)
+        serialized_public_key = serialize_public_key(dh_public_key)
+
+        both_public_keys = serialized_client_public_key + serialized_public_key
+        signature = sign_message_with_rsa(both_public_keys, rsa_private_key)
+        serialized_certificate = serialize_certificate(server_certificate)
+
+        # Send server's public key, certificate, and signature
+        writer.write(json.dumps({
+            "public_key": base64.b64encode(serialized_public_key).decode(),
+            "certificate": base64.b64encode(serialized_certificate).decode(),
+            "signature": base64.b64encode(signature).decode()
+        }).encode())
+        await writer.drain()
+
+        # Receive client's certificate and signature
+        response = await reader.read(max_msg_size)
+        response_data = json.loads(response.decode())
+        client_signature = base64.b64decode(response_data["signature"])
+        client_certificate = certificate_create(base64.b64decode(response_data["certificate"]))
+        client_subject = base64.b64decode(response_data["subject"]).decode()
+
+        self.id = client_subject
+
+        # Validate certificate
+        certificate_valid = is_certificate_valid(client_certificate, client_subject)
+        if not certificate_valid:
+            # Abort connection
+            print("Aborting handshake...")
+            return
+
+        # Extract client's public key from certificate
+        client_certificate_public_key = client_certificate.public_key()
+
+        # Validate signature
+        signature_valid = is_signature_valid(client_signature, both_public_keys, client_certificate_public_key)
+        if not signature_valid:
+            # Abort connection
+            print("Aborting handshake...")
+            return
+
+        # Derived shared key
+        shared_key = generate_shared_key(dh_private_key, client_public_key)
         derived_key = generate_derived_key(shared_key)
         self.aesgcm = build_aesgcm(derived_key)
 
@@ -61,12 +106,12 @@ class ServerWorker(object):
                 file_info = get_file_by_id(file_id)
 
                 if not file_info or not os.path.exists(file_info["location"]):
-                    log_request(f"u{self.id}", "read", [file_id], "failed", "file not found")
+                    log_request(f"{self.id}", "read", [file_id], "failed", "file not found")
                     return encrypt(f"Error: file {file_id} not found.".encode(), self.aesgcm)
 
                 with open(file_info["location"], "rb") as f:
                     filedata = f.read()
-                log_request(f"u{self.id}", "read", [file_id], "success")
+                log_request(f"{self.id}", "read", [file_id], "success")
 
                 return encrypt(filedata, self.aesgcm)
             else:

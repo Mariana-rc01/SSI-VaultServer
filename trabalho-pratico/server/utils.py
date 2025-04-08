@@ -64,11 +64,11 @@ def add_request(filename, filedata, id):
         "id": file_id,
         "name": filename,
         "size": len(filedata),
-        "owner": f"u{id}",
+        "owner": f"{id}",
         "created_at": datetime.now().isoformat() + "Z",
         "location": file_path,
     })
 
     save_files(files)
-    log_request(f"u{id}", "add", [file_id], "success")
+    log_request(f"{id}", "add", [file_id], "success")
     return file_id
