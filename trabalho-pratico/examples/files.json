@@ -8,16 +8,28 @@
             "users": [
                 {
                     "username": "u1",
+                    "key": "kfdvbkusdfwa",
                     "permissions": ["read", "write"]
                 },
                 {
                     "username": "u2",
+                    "key": "lfjhgdls",
                     "permissions": ["read"]
                 }
             ],
             "groups": [
                 {
                     "groupname": "g1",
+                    "keys": [
+                        {
+                            "username": "u1",
+                            "key": "kfdvdrgbhtybkusdfwa"
+                        },
+                        {
+                            "username": "u2",
+                            "key": "lfjhbgfbgdls"
+                        }
+                    ],
                     "permissions": ["read", "write"]
                 }
             ],
