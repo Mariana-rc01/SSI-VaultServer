@@ -4,7 +4,7 @@
         "name": "file1.txt",
         "size": 1234,
         "owner": "u1",
-        "key": "key simétrica cifrada pela private key do owner",
+        "key": "symmetric key encrypted with the owner's private key",
         "permissions": {
             "users": [
                 {
@@ -46,7 +46,7 @@
         "name": "file2.txt",
         "size": 5678,
         "owner": "u2",
-        "key": "key simétrica cifrada pela private key do owner",
+        "key": "symmetric key encrypted with the owner's private key",
         "permissions": {
             "users": [
                 {
