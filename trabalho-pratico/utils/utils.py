@@ -2,7 +2,7 @@ import os
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, padding
+from cryptography.hazmat.primitives.asymmetric import dh, padding, rsa
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from cryptography import x509
@@ -168,3 +168,10 @@ def is_signature_valid(signature, message, public_key):
         print("Signature is invalid!")
         print(e)
         return False
+
+def serialize_public_key_rsa(public_key: rsa.RSAPublicKey):
+    pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return pem

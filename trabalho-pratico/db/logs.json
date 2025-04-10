@@ -1,0 +1,57 @@
+[
+  {
+    "id": "r1",
+    "userid": "u1",
+    "type": "add",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-10T16:15:01.323999Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r2",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-10T16:15:02.861326Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r3",
+    "userid": "u2",
+    "type": "add",
+    "args": [
+      "f2"
+    ],
+    "timestamp": "2025-04-10T16:15:35.916634Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r4",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-10T16:15:40.985149Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r5",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f2"
+    ],
+    "timestamp": "2025-04-10T16:15:44.431303Z",
+    "status": "success",
+    "error": ""
+  }
+]

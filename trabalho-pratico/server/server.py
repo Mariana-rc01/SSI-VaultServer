@@ -2,7 +2,7 @@ import asyncio, os, json, base64
 
 from utils.utils import encrypt, decrypt, is_signature_valid, deserialize_public_key, is_certificate_valid, generate_private_key, generate_public_key, serialize_public_key, sign_message_with_rsa, serialize_certificate
 from utils.utils import generate_shared_key, generate_derived_key, build_aesgcm, certificate_create
-from server.utils import log_request, get_file_by_id, add_request
+from server.utils import log_request, get_file_by_id, add_request, add_user
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -11,6 +11,8 @@ max_msg_size = 9999
 
 STORAGE_DIR = "./storage"
 os.makedirs(STORAGE_DIR, exist_ok=True)
+DB_DIR = "./db"
+os.makedirs(DB_DIR, exist_ok=True)
 
 class ServerWorker(object):
     """ Class that implements the functionality of the SERVER. """
@@ -56,8 +58,6 @@ class ServerWorker(object):
         client_certificate = certificate_create(base64.b64decode(response_data["certificate"]))
         client_subject = base64.b64decode(response_data["subject"]).decode()
 
-        self.id = client_subject
-
         # Validate certificate
         certificate_valid = is_certificate_valid(client_certificate, client_subject)
         if not certificate_valid:
@@ -74,6 +74,8 @@ class ServerWorker(object):
             # Abort connection
             print("Aborting handshake...")
             return
+
+        self.id = add_user(client_subject, client_certificate_public_key)
 
         # Derived shared key
         shared_key = generate_shared_key(dh_private_key, client_public_key)
@@ -144,7 +146,7 @@ async def handle_echo(reader, writer):
         writer.write(data)
         await writer.drain()
         data = await reader.read(max_msg_size)
-    print("[%d]" % srvwrk.id)
+    print("[%s]" % srvwrk.id)
     writer.close()
 
 def run_server():

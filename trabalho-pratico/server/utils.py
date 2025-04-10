@@ -1,8 +1,11 @@
-import os, json
+import base64, os, json
 from datetime import datetime
 
-FILES_JSON = "files.json"
-LOGS_JSON = "logs.json"
+from utils.utils import serialize_public_key_rsa
+
+FILES_JSON = "./db/files.json"
+LOGS_JSON = "./db/logs.json"
+USERS_JSON = "./db/users.json"
 STORAGE_DIR = "./storage"
 
 def log_request(user_id, type, args, status, error=""):
@@ -72,3 +75,35 @@ def add_request(filename, filedata, id):
     save_files(files)
     log_request(f"{id}", "add", [file_id], "success")
     return file_id
+
+def add_user(client_subject, public_key):
+    """ Adds a user to the database. """
+    users = []
+    if os.path.exists(USERS_JSON):
+        with open(USERS_JSON, "r") as f:
+            try:
+                users = json.load(f)
+            except json.JSONDecodeError as e:
+                users = []
+
+    user_id = f"u{len(users)+1}"
+    for user in users:
+        if user["username"] == client_subject:
+            return user["id"]
+
+    try:
+        users.append({
+            "id": user_id,
+            "username": client_subject,
+            "public_key": base64.b64encode(serialize_public_key_rsa(public_key)).decode(),
+            "groups": []
+        })
+    except Exception as e:
+        return None
+
+    try:
+        with open(USERS_JSON, "w") as f:
+            json.dump(users, f, indent=2)
+    except Exception as e:
+        return None
+    return user_id
