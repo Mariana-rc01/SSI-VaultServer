@@ -7,17 +7,29 @@
         "permissions": {
             "users": [
                 {
-                    "username": "u1",
+                    "username": "u1 -> owner",
+                    "key": "symmetric key encrypted with the owner's public key (RSA)",
                     "permissions": ["read", "write"]
                 },
                 {
                     "username": "u2",
+                    "key": "lfjhgdls",
                     "permissions": ["read"]
                 }
             ],
             "groups": [
                 {
                     "groupname": "g1",
+                    "keys": [
+                        {
+                            "username": "u1",
+                            "key": "kfdvdrgbhtybkusdfwa"
+                        },
+                        {
+                            "username": "u2",
+                            "key": "lfjhbgfbgdls"
+                        }
+                    ],
                     "permissions": ["read", "write"]
                 }
             ],
@@ -33,6 +45,7 @@
         "name": "file2.txt",
         "size": 5678,
         "owner": "u2",
+        "key": "symmetric key encrypted with the owner's private key",
         "permissions": {
             "users": [
                 {
