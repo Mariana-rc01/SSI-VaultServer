@@ -4,12 +4,11 @@
         "name": "file1.txt",
         "size": 1234,
         "owner": "u1",
-        "key": "symmetric key encrypted with the owner's private key",
         "permissions": {
             "users": [
                 {
-                    "username": "u1",
-                    "key": "kfdvbkusdfwa",
+                    "username": "u1 -> owner",
+                    "key": "symmetric key encrypted with the owner's public key (RSA)",
                     "permissions": ["read", "write"]
                 },
                 {

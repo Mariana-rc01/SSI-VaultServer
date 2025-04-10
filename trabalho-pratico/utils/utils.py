@@ -142,13 +142,6 @@ def certificate_validexts(cert, policy=[]):
 
 # RSA
 
-keys_directory = "./keys"
-password = b""
-
-def load_rsa_private_key(filename):
-    with open(os.path.join(keys_directory, filename), "rb") as f:
-        return serialization.load_pem_private_key(f.read(),  None, default_backend())
-
 def sign_message_with_rsa(message, private_key):
     return private_key.sign(
         message,
@@ -175,19 +168,3 @@ def is_signature_valid(signature, message, public_key):
         print("Signature is invalid!")
         print(e)
         return False
-
-# Serialization
-
-def mkpair(x, y):
-    """produces a byte-string containing the tuple '(x,y)' ('x' and 'y' are byte-strings)"""
-    len_x = len(x)
-    len_x_bytes = len_x.to_bytes(2, "little")
-    return len_x_bytes + x + y
-
-def unpair(xy):
-    """returns the components of a pair encoded with 'mkpair'"""
-    len_x = int.from_bytes(xy[:2], "little")
-    x = xy[2 : len_x + 2]
-    y = xy[len_x + 2 :]
-    return x, y
-
