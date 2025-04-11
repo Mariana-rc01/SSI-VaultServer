@@ -57,7 +57,7 @@ def get_next_file_id() -> str:
     files = load_files()
     return f"f{len(files)+1}"
 
-def add_request(filename: str, filedata: bytes, id: str) -> str:
+def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key: Any) -> str:
     """ Adds a file request. """
     file_id = get_next_file_id()
     file_path = os.path.join(STORAGE_DIR, file_id)
@@ -65,19 +65,32 @@ def add_request(filename: str, filedata: bytes, id: str) -> str:
     with open(file_path, "wb") as f:
         f.write(filedata)
 
-    # TODO - Permissions
+    permissions = {
+        "users": [
+            {
+                "username": f"Owner: {owner_id}",
+                "key": owner_public_key,
+                "permissions": ["read", "write"]
+            }
+        ]
+    }
+
     files = load_files()
+
     files.append({
         "id": file_id,
         "name": filename,
         "size": len(filedata),
-        "owner": f"{id}",
+        "owner": owner_id,
+        "permissions": permissions,
         "created_at": datetime.now().isoformat() + "Z",
         "location": file_path,
     })
 
     save_files(files)
-    log_request(f"{id}", "add", [file_id], "success")
+
+    log_request(owner_id, "add", [file_id], "success")
+
     return file_id
 
 def add_user(client_subject: str, public_key: Any) -> Optional[str]:

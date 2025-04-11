@@ -20,6 +20,8 @@ from utils.utils import (
     is_signature_valid,
     sign_message_with_rsa,
     serialize_certificate,
+    serialize_to_bytes,
+    deserialize_from_bytes,
 )
 from client.utils import add, read
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -61,15 +63,15 @@ class Client:
         serialized_public_key: bytes = serialize_public_key(dh_public_key)
 
         # Encode the public key in Base64 before sending
-        serialized_public_key_json: bytes = json.dumps(
-            {"public_key": base64.b64encode(serialized_public_key).decode()}
-        ).encode()
+        serialized_public_key_json: bytes = serialize_to_bytes(
+        {"public_key": base64.b64encode(serialized_public_key).decode()}
+    )
         writer.write(serialized_public_key_json)
         await writer.drain()
 
         # Receive server's public key, certificate, and signature
         response: bytes = await reader.read(max_msg_size)
-        response_data: dict = json.loads(response.decode())
+        response_data: dict = deserialize_from_bytes(response)
         serialized_server_public_key: bytes = base64.b64decode(response_data["public_key"])
         server_certificate: bytes = base64.b64decode(response_data["certificate"])
         server_signature: bytes = base64.b64decode(response_data["signature"])
@@ -108,13 +110,13 @@ class Client:
             NameOID.COMMON_NAME
         )[0].value
         writer.write(
-            json.dumps(
+            serialize_to_bytes(
                 {
                     "signature": base64.b64encode(client_signature).decode(),
                     "certificate": base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
                     "subject": base64.b64encode(client_certificate_subject.encode()).decode(),
                 }
-            ).encode()
+            )
         )
         await writer.drain()
 
@@ -127,12 +129,13 @@ class Client:
         if len(msg) != 0:
             self.msg_cnt += 1
             decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+            response_data: dict = deserialize_from_bytes(decrypted_msg)
 
             if self.last_command == "read":
-                read(decrypted_msg)
+                read(decrypted_msg, self.rsa_private_key)
                 self.last_command = None
             else:
-                print("Received (%d): %r" % (self.msg_cnt, decrypted_msg.decode()))
+                print("Received (%d): %r" % (self.msg_cnt, response_data))
 
         print("\nCommand [add <file-path> | read <file-id> | exit]:")
         new_msg: str = input().strip()
@@ -140,7 +143,8 @@ class Client:
             self.last_command = "add"
             file_path: str = new_msg.split(" ", 1)[1]
 
-            json_bytes: Optional[bytes] = add(file_path)
+            client_public_key = self.rsa_private_key.public_key()
+            json_bytes: Optional[bytes] = add(file_path, client_public_key)
             if not json_bytes:
                 return b""
 
@@ -150,7 +154,7 @@ class Client:
             file_id: str = new_msg.split(" ", 1)[1]
 
             read_request: dict = request("read", [file_id])
-            json_bytes: bytes = json.dumps(read_request).encode("utf-8")
+            json_bytes: bytes = serialize_to_bytes(read_request)
 
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.strip() == "exit":

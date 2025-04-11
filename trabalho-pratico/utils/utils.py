@@ -1,4 +1,4 @@
-import os
+import os, json
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives import hashes, serialization
@@ -11,7 +11,37 @@ import datetime
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2
 
-HARDCODED_AES_KEY = b"12345678901234567890123456789012"
+def serialize_to_bytes(data) -> bytes:
+    """
+    Serializes a structure into a JSON-encoded array of bytes.
+
+    Args:
+        data: The structure to serialize.
+
+    Returns:
+        bytes: The serialized data as a JSON-encoded byte array.
+    """
+    try:
+        json_string = json.dumps(data)
+        return json_string.encode("utf-8")
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"Failed to serialize data: {e}")
+    
+def deserialize_from_bytes(data: bytes):
+    """
+    Deserializes a JSON-encoded array of bytes back into a structure.
+
+    Args:
+        data (bytes): The JSON-encoded byte array to deserialize.
+
+    Returns:
+        The deserialized structure.
+    """
+    try:
+        json_string = data.decode("utf-8")
+        return json.loads(json_string)
+    except (TypeError, ValueError, json.JSONDecodeError) as e:
+        raise ValueError(f"Failed to deserialize data: {e}")
 
 def generate_private_key():
     parameters = dh.DHParameterNumbers(p,g).parameters()

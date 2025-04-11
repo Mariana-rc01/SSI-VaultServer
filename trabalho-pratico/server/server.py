@@ -1,6 +1,5 @@
 import asyncio
 import os
-import json
 import base64
 from typing import Optional, Tuple, Union
 from asyncio.streams import StreamReader, StreamWriter
@@ -20,6 +19,8 @@ from utils.utils import (
     generate_derived_key,
     build_aesgcm,
     certificate_create,
+    deserialize_from_bytes,
+    serialize_to_bytes,
 )
 from server.utils import log_request, get_file_by_id, add_request, add_user
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -51,7 +52,7 @@ class ServerWorker:
 
         # Receive client's public key
         request = await reader.read(max_msg_size)
-        request_data = json.loads(request.decode())
+        request_data = deserialize_from_bytes(request)
         serialized_client_public_key = base64.b64decode(request_data["public_key"])
         client_public_key = deserialize_public_key(serialized_client_public_key)
 
@@ -64,21 +65,22 @@ class ServerWorker:
         signature = sign_message_with_rsa(both_public_keys, rsa_private_key)
         serialized_certificate = serialize_certificate(server_certificate)
 
+        # Create the structure to send
+        server_response = {
+            "public_key": base64.b64encode(serialized_public_key),
+            "certificate": base64.b64encode(serialized_certificate),
+            "signature": base64.b64encode(signature),
+        }
+
         # Send server's public key, certificate, and signature
         writer.write(
-            json.dumps(
-                {
-                    "public_key": base64.b64encode(serialized_public_key).decode(),
-                    "certificate": base64.b64encode(serialized_certificate).decode(),
-                    "signature": base64.b64encode(signature).decode(),
-                }
-            ).encode()
+            serialize_to_bytes(server_response)
         )
         await writer.drain()
 
         # Receive client's certificate and signature
         response = await reader.read(max_msg_size)
-        response_data = json.loads(response.decode())
+        response_data = deserialize_from_bytes(response)
         client_signature = base64.b64decode(response_data["signature"])
         client_certificate = certificate_create(base64.b64decode(response_data["certificate"]))
         client_subject = base64.b64decode(response_data["subject"]).decode()
@@ -115,7 +117,7 @@ class ServerWorker:
         plaintext = decrypt(msg, self.aesgcm)
 
         try:
-            client_request = json.loads(plaintext.decode("utf-8"))
+            client_request = deserialize_from_bytes(plaintext)
             request_type = client_request.get("type")
             request_args = client_request.get("args")
 
