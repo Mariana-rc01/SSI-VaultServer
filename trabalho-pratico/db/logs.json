@@ -53,5 +53,104 @@
     "timestamp": "2025-04-10T16:15:44.431303Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r6",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-11T09:30:06.750735Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r7",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "file.txt"
+    ],
+    "timestamp": "2025-04-11T09:30:32.556872Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r8",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-11T09:31:05.777842Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r9",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-11T09:31:24.617037Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r10",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f2"
+    ],
+    "timestamp": "2025-04-11T09:31:31.107898Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r11",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-11T09:31:52.439163Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r12",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-11T09:44:13.315451Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r13",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-11T09:45:02.338086Z",
+    "status": "failed",
+    "error": "file not found"
+  },
+  {
+    "id": "r14",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-11T09:45:05.287238Z",
+    "status": "success",
+    "error": ""
   }
 ]
