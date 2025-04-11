@@ -1,7 +1,26 @@
-import asyncio, os, json, base64
+import asyncio
+import os
+import json
+import base64
+from typing import Optional, Tuple, Union
+from asyncio.streams import StreamReader, StreamWriter
 
-from utils.utils import encrypt, decrypt, is_signature_valid, deserialize_public_key, is_certificate_valid, generate_private_key, generate_public_key, serialize_public_key, sign_message_with_rsa, serialize_certificate
-from utils.utils import generate_shared_key, generate_derived_key, build_aesgcm, certificate_create
+from utils.utils import (
+    encrypt,
+    decrypt,
+    is_signature_valid,
+    deserialize_public_key,
+    is_certificate_valid,
+    generate_private_key,
+    generate_public_key,
+    serialize_public_key,
+    sign_message_with_rsa,
+    serialize_certificate,
+    generate_shared_key,
+    generate_derived_key,
+    build_aesgcm,
+    certificate_create,
+)
 from server.utils import log_request, get_file_by_id, add_request, add_user
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -14,16 +33,18 @@ os.makedirs(STORAGE_DIR, exist_ok=True)
 DB_DIR = "./db"
 os.makedirs(DB_DIR, exist_ok=True)
 
-class ServerWorker(object):
-    """ Class that implements the functionality of the SERVER. """
-    def __init__(self, cnt, addr=None):
-        """ Class constructor. """
-        self.id = cnt
-        self.addr = addr
-        self.msg_cnt = 0
+
+class ServerWorker:
+    """Class that implements the functionality of the SERVER."""
+
+    def __init__(self, cnt: int, addr: Optional[Tuple[str, int]] = None) -> None:
+        """Class constructor."""
+        self.id: int = cnt
+        self.addr: Optional[Tuple[str, int]] = addr
+        self.msg_cnt: int = 0
         self.aesgcm = None
 
-    async def handshake(self, reader, writer) :
+    async def handshake(self, reader: StreamReader, writer: StreamWriter) -> None:
         with open("./certificates/VAULT_SERVER.p12", "rb") as p12_file:
             p12_data = p12_file.read()
         rsa_private_key, server_certificate, _ = load_key_and_certificates(p12_data, None)
@@ -44,11 +65,15 @@ class ServerWorker(object):
         serialized_certificate = serialize_certificate(server_certificate)
 
         # Send server's public key, certificate, and signature
-        writer.write(json.dumps({
-            "public_key": base64.b64encode(serialized_public_key).decode(),
-            "certificate": base64.b64encode(serialized_certificate).decode(),
-            "signature": base64.b64encode(signature).decode()
-        }).encode())
+        writer.write(
+            json.dumps(
+                {
+                    "public_key": base64.b64encode(serialized_public_key).decode(),
+                    "certificate": base64.b64encode(serialized_certificate).decode(),
+                    "signature": base64.b64encode(signature).decode(),
+                }
+            ).encode()
+        )
         await writer.drain()
 
         # Receive client's certificate and signature
@@ -82,15 +107,15 @@ class ServerWorker(object):
         derived_key = generate_derived_key(shared_key)
         self.aesgcm = build_aesgcm(derived_key)
 
-    def process(self, msg):
-        """ Processes a message (`bytestring`) sent by the CLIENT.
-            Returns the message to be sent as a response (`None` to
-            terminate the connection). """
+    def process(self, msg: bytes) -> Optional[bytes]:
+        """Processes a message (`bytestring`) sent by the CLIENT.
+        Returns the message to be sent as a response (`None` to
+        terminate the connection)."""
         self.msg_cnt += 1
         plaintext = decrypt(msg, self.aesgcm)
 
         try:
-            client_request = json.loads(plaintext.decode('utf-8'))
+            client_request = json.loads(plaintext.decode("utf-8"))
             request_type = client_request.get("type")
             request_args = client_request.get("args")
 
@@ -121,11 +146,12 @@ class ServerWorker(object):
         except Exception as e:
             return encrypt(f"Erro: {str(e)}".encode(), self.aesgcm)
 
+
 # Client/Server functionality
-async def handle_echo(reader, writer):
+async def handle_echo(reader: StreamReader, writer: StreamWriter) -> None:
     global conn_cnt
-    conn_cnt +=1
-    addr = writer.get_extra_info('peername')
+    conn_cnt += 1
+    addr = writer.get_extra_info("peername")
     srvwrk = ServerWorker(conn_cnt, addr)
 
     await srvwrk.handshake(reader, writer)
@@ -135,13 +161,16 @@ async def handle_echo(reader, writer):
 
     data = await reader.read(max_msg_size)
     while True:
-        if not data: continue
+        if not data:
+            continue
 
-        if data[:1]==b'\n': break
+        if data[:1] == b"\n":
+            break
 
         data = srvwrk.process(data)
 
-        if not data: break
+        if not data:
+            break
 
         writer.write(data)
         await writer.drain()
@@ -149,13 +178,14 @@ async def handle_echo(reader, writer):
     print("[%s]" % srvwrk.id)
     writer.close()
 
-def run_server():
+
+def run_server() -> None:
     loop = asyncio.get_event_loop()
-    coro = asyncio.start_server(handle_echo, '127.0.0.1', conn_port)
+    coro = asyncio.start_server(handle_echo, "127.0.0.1", conn_port)
     server = loop.run_until_complete(coro)
     # Serve requests until Ctrl+C is pressed
-    print('Serving on {}'.format(server.sockets[0].getsockname()))
-    print('  (type ^C to finish)\n')
+    print("Serving on {}".format(server.sockets[0].getsockname()))
+    print("  (type ^C to finish)\n")
     try:
         loop.run_forever()
     except KeyboardInterrupt:
@@ -164,6 +194,7 @@ def run_server():
     server.close()
     loop.run_until_complete(server.wait_closed())
     loop.close()
-    print('\nFINISHED!')
+    print("\nFINISHED!")
+
 
 run_server()
