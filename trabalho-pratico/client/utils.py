@@ -39,6 +39,10 @@ def add(file_path: str, client_public_key) -> bytes:
     return serialize_to_bytes(add_request)
 
 def read(decrypted_msg: bytes, client_private_key) -> None:
+    if not decrypted_msg:
+        print("Error: Decrypted message is empty.")
+        return
+    
     try:
         message_data = deserialize_from_bytes(decrypted_msg)
         encrypted_aes_key_b64 = message_data.get("encrypted_aes_key")

@@ -67,9 +67,9 @@ class ServerWorker:
 
         # Create the structure to send
         server_response = {
-            "public_key": base64.b64encode(serialized_public_key),
-            "certificate": base64.b64encode(serialized_certificate),
-            "signature": base64.b64encode(signature),
+            "public_key": base64.b64encode(serialized_public_key).decode(),
+            "certificate": base64.b64encode(serialized_certificate).decode(),
+            "signature": base64.b64encode(signature).decode(),
         }
 
         # Send server's public key, certificate, and signature
@@ -118,8 +118,11 @@ class ServerWorker:
 
         try:
             client_request = deserialize_from_bytes(plaintext)
+            print(client_request)
             request_type = client_request.get("type")
             request_args = client_request.get("args")
+
+            print(f"Request: {request_type} {request_args}")
 
             if request_type == "add":
                 filename = request_args[0]

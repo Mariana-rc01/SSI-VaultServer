@@ -65,12 +65,16 @@ class Client:
         # Encode the public key in Base64 before sending
         serialized_public_key_json: bytes = serialize_to_bytes(
         {"public_key": base64.b64encode(serialized_public_key).decode()}
-    )
+        )
         writer.write(serialized_public_key_json)
         await writer.drain()
 
         # Receive server's public key, certificate, and signature
         response: bytes = await reader.read(max_msg_size)
+        print(f"Received request: {request}")
+        if not response:
+            print("Error: Received empty response during handshake.")
+            return
         response_data: dict = deserialize_from_bytes(response)
         serialized_server_public_key: bytes = base64.b64decode(response_data["public_key"])
         server_certificate: bytes = base64.b64decode(response_data["certificate"])
@@ -129,6 +133,7 @@ class Client:
         if len(msg) != 0:
             self.msg_cnt += 1
             decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+            print(f"[DEBUG] Received ({self.msg_cnt}): {decrypted_msg}")
             response_data: dict = deserialize_from_bytes(decrypted_msg)
 
             if self.last_command == "read":

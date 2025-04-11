@@ -12,15 +12,6 @@ p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B
 g = 2
 
 def serialize_to_bytes(data) -> bytes:
-    """
-    Serializes a structure into a JSON-encoded array of bytes.
-
-    Args:
-        data: The structure to serialize.
-
-    Returns:
-        bytes: The serialized data as a JSON-encoded byte array.
-    """
     try:
         json_string = json.dumps(data)
         return json_string.encode("utf-8")
@@ -28,19 +19,13 @@ def serialize_to_bytes(data) -> bytes:
         raise ValueError(f"Failed to serialize data: {e}")
     
 def deserialize_from_bytes(data: bytes):
-    """
-    Deserializes a JSON-encoded array of bytes back into a structure.
-
-    Args:
-        data (bytes): The JSON-encoded byte array to deserialize.
-
-    Returns:
-        The deserialized structure.
-    """
     try:
+        if not data:
+            raise ValueError("Input data is empty.")
+        
         json_string = data.decode("utf-8")
         return json.loads(json_string)
-    except (TypeError, ValueError, json.JSONDecodeError) as e:
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise ValueError(f"Failed to deserialize data: {e}")
 
 def generate_private_key():
