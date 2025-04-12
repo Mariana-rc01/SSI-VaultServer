@@ -21,6 +21,8 @@ from utils.utils import (
     certificate_create,
     deserialize_from_bytes,
     serialize_to_bytes,
+    deserialize_request,
+    ClientFirstInteraction
 )
 from server.utils import log_request, get_file_by_id, add_request, add_user
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -52,8 +54,8 @@ class ServerWorker:
 
         # Receive client's public key
         request = await reader.read(max_msg_size)
-        request_data = deserialize_from_bytes(request)
-        serialized_client_public_key = base64.b64decode(request_data["public_key"])
+        request_data: ClientFirstInteraction = deserialize_request(request)
+        serialized_client_public_key = base64.b64decode(request_data.public_key)
         client_public_key = deserialize_public_key(serialized_client_public_key)
 
         # Generate server's public key and signature
@@ -119,21 +121,23 @@ class ServerWorker:
         try:
             client_request = deserialize_from_bytes(plaintext)
             print(client_request)
-            request_type = client_request.get("type")
-            request_args = client_request.get("args")
+            request_type = client_request.get("action")
+            request_filename = client_request.get("filename")
+            request_filedata = client_request.get("encrypted_file")
+            protected_key = client_request.get("encrypted_aes_key")
 
-            print(f"Request: {request_type} {request_args}")
+            print(f"Request: {request_type} {request_filedata}")
 
             if request_type == "add":
-                filename = request_args[0]
-                filedata_b64 = request_args[1]
+                filename = request_filename
+                filedata_b64 = request_filedata
                 filedata = base64.b64decode(filedata_b64)
 
-                file_id = add_request(filename, filedata, self.id)
+                file_id = add_request(filename, filedata, self.id, protected_key)
 
                 return encrypt(f"File saved with id: {file_id}".encode(), self.aesgcm)
             elif request_type == "read":
-                file_id = request_args[0]
+                file_id = request_filename
 
                 file_info = get_file_by_id(file_id)
 

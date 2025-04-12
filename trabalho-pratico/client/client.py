@@ -22,6 +22,8 @@ from utils.utils import (
     serialize_certificate,
     serialize_to_bytes,
     deserialize_from_bytes,
+    serialize_response,
+    ClientFirstInteraction
 )
 from client.utils import add, read
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -63,9 +65,7 @@ class Client:
         serialized_public_key: bytes = serialize_public_key(dh_public_key)
 
         # Encode the public key in Base64 before sending
-        serialized_public_key_json: bytes = serialize_to_bytes(
-        {"public_key": base64.b64encode(serialized_public_key).decode()}
-        )
+        serialized_public_key_json: bytes = serialize_response(ClientFirstInteraction(base64.b64encode(serialized_public_key).decode()))
         writer.write(serialized_public_key_json)
         await writer.drain()
 
@@ -132,15 +132,21 @@ class Client:
         terminate the connection)."""
         if len(msg) != 0:
             self.msg_cnt += 1
-            decrypted_msg: bytes = decrypt(msg, self.aesgcm)
-            print(f"[DEBUG] Received ({self.msg_cnt}): {decrypted_msg}")
-            response_data: dict = deserialize_from_bytes(decrypted_msg)
+            try:
+                decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+                print(f"[DEBUG] Decrypted message ({self.msg_cnt}): {decrypted_msg}")
+                response_data: dict = deserialize_from_bytes(decrypted_msg)
+                print("VER AQUI O RESPONSE DATA")
+                print(response_data)
 
-            if self.last_command == "read":
-                read(decrypted_msg, self.rsa_private_key)
-                self.last_command = None
-            else:
-                print("Received (%d): %r" % (self.msg_cnt, response_data))
+                if self.last_command == "read":
+                    read(decrypted_msg, self.rsa_private_key)
+                    self.last_command = None
+                else:
+                    print("Received (%d): %r" % (self.msg_cnt, response_data))
+            except Exception as e:
+                print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
+                return None
 
         print("\nCommand [add <file-path> | read <file-id> | exit]:")
         new_msg: str = input().strip()

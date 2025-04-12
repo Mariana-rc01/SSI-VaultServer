@@ -14,5 +14,45 @@
     "owner": "u2",
     "created_at": "2025-04-10T16:15:35.916201Z",
     "location": "./storage/f2"
+  },
+  {
+    "id": "f3",
+    "name": "file.txt",
+    "size": 45,
+    "owner": "u1",
+    "permissions": {
+      "users": [
+        {
+          "username": "Owner: u1",
+          "key": "l6D+YyCpFGAdNZUMiD9TTrNwAW5tTHOYdSCgJdKC48JYurvtd9g8VAkcXZQqINMou40Zj1LXeiKEs2yGdFARrHWlnt0tq0ZRaiXEeX9xBThdz9128xCwzh8fR/ocE+xUJuXOpPgiBE6lOsDHToXwagZKLRKLvc2NxI1jauXL0r705bPcTWAVRfII0z+yTNXY7b8k7l9YIcOrPFbRG7TcPsmJjxxKUsJaotMEJzT6+AglfuS97oHAYaV9HSxhmWf83ivzJ9Cq5FW1JO4V01O6IM/tmvu4ypKMBSyvA84azPj72xr1WyEXtfrjhBMxPZbWlq3HG1pcfYDMaAsSlLJW7w==",
+          "permissions": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    "created_at": "2025-04-12T15:02:41.455249Z",
+    "location": "./storage/f3"
+  },
+  {
+    "id": "f4",
+    "name": "file.txt",
+    "size": 45,
+    "owner": "u1",
+    "permissions": {
+      "users": [
+        {
+          "username": "Owner: u1",
+          "key": "RhlvJYysI/9h46/voMFK8ddN0ormmF2Tzv/vA0zbMUEId3juZrAUI0c0RzT9CFauM2PvIrgadG7leyWJFXB3OrYSBXpzOOjsW66VkeSSnDe514gYQTJYpSaBmII217BqfQwL8fMAb6lTGq3iG8aI1X+MF1yK/3HHva41yYQ04CD+WRlWouH1/Jor+b0XSXLhfIM0B0kpdMX1TWiZwFS0dP2x9cGHgOxCoU07Mj5wypLm7T4iKqQE5xL5FFKYxFEp44Q+IKg1+EEQ8jLQu/qvl60SkmchVdfoaUS06cuovvRJ6vSKKrwRi+CtJiBPm0bSt0c5Ezy8OpiJDJ5q1WltwQ==",
+          "permissions": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    "created_at": "2025-04-13T00:31:39.407519Z",
+    "location": "./storage/f4"
   }
 ]
