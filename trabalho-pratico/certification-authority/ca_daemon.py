@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives.serialization.pkcs12 import (
 # Configuration
 CA_P12_FILE = "ca.p12"
 CA_P12_PASSWORD = b"capassword"
-CA_CERT_VALIDITY_DAYS = 365  # CA certificate validity
+CA_CERT_VALIDITY_DAYS = 365
 
 def create_ca_certificate():
     """
@@ -30,8 +30,8 @@ def create_ca_certificate():
     ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name([
         x509.NameAttribute(NameOID.COUNTRY_NAME, u"PT"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"MyCA"),
-        x509.NameAttribute(NameOID.COMMON_NAME, u"My Test CA"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Grupo 2 SSI"),
+        x509.NameAttribute(NameOID.COMMON_NAME, u"Our CA"),
     ])
     ca_cert = x509.CertificateBuilder() \
         .subject_name(subject) \
@@ -75,12 +75,10 @@ class CADaemonHandler(socketserver.StreamRequestHandler):
     """
     def handle(self):
         try:
-            print("Request received")
-            data = self.rfile.read()  # reads until the end of the message
+            data = self.rfile.read()
             if not data:
                 return
             
-            print("I've read all the data") # It doesn't pass here until I close the server.py connection
             # Load the CSR from PEM format
             csr = x509.load_pem_x509_csr(data)
             # Ask the CA to sign the CSR

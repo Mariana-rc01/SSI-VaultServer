@@ -7,7 +7,7 @@ Verifies the server's certificate using the CA's certificate.
 import socket, ssl
 
 # CA certificate file (in PEM format)
-CA_CERT_FILE = "ca_cert.pem"
+CA_CERT_FILE = "ca_cert.crt"
 
 def connect_to_server(server_host="localhost", server_port=8443):
     context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=CA_CERT_FILE)
