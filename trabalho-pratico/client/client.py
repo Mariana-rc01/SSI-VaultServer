@@ -14,7 +14,6 @@ from utils.utils import (
     encrypt,
     decrypt,
     build_aesgcm,
-    request,
     certificate_create,
     is_certificate_valid,
     is_signature_valid,
@@ -27,6 +26,7 @@ from utils.utils import (
     ClientFirstInteraction,
     ServerFirstInteraction,
     ClientSecondInteraction,
+    ReadRequest,
 )
 from client.utils import add, read
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -129,16 +129,12 @@ class Client:
             self.msg_cnt += 1
             try:
                 decrypted_msg: bytes = decrypt(msg, self.aesgcm)
-                print(f"[DEBUG] Decrypted message ({self.msg_cnt}): {decrypted_msg}")
-                response_data: dict = deserialize_from_bytes(decrypted_msg)
-                print("VER AQUI O RESPONSE DATA")
-                print(response_data)
-
                 if self.last_command == "read":
+                    print("Recebi novamente!!!")
                     read(decrypted_msg, self.rsa_private_key)
                     self.last_command = None
                 else:
-                    print("Received (%d): %r" % (self.msg_cnt, response_data))
+                    print(f"Received ({self.msg_cnt}): {decrypted_msg.decode('utf-8')}")
             except Exception as e:
                 print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
                 return None
@@ -150,18 +146,21 @@ class Client:
             file_path: str = new_msg.split(" ", 1)[1]
 
             client_public_key = self.rsa_private_key.public_key()
+
             json_bytes: Optional[bytes] = add(file_path, client_public_key)
             if not json_bytes:
                 return b""
-
+            
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("read "):
             self.last_command = "read"
             file_id: str = new_msg.split(" ", 1)[1]
 
-            read_request: dict = request("read", [file_id])
-            json_bytes: bytes = serialize_to_bytes(read_request)
-
+            json_bytes: bytes = serialize_response(ReadRequest("read", file_id))
+            print("Mandei!!!")
+            if not json_bytes:
+                return b""
+            
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.strip() == "exit":
             return None

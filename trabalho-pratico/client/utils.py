@@ -1,5 +1,14 @@
 import os, base64
-from utils.utils import encrypt, decrypt, build_aesgcm, serialize_to_bytes, deserialize_from_bytes
+from utils.utils import(
+    encrypt,
+    decrypt,
+    build_aesgcm,
+    serialize_to_bytes,
+    deserialize_from_bytes,
+    serialize_response,
+    AddRequest,
+    ReadRequest,
+)
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import pkcs12
@@ -29,14 +38,14 @@ def add(file_path: str, client_public_key) -> bytes:
     encrypted_aes_key_b64: str = base64.b64encode(encrypted_aes_key).decode()
     filename: str = os.path.basename(file_path)
 
-    add_request = {
-        "action": "add",
-        "filename": filename,
-        "encrypted_file": encrypted_file_b64,
-        "encrypted_aes_key": encrypted_aes_key_b64,
-    }
+    add_request = AddRequest(
+        action="add",
+        filename=filename,
+        encrypted_file=encrypted_file_b64,
+        encrypted_aes_key=encrypted_aes_key_b64,
+    )
 
-    return serialize_to_bytes(add_request)
+    return serialize_response(add_request)
 
 def read(decrypted_msg: bytes, client_private_key) -> None:
     if not decrypted_msg:
@@ -44,7 +53,10 @@ def read(decrypted_msg: bytes, client_private_key) -> None:
         return
     
     try:
-        message_data = deserialize_from_bytes(decrypted_msg)
+        print(f"[DEBUGGG] Decrypted message: {decrypted_msg}, {type(decrypted_msg)}")
+
+        message_data = decrypted_msg.decode('utf-8')
+        print(f"[DEBUGGG2] Decrypted message: {decrypted_msg}")
         encrypted_aes_key_b64 = message_data.get("encrypted_aes_key")
         encrypted_file_b64 = message_data.get("encrypted_file")
 

@@ -83,8 +83,7 @@ class ServerWorker:
         response_data: ClientSecondInteraction = deserialize_request(response)
         client_signature: bytes = base64.b64decode(response_data.signature)
         client_certificate: bytes = certificate_create(base64.b64decode(response_data.certificate))
-        client_subject: bytes = base64.b64decode(response_data.subject)
-        print(f"Client subject: {client_subject}")
+        client_subject: bytes = base64.b64decode(response_data.subject).decode()
 
         # Validate certificate
         certificate_valid = is_certificate_valid(client_certificate, client_subject)
@@ -118,25 +117,24 @@ class ServerWorker:
         plaintext = decrypt(msg, self.aesgcm)
 
         try:
-            client_request = deserialize_from_bytes(plaintext)
-            print(client_request)
-            request_type = client_request.get("action")
-            request_filename = client_request.get("filename")
-            request_filedata = client_request.get("encrypted_file")
-            protected_key = client_request.get("encrypted_aes_key")
-
-            print(f"Request: {request_type} {request_filedata}")
+            client_request = deserialize_request(plaintext)
+            request_type = client_request.action
 
             if request_type == "add":
+                request_filename = client_request.filename
+                request_filedata = client_request.encrypted_file
+                request_encrypted_aes_key = client_request.encrypted_aes_key
+
                 filename = request_filename
                 filedata_b64 = request_filedata
                 filedata = base64.b64decode(filedata_b64)
 
-                file_id = add_request(filename, filedata, self.id, protected_key)
+                file_id = add_request(filename, filedata, self.id, request_encrypted_aes_key)
 
                 return encrypt(f"File saved with id: {file_id}".encode(), self.aesgcm)
             elif request_type == "read":
-                file_id = request_filename
+                print("Recebi!!!!")
+                file_id = client_request.fileid
 
                 file_info = get_file_by_id(file_id)
 

@@ -31,10 +31,22 @@ class ClientSecondInteraction:
     subject: str
 
 @dataclass
+class AddRequest:
+    action: str
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class ReadRequest:
+    action: str
+    fileid: str
+
+@dataclass
 class VaultError:
     error: str
 
-def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, VaultError]:
+def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, AddRequest, ReadRequest, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -53,12 +65,16 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return ServerFirstInteraction(**args)
     elif op_type == "ClientSecondInteraction":
         return ClientSecondInteraction(**args)
+    elif op_type == "AddRequest":
+        return AddRequest(**args)
+    elif op_type == "ReadRequest":
+        return ReadRequest(**args)
     elif op_type == "VaultError":
         return VaultError(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
-def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, VaultError]) -> bytes:
+def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, AddRequest, ReadRequest, VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -67,6 +83,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, ClientSecondInteraction):
         op_type = "ClientSecondInteraction"
+        args = obj.__dict__
+    elif isinstance(obj, AddRequest):
+        op_type = "AddRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReadRequest):
+        op_type = "ReadRequest"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"
@@ -141,12 +163,6 @@ def decrypt(content, aesgcm):
 
 def build_aesgcm(key):
     return AESGCM(key)
-
-def request(type, args):
-    return {
-        "type": type,
-        "args": args
-    }
 
 # Certificates
 certificates_path = "./certificates"
