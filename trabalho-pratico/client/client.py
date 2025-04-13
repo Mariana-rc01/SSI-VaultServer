@@ -23,7 +23,10 @@ from utils.utils import (
     serialize_to_bytes,
     deserialize_from_bytes,
     serialize_response,
-    ClientFirstInteraction
+    deserialize_request,
+    ClientFirstInteraction,
+    ServerFirstInteraction,
+    ClientSecondInteraction,
 )
 from client.utils import add, read
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -69,16 +72,12 @@ class Client:
         writer.write(serialized_public_key_json)
         await writer.drain()
 
-        # Receive server's public key, certificate, and signature
-        response: bytes = await reader.read(max_msg_size)
-        print(f"Received request: {request}")
-        if not response:
-            print("Error: Received empty response during handshake.")
-            return
-        response_data: dict = deserialize_from_bytes(response)
-        serialized_server_public_key: bytes = base64.b64decode(response_data["public_key"])
-        server_certificate: bytes = base64.b64decode(response_data["certificate"])
-        server_signature: bytes = base64.b64decode(response_data["signature"])
+        # Receive server's public key, signature, and certificate
+        response = await reader.read(max_msg_size)
+        response_data: ServerFirstInteraction = deserialize_request(response)
+        serialized_server_public_key: bytes = base64.b64decode(response_data.public_key)
+        server_signature: bytes = base64.b64decode(response_data.signature)
+        server_certificate: bytes = base64.b64decode(response_data.certificate)
 
         server_public_key: EllipticCurvePublicKey = deserialize_public_key(serialized_server_public_key)
         server_certificate_obj: Certificate = certificate_create(server_certificate)
@@ -86,7 +85,6 @@ class Client:
         # Validate certificate
         certificate_valid: bool = is_certificate_valid(server_certificate_obj, "SSI Vault Server")
         if not certificate_valid:
-            # Abort connection
             print("Aborting handshake...")
             return
 
@@ -99,7 +97,6 @@ class Client:
             server_signature, both_public_keys, server_certificate_public_key
         )
         if not signature_valid:
-            # Abort connection
             print("Aborting handshake...")
             return
 
@@ -113,15 +110,13 @@ class Client:
         client_certificate_subject: str = self.client_certificate.subject.get_attributes_for_oid(
             NameOID.COMMON_NAME
         )[0].value
-        writer.write(
-            serialize_to_bytes(
-                {
-                    "signature": base64.b64encode(client_signature).decode(),
-                    "certificate": base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
-                    "subject": base64.b64encode(client_certificate_subject.encode()).decode(),
-                }
-            )
-        )
+
+        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(), 
+                                                  base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
+                                                  base64.b64encode(client_certificate_subject.encode()).decode())
+        
+        # Send client's certificate and signature
+        writer.write(serialize_response(response_tosend))
         await writer.drain()
 
         print("Handshake completed!")

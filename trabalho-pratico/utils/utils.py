@@ -22,7 +22,7 @@ class ClientFirstInteraction:
 class ServerFirstInteraction:
     public_key: str
     signature: str
-    certicate: str
+    certificate: str
 
 @dataclass
 class ClientSecondInteraction:

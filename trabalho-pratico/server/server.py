@@ -22,7 +22,10 @@ from utils.utils import (
     deserialize_from_bytes,
     serialize_to_bytes,
     deserialize_request,
-    ClientFirstInteraction
+    serialize_response,
+    ClientFirstInteraction,
+    ServerFirstInteraction,
+    ClientSecondInteraction,
 )
 from server.utils import log_request, get_file_by_id, add_request, add_user
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -67,25 +70,21 @@ class ServerWorker:
         signature = sign_message_with_rsa(both_public_keys, rsa_private_key)
         serialized_certificate = serialize_certificate(server_certificate)
 
-        # Create the structure to send
-        server_response = {
-            "public_key": base64.b64encode(serialized_public_key).decode(),
-            "certificate": base64.b64encode(serialized_certificate).decode(),
-            "signature": base64.b64encode(signature).decode(),
-        }
+        response_tosend = ServerFirstInteraction(base64.b64encode(serialized_public_key).decode(), 
+                                                 base64.b64encode(signature).decode(),
+                                                 base64.b64encode(serialized_certificate).decode())
 
-        # Send server's public key, certificate, and signature
-        writer.write(
-            serialize_to_bytes(server_response)
-        )
+        # Send server's public key, signature, and certificate
+        writer.write(serialize_response(response_tosend))
         await writer.drain()
 
         # Receive client's certificate and signature
-        response = await reader.read(max_msg_size)
-        response_data = deserialize_from_bytes(response)
-        client_signature = base64.b64decode(response_data["signature"])
-        client_certificate = certificate_create(base64.b64decode(response_data["certificate"]))
-        client_subject = base64.b64decode(response_data["subject"]).decode()
+        response: bytes = await reader.read(max_msg_size)
+        response_data: ClientSecondInteraction = deserialize_request(response)
+        client_signature: bytes = base64.b64decode(response_data.signature)
+        client_certificate: bytes = certificate_create(base64.b64decode(response_data.certificate))
+        client_subject: bytes = base64.b64decode(response_data.subject)
+        print(f"Client subject: {client_subject}")
 
         # Validate certificate
         certificate_valid = is_certificate_valid(client_certificate, client_subject)
