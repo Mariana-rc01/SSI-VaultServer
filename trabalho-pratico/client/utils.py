@@ -1,10 +1,8 @@
-import os, base64
+import os, base64, json
 from utils.utils import(
     encrypt,
     decrypt,
     build_aesgcm,
-    serialize_to_bytes,
-    deserialize_from_bytes,
     serialize_response,
     AddRequest,
     ReadRequest,
@@ -51,14 +49,13 @@ def read(decrypted_msg: bytes, client_private_key) -> None:
     if not decrypted_msg:
         print("Error: Decrypted message is empty.")
         return
-    
-    try:
-        print(f"[DEBUGGG] Decrypted message: {decrypted_msg}, {type(decrypted_msg)}")
 
-        message_data = decrypted_msg.decode('utf-8')
-        print(f"[DEBUGGG2] Decrypted message: {decrypted_msg}")
-        encrypted_aes_key_b64 = message_data.get("encrypted_aes_key")
-        encrypted_file_b64 = message_data.get("encrypted_file")
+    try:
+        message_data_str = decrypted_msg.decode('utf-8')
+        message_data = json.loads(message_data_str)
+
+        encrypted_aes_key_b64 = message_data.get("encrypted_key")
+        encrypted_file_b64 = message_data.get("filedata")
 
         if not encrypted_aes_key_b64 or not encrypted_file_b64:
             print("Error: Missing encrypted AES key or file data.")
@@ -77,10 +74,10 @@ def read(decrypted_msg: bytes, client_private_key) -> None:
         )
 
         aesgcm_file = build_aesgcm(aes_key)
-
         file_data: bytes = decrypt(encrypted_file, aesgcm_file)
 
         print("\nFile content:")
         print(file_data.decode("utf-8"))
+
     except Exception as e:
         print("\nError decrypting:", e)

@@ -52,6 +52,14 @@ def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
             return f
     return None
 
+def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
+    """ Gets the file by its ID. """
+    users = file_info.get("permissions", {}).get("users", [])
+    for user in users:
+        if user.get("username") == f"Owner: {user_id}":
+            return user.get("key")
+    return None
+
 def get_next_file_id() -> str:
     """ Gets the next file ID. """
     files = load_files()

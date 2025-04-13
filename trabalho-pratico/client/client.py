@@ -130,7 +130,6 @@ class Client:
             try:
                 decrypted_msg: bytes = decrypt(msg, self.aesgcm)
                 if self.last_command == "read":
-                    print("Recebi novamente!!!")
                     read(decrypted_msg, self.rsa_private_key)
                     self.last_command = None
                 else:
@@ -157,7 +156,6 @@ class Client:
             file_id: str = new_msg.split(" ", 1)[1]
 
             json_bytes: bytes = serialize_response(ReadRequest("read", file_id))
-            print("Mandei!!!")
             if not json_bytes:
                 return b""
             

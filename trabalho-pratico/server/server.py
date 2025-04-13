@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, json
 import os
 import base64
 from typing import Optional, Tuple, Union
@@ -19,15 +19,13 @@ from utils.utils import (
     generate_derived_key,
     build_aesgcm,
     certificate_create,
-    deserialize_from_bytes,
-    serialize_to_bytes,
     deserialize_request,
     serialize_response,
     ClientFirstInteraction,
     ServerFirstInteraction,
     ClientSecondInteraction,
 )
-from server.utils import log_request, get_file_by_id, add_request, add_user
+from server.utils import log_request, get_file_by_id, add_request, add_user, get_user_key
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -133,7 +131,6 @@ class ServerWorker:
 
                 return encrypt(f"File saved with id: {file_id}".encode(), self.aesgcm)
             elif request_type == "read":
-                print("Recebi!!!!")
                 file_id = client_request.fileid
 
                 file_info = get_file_by_id(file_id)
@@ -142,11 +139,22 @@ class ServerWorker:
                     log_request(f"{self.id}", "read", [file_id], "failed", "file not found")
                     return encrypt(f"Error: file {file_id} not found.".encode(), self.aesgcm)
 
+                user_key = get_user_key(file_info, self.id)
+
+                if not user_key:
+                    log_request(f"{self.id}", "read", [file_id], "failed", "no access key")
+                    return encrypt(f"Error: no access key for user {self.id}.".encode(), self.aesgcm)
+
                 with open(file_info["location"], "rb") as f:
                     filedata = f.read()
-                log_request(f"{self.id}", "read", [file_id], "success")
 
-                return encrypt(filedata, self.aesgcm)
+                response_data = {
+                    "filedata": base64.b64encode(filedata).decode(),
+                    "encrypted_key": user_key
+                }
+
+                log_request(f"{self.id}", "read", [file_id], "success")
+                return encrypt(json.dumps(response_data).encode(), self.aesgcm)
             else:
                 return encrypt(b"Invalid command", self.aesgcm)
         except Exception as e:
