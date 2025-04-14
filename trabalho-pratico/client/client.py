@@ -1,10 +1,15 @@
 import asyncio
-import json
 import base64
 import argparse
-from typing import Optional, Union
+from typing import Optional
 
 from utils.utils import (
+    VaultError,
+    ClientFirstInteraction,
+    ServerFirstInteraction,
+    ClientSecondInteraction,
+    AddResponse,
+    ReadResponse,
     generate_derived_key,
     generate_private_key,
     generate_public_key,
@@ -14,14 +19,15 @@ from utils.utils import (
     encrypt,
     decrypt,
     build_aesgcm,
-    request,
     certificate_create,
     is_certificate_valid,
     is_signature_valid,
     sign_message_with_rsa,
     serialize_certificate,
+    serialize_response,
+    deserialize_request,
 )
-from client.utils import add, read
+from client.utils import addRequest, readRequest, readResponse
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -47,7 +53,6 @@ class Client:
         self.sckt = sckt
         self.msg_cnt: int = 0
         self.aesgcm: Optional[AESGCM] = None
-        self.last_command: Optional[str] = None
         self.rsa_private_key = rsa_private_key
         self.client_certificate = client_certificate
 
@@ -61,18 +66,16 @@ class Client:
         serialized_public_key: bytes = serialize_public_key(dh_public_key)
 
         # Encode the public key in Base64 before sending
-        serialized_public_key_json: bytes = json.dumps(
-            {"public_key": base64.b64encode(serialized_public_key).decode()}
-        ).encode()
+        serialized_public_key_json: bytes = serialize_response(ClientFirstInteraction(base64.b64encode(serialized_public_key).decode()))
         writer.write(serialized_public_key_json)
         await writer.drain()
 
-        # Receive server's public key, certificate, and signature
-        response: bytes = await reader.read(max_msg_size)
-        response_data: dict = json.loads(response.decode())
-        serialized_server_public_key: bytes = base64.b64decode(response_data["public_key"])
-        server_certificate: bytes = base64.b64decode(response_data["certificate"])
-        server_signature: bytes = base64.b64decode(response_data["signature"])
+        # Receive server's public key, signature, and certificate
+        response = await reader.read(max_msg_size)
+        response_data: ServerFirstInteraction = deserialize_request(response)
+        serialized_server_public_key: bytes = base64.b64decode(response_data.public_key)
+        server_signature: bytes = base64.b64decode(response_data.signature)
+        server_certificate: bytes = base64.b64decode(response_data.certificate)
 
         server_public_key: EllipticCurvePublicKey = deserialize_public_key(serialized_server_public_key)
         server_certificate_obj: Certificate = certificate_create(server_certificate)
@@ -80,7 +83,6 @@ class Client:
         # Validate certificate
         certificate_valid: bool = is_certificate_valid(server_certificate_obj, "SSI Vault Server")
         if not certificate_valid:
-            # Abort connection
             print("Aborting handshake...")
             return
 
@@ -93,7 +95,6 @@ class Client:
             server_signature, both_public_keys, server_certificate_public_key
         )
         if not signature_valid:
-            # Abort connection
             print("Aborting handshake...")
             return
 
@@ -107,15 +108,13 @@ class Client:
         client_certificate_subject: str = self.client_certificate.subject.get_attributes_for_oid(
             NameOID.COMMON_NAME
         )[0].value
-        writer.write(
-            json.dumps(
-                {
-                    "signature": base64.b64encode(client_signature).decode(),
-                    "certificate": base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
-                    "subject": base64.b64encode(client_certificate_subject.encode()).decode(),
-                }
-            ).encode()
-        )
+
+        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(), 
+                                                  base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
+                                                  base64.b64encode(client_certificate_subject.encode()).decode())
+        
+        # Send client's certificate and signature
+        writer.write(serialize_response(response_tosend))
         await writer.drain()
 
         print("Handshake completed!")
@@ -126,32 +125,46 @@ class Client:
         terminate the connection)."""
         if len(msg) != 0:
             self.msg_cnt += 1
-            decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+            try:
+                decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+                server_response = deserialize_request(decrypted_msg)
 
-            if self.last_command == "read":
-                read(decrypted_msg)
-                self.last_command = None
-            else:
-                print("Received (%d): %r" % (self.msg_cnt, decrypted_msg.decode()))
+                if isinstance(server_response, ReadResponse):
+                    readResponse(server_response, self.rsa_private_key)
+
+                elif isinstance(server_response, AddResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, VaultError):
+                    print(f"Error: {server_response.error}")
+
+                else:
+                    print(f"Unknown response type: {type(server_response)}")
+                    return None
+
+            except Exception as e:
+                print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
+                return None
 
         print("\nCommand [add <file-path> | read <file-id> | exit]:")
         new_msg: str = input().strip()
         if new_msg.startswith("add "):
-            self.last_command = "add"
             file_path: str = new_msg.split(" ", 1)[1]
 
-            json_bytes: Optional[bytes] = add(file_path)
+            client_public_key = self.rsa_private_key.public_key()
+
+            json_bytes: Optional[bytes] = addRequest(file_path, client_public_key)
             if not json_bytes:
                 return b""
-
+            
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("read "):
-            self.last_command = "read"
             file_id: str = new_msg.split(" ", 1)[1]
 
-            read_request: dict = request("read", [file_id])
-            json_bytes: bytes = json.dumps(read_request).encode("utf-8")
-
+            json_bytes: bytes = readRequest(file_id)
+            if not json_bytes:
+                return b""
+            
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.strip() == "exit":
             return None
