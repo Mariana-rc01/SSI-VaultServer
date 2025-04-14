@@ -38,9 +38,20 @@ class AddRequest:
     encrypted_aes_key: str
 
 @dataclass
+class AddResponse:
+    action: str
+    response: str
+
+@dataclass
 class ReadRequest:
     action: str
     fileid: str
+
+@dataclass
+class ReadResponse:
+    action: str
+    filedata: str
+    encrypted_key: str
 
 @dataclass
 class VaultError:
@@ -67,8 +78,12 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return ClientSecondInteraction(**args)
     elif op_type == "AddRequest":
         return AddRequest(**args)
+    elif op_type == "AddResponse":
+        return AddResponse(**args)
     elif op_type == "ReadRequest":
         return ReadRequest(**args)
+    elif op_type == "ReadResponse":
+        return ReadResponse(**args)
     elif op_type == "VaultError":
         return VaultError(**args)
     else:
@@ -87,8 +102,14 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
     elif isinstance(obj, AddRequest):
         op_type = "AddRequest"
         args = obj.__dict__
+    elif isinstance(obj, AddResponse):
+        op_type = "AddResponse"
+        args = obj.__dict__
     elif isinstance(obj, ReadRequest):
         op_type = "ReadRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReadResponse):
+        op_type = "ReadResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"
@@ -102,24 +123,6 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
     }
 
     return json.dumps(payload).encode('utf-8')
-
-
-def serialize_to_bytes(data) -> bytes:
-    try:
-        json_string = json.dumps(data)
-        return json_string.encode("utf-8")
-    except (TypeError, ValueError) as e:
-        raise ValueError(f"Failed to serialize data: {e}")
-    
-def deserialize_from_bytes(data: bytes):
-    try:
-        if not data:
-            raise ValueError("Input data is empty.")
-        
-        json_string = data.decode("utf-8")
-        return json.loads(json_string)
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        raise ValueError(f"Failed to deserialize data: {e}")
 
 def generate_private_key():
     parameters = dh.DHParameterNumbers(p,g).parameters()

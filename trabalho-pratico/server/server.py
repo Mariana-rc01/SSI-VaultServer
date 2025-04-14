@@ -1,10 +1,18 @@
-import asyncio, json
+import asyncio
 import os
 import base64
 from typing import Optional, Tuple, Union
 from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
+    AddResponse,
+    ReadResponse,
+    VaultError,
+    ClientFirstInteraction,
+    ServerFirstInteraction,
+    ClientSecondInteraction,
+    AddRequest,
+    ReadRequest,
     encrypt,
     decrypt,
     is_signature_valid,
@@ -21,9 +29,6 @@ from utils.utils import (
     certificate_create,
     deserialize_request,
     serialize_response,
-    ClientFirstInteraction,
-    ServerFirstInteraction,
-    ClientSecondInteraction,
 )
 from server.utils import log_request, get_file_by_id, add_request, add_user, get_user_key
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
@@ -86,7 +91,6 @@ class ServerWorker:
         # Validate certificate
         certificate_valid = is_certificate_valid(client_certificate, client_subject)
         if not certificate_valid:
-            # Abort connection
             print("Aborting handshake...")
             return
 
@@ -96,7 +100,6 @@ class ServerWorker:
         # Validate signature
         signature_valid = is_signature_valid(client_signature, both_public_keys, client_certificate_public_key)
         if not signature_valid:
-            # Abort connection
             print("Aborting handshake...")
             return
 
@@ -116,9 +119,8 @@ class ServerWorker:
 
         try:
             client_request = deserialize_request(plaintext)
-            request_type = client_request.action
 
-            if request_type == "add":
+            if isinstance(client_request, AddRequest):
                 request_filename = client_request.filename
                 request_filedata = client_request.encrypted_file
                 request_encrypted_aes_key = client_request.encrypted_aes_key
@@ -129,8 +131,10 @@ class ServerWorker:
 
                 file_id = add_request(filename, filedata, self.id, request_encrypted_aes_key)
 
-                return encrypt(f"File saved with id: {file_id}".encode(), self.aesgcm)
-            elif request_type == "read":
+                response_data = AddResponse("AddResponse", f"file {filename} added with id: {file_id}")
+
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, ReadRequest):
                 file_id = client_request.fileid
 
                 file_info = get_file_by_id(file_id)
@@ -148,17 +152,14 @@ class ServerWorker:
                 with open(file_info["location"], "rb") as f:
                     filedata = f.read()
 
-                response_data = {
-                    "filedata": base64.b64encode(filedata).decode(),
-                    "encrypted_key": user_key
-                }
+                response_data = ReadResponse("ReadResponse", base64.b64encode(filedata).decode(), user_key)
 
                 log_request(f"{self.id}", "read", [file_id], "success")
-                return encrypt(json.dumps(response_data).encode(), self.aesgcm)
+                return encrypt(serialize_response(response_data), self.aesgcm)
             else:
-                return encrypt(b"Invalid command", self.aesgcm)
+                return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
         except Exception as e:
-            return encrypt(f"Erro: {str(e)}".encode(), self.aesgcm)
+            return encrypt(VaultError("Error: {str(e)}".encode(), self.aesgcm))
 
 
 # Client/Server functionality

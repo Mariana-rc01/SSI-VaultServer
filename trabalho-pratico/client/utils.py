@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import pkcs12
 
 
-def add(file_path: str, client_public_key) -> bytes:
+def addRequest(file_path: str, client_public_key) -> bytes:
     if not os.path.isfile(file_path):
         print(f"Error: File '{file_path}' does not exist.")
         return b""
@@ -45,17 +45,21 @@ def add(file_path: str, client_public_key) -> bytes:
 
     return serialize_response(add_request)
 
-def read(decrypted_msg: bytes, client_private_key) -> None:
+def readRequest(file_id: str) -> bytes:
+    read_request = ReadRequest(
+        action="read",
+        fileid=file_id,
+    )
+    return serialize_response(read_request)
+
+def readResponse(decrypted_msg: bytes, client_private_key) -> None:
     if not decrypted_msg:
         print("Error: Decrypted message is empty.")
         return
 
     try:
-        message_data_str = decrypted_msg.decode('utf-8')
-        message_data = json.loads(message_data_str)
-
-        encrypted_aes_key_b64 = message_data.get("encrypted_key")
-        encrypted_file_b64 = message_data.get("filedata")
+        encrypted_aes_key_b64 = decrypted_msg.encrypted_key
+        encrypted_file_b64 = decrypted_msg.filedata
 
         if not encrypted_aes_key_b64 or not encrypted_file_b64:
             print("Error: Missing encrypted AES key or file data.")

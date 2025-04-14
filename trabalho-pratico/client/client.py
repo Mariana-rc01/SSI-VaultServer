@@ -1,10 +1,15 @@
 import asyncio
-import json
 import base64
 import argparse
-from typing import Optional, Union
+from typing import Optional
 
 from utils.utils import (
+    VaultError,
+    ClientFirstInteraction,
+    ServerFirstInteraction,
+    ClientSecondInteraction,
+    AddResponse,
+    ReadResponse,
     generate_derived_key,
     generate_private_key,
     generate_public_key,
@@ -19,16 +24,10 @@ from utils.utils import (
     is_signature_valid,
     sign_message_with_rsa,
     serialize_certificate,
-    serialize_to_bytes,
-    deserialize_from_bytes,
     serialize_response,
     deserialize_request,
-    ClientFirstInteraction,
-    ServerFirstInteraction,
-    ClientSecondInteraction,
-    ReadRequest,
 )
-from client.utils import add, read
+from client.utils import addRequest, readRequest, readResponse
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -54,7 +53,6 @@ class Client:
         self.sckt = sckt
         self.msg_cnt: int = 0
         self.aesgcm: Optional[AESGCM] = None
-        self.last_command: Optional[str] = None
         self.rsa_private_key = rsa_private_key
         self.client_certificate = client_certificate
 
@@ -129,11 +127,21 @@ class Client:
             self.msg_cnt += 1
             try:
                 decrypted_msg: bytes = decrypt(msg, self.aesgcm)
-                if self.last_command == "read":
-                    read(decrypted_msg, self.rsa_private_key)
-                    self.last_command = None
+                server_response = deserialize_request(decrypted_msg)
+
+                if isinstance(server_response, ReadResponse):
+                    readResponse(server_response, self.rsa_private_key)
+
+                elif isinstance(server_response, AddResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, VaultError):
+                    print(f"Error: {server_response.error}")
+
                 else:
-                    print(f"Received ({self.msg_cnt}): {decrypted_msg.decode('utf-8')}")
+                    print(f"Unknown response type: {type(server_response)}")
+                    return None
+
             except Exception as e:
                 print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
                 return None
@@ -141,21 +149,19 @@ class Client:
         print("\nCommand [add <file-path> | read <file-id> | exit]:")
         new_msg: str = input().strip()
         if new_msg.startswith("add "):
-            self.last_command = "add"
             file_path: str = new_msg.split(" ", 1)[1]
 
             client_public_key = self.rsa_private_key.public_key()
 
-            json_bytes: Optional[bytes] = add(file_path, client_public_key)
+            json_bytes: Optional[bytes] = addRequest(file_path, client_public_key)
             if not json_bytes:
                 return b""
             
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("read "):
-            self.last_command = "read"
             file_id: str = new_msg.split(" ", 1)[1]
 
-            json_bytes: bytes = serialize_response(ReadRequest("read", file_id))
+            json_bytes: bytes = readRequest(file_id)
             if not json_bytes:
                 return b""
             
