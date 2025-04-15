@@ -3,6 +3,8 @@ import base64
 import argparse
 from typing import Optional
 
+from authentication.authenticator import terminal_interface
+
 from utils.utils import (
     VaultError,
     ClientFirstInteraction,
@@ -39,6 +41,7 @@ from cryptography.x509.oid import NameOID
 conn_port: int = 7777
 max_msg_size: int = 9999
 
+SERVER_COMMOM_NAME: str = "S"
 
 class Client:
     """Class that implements the functionality of a CLIENT."""
@@ -81,7 +84,7 @@ class Client:
         server_certificate_obj: Certificate = certificate_create(server_certificate)
 
         # Validate certificate
-        certificate_valid: bool = is_certificate_valid(server_certificate_obj, "SSI Vault Server")
+        certificate_valid: bool = is_certificate_valid(server_certificate_obj, SERVER_COMMOM_NAME)
         if not certificate_valid:
             print("Aborting handshake...")
             return
@@ -174,17 +177,15 @@ class Client:
 
 
 # Client/Server functionality
-async def tcp_echo_client(args: argparse.Namespace) -> None:
+async def tcp_echo_client() -> None:
     """Establishes the connection with the server and handles communication."""
 
-    # Load the PKCS#12 file
-    with open(args.p12_path, "rb") as p12_file:
-        p12_data: bytes = p12_file.read()
-
-    password: Optional[bytes] = args.password.encode() if args.password else None
     private_key: RSAPrivateKey
     certificate: Certificate
-    private_key, certificate, _ = load_key_and_certificates(p12_data, password)
+    private_key, certificate = terminal_interface()
+
+    if private_key is None or Certificate is None:
+        return
 
     reader: asyncio.StreamReader
     writer: asyncio.StreamWriter
@@ -211,13 +212,8 @@ async def tcp_echo_client(args: argparse.Namespace) -> None:
 
 def run_client() -> None:
     """Runs the client event loop."""
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Client for secure communication.")
-    parser.add_argument("p12_path", help="Path to the PKCS#12 file (.p12)")
-    parser.add_argument("--password", help="Password for the PKCS#12 file", default="")
-    args: argparse.Namespace = parser.parse_args()
-
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-    loop.run_until_complete(tcp_echo_client(args))
+    loop.run_until_complete(tcp_echo_client())
 
 
 run_client()

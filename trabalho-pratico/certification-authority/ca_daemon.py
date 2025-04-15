@@ -1,31 +1,50 @@
 """
-CA Daemon - Signs Certificate Signing Requests (CSR)
-Stores the CA's private key and certificate in a PKCS#12 (.p12) file.
-Listens on a TCP socket (default localhost:8000) to receive CSRs (PEM)
-and returns the signed certificate (PEM).
+CA Daemon - Signs Certificate Signing Requests (CSR) and provides a handshake response for one-way validation.
+
+This module stores the CA's private key and certificate in a PKCS#12 (.p12) file located in the "db" directory.
+It listens on a TCP socket (default: localhost:8000) to:
+  - Respond to a handshake "HELLO" request by sending back:
+      • The greeting ("HELLO")
+      • The signature of the greeting (using its RSA private key)
+      • The CA's certificate in PEM format
+  - Process CSRs (in PEM) and return the signed certificate (in PEM)
 """
 
 import os
 import socketserver
 from datetime import datetime, timedelta
+from typing import Tuple
 
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives.serialization.pkcs12 import (
     serialize_key_and_certificates,
     load_key_and_certificates,
 )
 
-# Configuration
-CA_P12_FILE = "ca.p12"
-CA_P12_PASSWORD = b"capassword"
-CA_CERT_VALIDITY_DAYS = 365
+# Configuration Constants
+DB_DIR: str = "db"
+CA_P12_FILE: str = os.path.join(DB_DIR, "ca.p12")
+CA_P12_PASSWORD: bytes = b"capassword"
+CA_CERT_VALIDITY_DAYS: int = 365
+HANDSHAKE_GREETING: bytes = b"HELLO"
 
-def create_ca_certificate():
+def ensure_db_directory() -> None:
     """
-    Creates a private key and a self-signed certificate for the CA.
+    Ensure that the directory for storing certificates exists.
+    """
+    if not os.path.exists(DB_DIR):
+        os.makedirs(DB_DIR)
+        print(f"Directory '{DB_DIR}' created for storing certificates.")
+
+def create_ca_certificate() -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
+    """
+    Creates a new RSA private key and self-signed certificate for the CA.
+
+    Returns:
+        A tuple (CA private key, CA certificate).
     """
     ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name([
@@ -33,21 +52,27 @@ def create_ca_certificate():
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Grupo 2 SSI"),
         x509.NameAttribute(NameOID.COMMON_NAME, u"Our CA"),
     ])
-    ca_cert = x509.CertificateBuilder() \
-        .subject_name(subject) \
-        .issuer_name(issuer) \
-        .public_key(ca_key.public_key()) \
-        .serial_number(x509.random_serial_number()) \
-        .not_valid_before(datetime.utcnow()) \
-        .not_valid_after(datetime.utcnow() + timedelta(days=CA_CERT_VALIDITY_DAYS)) \
-        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True) \
+    ca_cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(ca_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.utcnow())
+        .not_valid_after(datetime.utcnow() + timedelta(days=CA_CERT_VALIDITY_DAYS))
+        .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
         .sign(ca_key, hashes.SHA256())
+    )
     return ca_key, ca_cert
 
-def load_or_create_ca():
+def load_or_create_ca() -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
     """
-    Loads the CA from the p12 file if it exists; otherwise, creates and saves it.
+    Loads the CA from the PKCS#12 file if it exists; otherwise, creates a new CA certificate and saves it.
+    
+    Returns:
+        A tuple (CA private key, CA certificate).
     """
+    ensure_db_directory()
     if os.path.exists(CA_P12_FILE):
         with open(CA_P12_FILE, "rb") as f:
             p12 = load_key_and_certificates(f.read(), CA_P12_PASSWORD)
@@ -68,54 +93,121 @@ def load_or_create_ca():
         print("New CA created and saved to p12 file.")
     return ca_key, ca_cert
 
+def sign_message(message: bytes, ca_key: rsa.RSAPrivateKey) -> bytes:
+    """
+    Signs the given message using the CA's RSA private key.
+
+    Args:
+        message: The message bytes to sign.
+        ca_key: The CA's RSA private key.
+
+    Returns:
+        The signature bytes.
+    """
+    signature = ca_key.sign(
+        message,
+        padding.PKCS1v15(),
+        hashes.SHA256()
+    )
+    return signature
+
+def sign_csr(ca_key: rsa.RSAPrivateKey, ca_cert: x509.Certificate,
+             csr: x509.CertificateSigningRequest) -> x509.Certificate:
+    """
+    Signs a Certificate Signing Request (CSR) using the CA's key and certificate.
+
+    Args:
+        ca_key: The CA's private key.
+        ca_cert: The CA's certificate.
+        csr: The CSR to be signed.
+
+    Returns:
+        The signed certificate.
+    """
+    subject = csr.subject
+    cert_builder = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(ca_cert.subject)
+        .public_key(csr.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.utcnow())
+        .not_valid_after(datetime.utcnow() + timedelta(days=180))
+    )
+    certificate = cert_builder.sign(private_key=ca_key, algorithm=hashes.SHA256())
+    return certificate
+
 class CADaemonHandler(socketserver.StreamRequestHandler):
     """
-    CSR request handler.
-    Receives a CSR in PEM format, signs it, and returns the signed certificate in PEM format.
+    Request handler for the CA daemon.
+    
+    If the client sends a handshake greeting ("HELLO"), the daemon signs the greeting and returns:
+      - The greeting
+      - The signature (hex-encoded)
+      - The CA certificate in PEM format.
+    Otherwise, it treats the incoming data as a CSR in PEM, signs it, and returns the signed certificate (in PEM).
     """
-    def handle(self):
+    def handle(self) -> None:
         try:
             data = self.rfile.read()
             if not data:
                 return
-            
-            # Load the CSR from PEM format
-            csr = x509.load_pem_x509_csr(data)
-            # Ask the CA to sign the CSR
-            signed_cert = self.server.ca_sign(csr)
-            pem_cert = signed_cert.public_bytes(encoding=serialization.Encoding.PEM)
-            self.wfile.write(pem_cert)
-            print("CSR signed and certificate sent.")
+
+            if data.strip() == HANDSHAKE_GREETING:
+                self.handle_handshake()
+            else:
+                self.handle_csr(data)
         except Exception as e:
             print("Error handling request:", e)
-            error_msg = f"Error processing CSR: {e}".encode()
+            error_msg = f"Error processing request: {e}".encode()
             self.wfile.write(error_msg)
+
+    def handle_handshake(self) -> None:
+        """
+        Handles the handshake request by signing the greeting and sending:
+          - The greeting
+          - The signature (in hex)
+          - The CA certificate in PEM
+        """
+        ca_key = self.server.ca_key
+        ca_cert = self.server.ca_cert
+        signature = sign_message(HANDSHAKE_GREETING, ca_key)
+        response_parts = [
+            HANDSHAKE_GREETING,
+            signature.hex().encode(),
+            ca_cert.public_bytes(encoding=serialization.Encoding.PEM)
+        ]
+        response = b"\n".join(response_parts)
+        self.wfile.write(response)
+        print("Handshake completed and sent to client.")
+
+    def handle_csr(self, data: bytes) -> None:
+        """
+        Processes a CSR: loads the CSR, signs it, and sends back the signed certificate in PEM.
+        """
+        csr = x509.load_pem_x509_csr(data)
+        signed_cert = sign_csr(self.server.ca_key, self.server.ca_cert, csr)
+        pem_cert = signed_cert.public_bytes(encoding=serialization.Encoding.PEM)
+        self.wfile.write(pem_cert)
+        print("CSR signed and certificate sent.")
 
 class CADaemon(socketserver.ThreadingTCPServer):
     """
-    CA server that, in addition to standard behavior, loads the CA and has the ca_sign method.
+    CA daemon that loads the CA and provides handshake and CSR signing functionality.
     """
     allow_reuse_address = True
-    def __init__(self, server_address, RequestHandlerClass):
+    def __init__(self, server_address: Tuple[str, int], RequestHandlerClass) -> None:
         super().__init__(server_address, RequestHandlerClass)
         self.ca_key, self.ca_cert = load_or_create_ca()
 
-    def ca_sign(self, csr):
-        """
-        Signs a CSR and returns a certificate.
-        """
-        subject = csr.subject
-        cert_builder = x509.CertificateBuilder() \
-            .subject_name(subject) \
-            .issuer_name(self.ca_cert.subject) \
-            .public_key(csr.public_key()) \
-            .serial_number(x509.random_serial_number()) \
-            .not_valid_before(datetime.utcnow()) \
-            .not_valid_after(datetime.utcnow() + timedelta(days=180))
-        certificate = cert_builder.sign(private_key=self.ca_key, algorithm=hashes.SHA256())
-        return certificate
+def run_ca_daemon(host: str = "localhost", port: int = 8000) -> None:
+    """
+    Runs the CA daemon.
 
-def run_ca_daemon(host="localhost", port=8000):
+    Args:
+        host: The hostname to bind to.
+        port: The port to listen on.
+    """
     with CADaemon((host, port), CADaemonHandler) as server:
         print(f"CA Daemon running on {host}:{port}")
         server.serve_forever()
