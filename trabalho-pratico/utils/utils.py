@@ -1,4 +1,6 @@
-import os
+import os, json
+from dataclasses import dataclass
+from typing import Union
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives import hashes, serialization
@@ -11,7 +13,116 @@ import datetime
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2
 
-HARDCODED_AES_KEY = b"12345678901234567890123456789012"
+# Data structures
+@dataclass
+class ClientFirstInteraction:
+    public_key: str
+
+@dataclass
+class ServerFirstInteraction:
+    public_key: str
+    signature: str
+    certificate: str
+
+@dataclass
+class ClientSecondInteraction:
+    signature: str
+    certificate: str
+    subject: str
+
+@dataclass
+class AddRequest:
+    action: str
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class AddResponse:
+    action: str
+    response: str
+
+@dataclass
+class ReadRequest:
+    action: str
+    fileid: str
+
+@dataclass
+class ReadResponse:
+    action: str
+    filedata: str
+    encrypted_key: str
+
+@dataclass
+class VaultError:
+    error: str
+
+def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, AddRequest, ReadRequest, VaultError]:
+    """
+        "type": "ClientFirstInteraction",
+        "args": {
+            "public_key": "adkhasjfbUISAFSF"
+        }
+    """
+    
+    obj = json.loads(data.decode('utf-8')) # bytes -> str -> dict
+
+    op_type = obj.get("type")
+    args = obj.get("args")
+
+    if op_type == "ClientFirstInteraction":
+        return ClientFirstInteraction(**args)
+    elif op_type == "ServerFirstInteraction":
+        return ServerFirstInteraction(**args)
+    elif op_type == "ClientSecondInteraction":
+        return ClientSecondInteraction(**args)
+    elif op_type == "AddRequest":
+        return AddRequest(**args)
+    elif op_type == "AddResponse":
+        return AddResponse(**args)
+    elif op_type == "ReadRequest":
+        return ReadRequest(**args)
+    elif op_type == "ReadResponse":
+        return ReadResponse(**args)
+    elif op_type == "VaultError":
+        return VaultError(**args)
+    else:
+        raise ValueError(f"Unknow type to deserialize: {op_type}")
+
+def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, AddRequest, ReadRequest, VaultError]) -> bytes:
+    if isinstance(obj, ClientFirstInteraction):
+        op_type = "ClientFirstInteraction"
+        args = obj.__dict__
+    elif isinstance(obj, ServerFirstInteraction):
+        op_type = "ServerFirstInteraction"
+        args = obj.__dict__
+    elif isinstance(obj, ClientSecondInteraction):
+        op_type = "ClientSecondInteraction"
+        args = obj.__dict__
+    elif isinstance(obj, AddRequest):
+        op_type = "AddRequest"
+        args = obj.__dict__
+    elif isinstance(obj, AddResponse):
+        op_type = "AddResponse"
+        args = obj.__dict__
+    elif isinstance(obj, ReadRequest):
+        op_type = "ReadRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReadResponse):
+        op_type = "ReadResponse"
+        args = obj.__dict__
+    elif isinstance(obj, VaultError):
+        op_type = "VaultError"
+        args = obj.__dict__
+    else:
+        raise ValueError(f"Unknow type to serialize: {type(obj)}")
+    
+    payload = {
+        "type": op_type,
+        "args": args
+    }
+
+    return json.dumps(payload).encode('utf-8')
 
 def generate_private_key():
     parameters = dh.DHParameterNumbers(p,g).parameters()
@@ -55,12 +166,6 @@ def decrypt(content, aesgcm):
 
 def build_aesgcm(key):
     return AESGCM(key)
-
-def request(type, args):
-    return {
-        "type": type,
-        "args": args
-    }
 
 # Certificates
 certificates_path = "./certificates"
@@ -142,7 +247,7 @@ def certificate_validexts(cert, policy=[]):
 
 # RSA
 
-def sign_message_with_rsa(message, private_key):
+def sign_message_with_rsa(message: bytes, private_key: rsa.RSAPrivateKey) -> bytes:
     return private_key.sign(
         message,
         padding.PSS(
