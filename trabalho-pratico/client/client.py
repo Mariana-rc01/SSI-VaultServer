@@ -153,7 +153,11 @@ class Client:
                 print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
                 return None
 
-        print("\nCommand [add <file-path> | read <file-id> | exit]:")
+        print("\nPlease choose an command:")
+        print("- add <file-path>")
+        print("- read <file-id>")
+        print("- group create <group-name>")
+        print("- exit")
         new_msg: str = input().strip()
         if new_msg.startswith("add "):
             file_path: str = new_msg.split(" ", 1)[1]
