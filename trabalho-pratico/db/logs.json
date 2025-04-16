@@ -31,5 +31,27 @@
     "timestamp": "2025-04-13T23:22:22.586567Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r4",
+    "userid": "u1",
+    "type": "add",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-15T12:20:08.840867Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r5",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-15T12:20:12.683742Z",
+    "status": "success",
+    "error": ""
   }
 ]
