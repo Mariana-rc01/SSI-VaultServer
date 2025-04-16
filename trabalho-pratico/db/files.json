@@ -58,25 +58,5 @@
     },
     "created_at": "2025-04-13T23:22:22.585390Z",
     "location": "./storage/f3"
-  },
-  {
-    "id": "f4",
-    "name": "file.txt",
-    "size": 45,
-    "owner": "u1",
-    "permissions": {
-      "users": [
-        {
-          "username": "Owner: u1",
-          "key": "dTfQE0nr1XXsh4jmQlJ2cEZgNEIEG8DIkl63JpJmC5QhEzhCsKHklW4fSELeizOIaQCy4dMw2IKHUDOzFFqFkhuAjALCcqinsWcb+k3u2LukCGadVVy5l6NE6Q97UKGxyRmbZ5MdVzwS46ua30bMLAgbFWOPQ7IYTwBAMtgJalrDi0T6f2kU+H0H1/8K04xVyvNDqNMbFhngyZYtS1kHQaAYfNa4dgHkSANLpqAboxSyPq64s5YEZZkc4iXLNxMUwjuCDQINlu92IOIUC0NJxHCgzhcyFa8tUetR8J3SB0Vpi8ReNbAVpY3hIVU4IBVrxoDTuO84QGAHuO8u5P9Uxg==",
-          "permissions": [
-            "read",
-            "write"
-          ]
-        }
-      ]
-    },
-    "created_at": "2025-04-15T12:20:08.839176Z",
-    "location": "./storage/f4"
   }
 ]
