@@ -42,9 +42,6 @@ def ensure_db_directory() -> None:
 def create_ca_certificate() -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
     """
     Creates a new RSA private key and self-signed certificate for the CA.
-
-    Returns:
-        A tuple (CA private key, CA certificate).
     """
     ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     subject = issuer = x509.Name([
@@ -68,9 +65,6 @@ def create_ca_certificate() -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
 def load_or_create_ca() -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
     """
     Loads the CA from the PKCS#12 file if it exists; otherwise, creates a new CA certificate and saves it.
-    
-    Returns:
-        A tuple (CA private key, CA certificate).
     """
     ensure_db_directory()
     if os.path.exists(CA_P12_FILE):
@@ -96,13 +90,6 @@ def load_or_create_ca() -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
 def sign_message(message: bytes, ca_key: rsa.RSAPrivateKey) -> bytes:
     """
     Signs the given message using the CA's RSA private key.
-
-    Args:
-        message: The message bytes to sign.
-        ca_key: The CA's RSA private key.
-
-    Returns:
-        The signature bytes.
     """
     signature = ca_key.sign(
         message,
@@ -115,14 +102,6 @@ def sign_csr(ca_key: rsa.RSAPrivateKey, ca_cert: x509.Certificate,
              csr: x509.CertificateSigningRequest) -> x509.Certificate:
     """
     Signs a Certificate Signing Request (CSR) using the CA's key and certificate.
-
-    Args:
-        ca_key: The CA's private key.
-        ca_cert: The CA's certificate.
-        csr: The CSR to be signed.
-
-    Returns:
-        The signed certificate.
     """
     subject = csr.subject
     cert_builder = (
@@ -203,10 +182,6 @@ class CADaemon(socketserver.ThreadingTCPServer):
 def run_ca_daemon(host: str = "localhost", port: int = 8000) -> None:
     """
     Runs the CA daemon.
-
-    Args:
-        host: The hostname to bind to.
-        port: The port to listen on.
     """
     with CADaemon((host, port), CADaemonHandler) as server:
         print(f"CA Daemon running on {host}:{port}")

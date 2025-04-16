@@ -31,25 +31,12 @@ def ensure_db_directory() -> None:
 def generate_private_key(key_size: int = 2048) -> rsa.RSAPrivateKey:
     """
     Generate a new RSA private key.
-
-    Args:
-        key_size: Key size in bits (default 2048).
-
-    Returns:
-        An instance of RSAPrivateKey.
     """
     return rsa.generate_private_key(public_exponent=65537, key_size=key_size)
 
 def create_csr(private_key: rsa.RSAPrivateKey, common_name: str) -> x509.CertificateSigningRequest:
     """
     Create a CSR for the user.
-
-    Args:
-        private_key: User's private key.
-        common_name: Username to set as the common name.
-
-    Returns:
-        A CSR object.
     """
     subject = x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
@@ -65,14 +52,6 @@ def send_csr_to_ca(csr: x509.CertificateSigningRequest,
 
     Prior to sending the CSR, the client performs a handshake with the CA to get its signed greeting and certificate.
     The handshake response is validated before proceeding with the CSR submission.
-
-    Args:
-        csr: The CSR to submit.
-        ca_host: CA daemon host.
-        ca_port: CA daemon port.
-
-    Returns:
-        The signed certificate from the CA.
     """
     # First, perform the one-way validation handshake with the CA.
     perform_ca_handshake(ca_host, ca_port)
@@ -99,13 +78,6 @@ def perform_ca_handshake(ca_host: str, ca_port: int) -> None:
       - The CA certificate in PEM format.
     
     The function verifies the signature using the CA certificate's public key.
-    
-    Args:
-        ca_host: The CA daemon host.
-        ca_port: The CA daemon port.
-    
-    Raises:
-        Exception: If the handshake response is invalid or the signature verification fails.
     """
     with socket.create_connection((ca_host, ca_port)) as sock:
         # Send handshake greeting
@@ -176,12 +148,7 @@ def load_p12_file(file_path: str, password: bytes) -> Tuple[Optional[rsa.RSAPriv
     """
     Loads a PKCS#12 file to retrieve the user's private key and certificate.
 
-    Args:
-        file_path: The path to the .p12 file.
-        password: The password to decrypt the file.
-
-    Returns:
-        A tuple (private_key, certificate) if successful; otherwise, (None, None).
+    It returns a tuple (private_key, certificate) if successful; otherwise, (None, None).
     """
     if not os.path.exists(file_path):
         return None, None
@@ -205,15 +172,6 @@ def load_or_create_user_certificate(username: str,
       2. Creates a CSR using the username as the common name.
       3. Sends the CSR to the CA (after a successful handshake) to obtain a signed certificate.
       4. Saves the new .p12 file.
-
-    Args:
-        username: The user's username.
-        p12_password: The password used to encrypt the .p12 file.
-        ca_host: The CA daemon host.
-        ca_port: The CA daemon port.
-
-    Returns:
-        A tuple (private_key, certificate) for the user.
     """
     ensure_db_directory()
     file_path: str = USER_P12_FORMAT.format(username=username)
