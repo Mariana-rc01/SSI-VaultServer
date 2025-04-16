@@ -137,7 +137,7 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
 def get_next_group_id() -> str:
     """ Gets the next group ID. """
     groups = load_groups()
-    return f"f{len(groups)+1}"
+    return f"g{len(groups)+1}"
 
 def load_groups() -> List[Dict[str, Any]]:
     """ Loads the groups from the JSON file. """
@@ -151,7 +151,7 @@ def save_groups(groups: List[Dict[str, Any]]) -> None:
     with open(GROUPS_JSON, "w") as f:
         json.dump(groups, f, indent=2)
 
-def add_group_request(group_name: str) -> str:
+def add_group_request(group_name: str, user_id: str) -> str:
     """ Adds a group request. """
     group_id = get_next_group_id()
 
@@ -165,6 +165,6 @@ def add_group_request(group_name: str) -> str:
 
     save_groups(groups)
 
-    log_request(group_id, "group_create", [group_name], "success")
+    log_request(user_id, "group create", [group_id, group_name], "success")
 
     return group_id

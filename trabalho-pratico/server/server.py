@@ -164,7 +164,7 @@ class ServerWorker:
             elif (isinstance(client_request, GroupCreateRequest)):
                 group_name = client_request.group_name
 
-                group_id = add_group_request(group_name)
+                group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
                 return encrypt(serialize_response(response_data), self.aesgcm)    
