@@ -9,6 +9,7 @@ from utils.utils import serialize_public_key_rsa
 FILES_JSON = "./db/files.json"
 LOGS_JSON = "./db/logs.json"
 USERS_JSON = "./db/users.json"
+GROUPS_JSON = "./db/groups.json"
 STORAGE_DIR = "./storage"
 
 def log_request(user_id: str, type: str, args: List[Any], status: str, error: str = "") -> None:
@@ -132,3 +133,38 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
     except Exception as e:
         return None
     return user_id
+
+def get_next_group_id() -> str:
+    """ Gets the next group ID. """
+    groups = load_groups()
+    return f"g{len(groups)+1}"
+
+def load_groups() -> List[Dict[str, Any]]:
+    """ Loads the groups from the JSON file. """
+    if os.path.exists(GROUPS_JSON):
+        with open(GROUPS_JSON, "r") as f:
+            return json.load(f)
+    return []
+
+def save_groups(groups: List[Dict[str, Any]]) -> None:
+    """ Saves the groups to the JSON file. """
+    with open(GROUPS_JSON, "w") as f:
+        json.dump(groups, f, indent=2)
+
+def add_group_request(group_name: str, user_id: str) -> str:
+    """ Adds a group request. """
+    group_id = get_next_group_id()
+
+    groups = load_groups()
+
+    groups.append({
+        "id": group_id,
+        "name": group_name,
+        "members": [],
+    })
+
+    save_groups(groups)
+
+    log_request(user_id, "group create", [group_id, group_name], "success")
+
+    return group_id

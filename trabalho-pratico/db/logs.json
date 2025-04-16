@@ -53,5 +53,60 @@
     "timestamp": "2025-04-15T12:20:12.683742Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r6",
+    "userid": "f1",
+    "type": "group_create",
+    "args": [
+      "ola"
+    ],
+    "timestamp": "2025-04-16T11:47:30.073565Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r7",
+    "userid": "f2",
+    "type": "group_create",
+    "args": [
+      "ola"
+    ],
+    "timestamp": "2025-04-16T12:01:24.657079Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r8",
+    "userid": "u3",
+    "type": "add",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-16T13:16:13.847976Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r9",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-16T13:16:18.928144Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r10",
+    "userid": "f3",
+    "type": "group_create",
+    "args": [
+      "group3"
+    ],
+    "timestamp": "2025-04-16T13:16:31.079849Z",
+    "status": "success",
+    "error": ""
   }
 ]

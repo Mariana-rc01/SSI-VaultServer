@@ -1,5 +1,6 @@
 import os, base64, json
 from utils.utils import(
+    GroupCreateRequest,
     encrypt,
     decrypt,
     build_aesgcm,
@@ -37,7 +38,6 @@ def addRequest(file_path: str, client_public_key) -> bytes:
     filename: str = os.path.basename(file_path)
 
     add_request = AddRequest(
-        action="add",
         filename=filename,
         encrypted_file=encrypted_file_b64,
         encrypted_aes_key=encrypted_aes_key_b64,
@@ -47,7 +47,6 @@ def addRequest(file_path: str, client_public_key) -> bytes:
 
 def readRequest(file_id: str) -> bytes:
     read_request = ReadRequest(
-        action="read",
         fileid=file_id,
     )
     return serialize_response(read_request)
@@ -85,3 +84,9 @@ def readResponse(decrypted_msg: bytes, client_private_key) -> None:
 
     except Exception as e:
         print("\nError decrypting:", e)
+
+def groupCreateRequest(group_name: str) -> bytes:
+    group_create_request = GroupCreateRequest(
+        group_name=group_name,
+    )
+    return serialize_response(group_create_request)

@@ -32,26 +32,30 @@ class ClientSecondInteraction:
 
 @dataclass
 class AddRequest:
-    action: str
     filename: str
     encrypted_file: str
     encrypted_aes_key: str
 
 @dataclass
 class AddResponse:
-    action: str
     response: str
 
 @dataclass
 class ReadRequest:
-    action: str
     fileid: str
 
 @dataclass
 class ReadResponse:
-    action: str
     filedata: str
     encrypted_key: str
+
+@dataclass
+class GroupCreateRequest:
+    group_name: str
+
+@dataclass
+class GroupCreateResponse:
+    response: str
 
 @dataclass
 class VaultError:
@@ -86,6 +90,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return ReadResponse(**args)
     elif op_type == "VaultError":
         return VaultError(**args)
+    elif op_type == "GroupCreateRequest":
+        return GroupCreateRequest(**args)
+    elif op_type == "GroupCreateResponse":
+        return GroupCreateResponse(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
@@ -110,6 +118,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, ReadResponse):
         op_type = "ReadResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupCreateRequest):
+        op_type = "GroupCreateRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupCreateResponse):
+        op_type = "GroupCreateResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"
