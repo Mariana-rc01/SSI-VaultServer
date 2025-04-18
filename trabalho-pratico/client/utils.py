@@ -1,6 +1,7 @@
 import os, base64, json
 from utils.utils import(
     GroupCreateRequest,
+    ListRequest,
     encrypt,
     decrypt,
     build_aesgcm,
@@ -17,7 +18,7 @@ def addRequest(file_path: str, client_public_key) -> bytes:
     if not os.path.isfile(file_path):
         print(f"Error: File '{file_path}' does not exist.")
         return b""
-    
+
     aes_key = os.urandom(32)
 
     aesgcm_file = build_aesgcm(aes_key)
@@ -84,6 +85,27 @@ def readResponse(decrypted_msg: bytes, client_private_key) -> None:
 
     except Exception as e:
         print("\nError decrypting:", e)
+
+def listRequest(list_type: str, target_id: str) -> bytes:
+    list_request = ListRequest(
+        list_type = list_type if list_type else None,
+        target_id = target_id if target_id else "",
+    )
+    return serialize_response(list_request)
+
+def listResponse(server_response: bytes) -> None:
+    print("\n=== Files ===")
+    for file in server_response.files:
+        print(f"ID: {file['id']}, Name: {file['name']}, Owner: {file['owner']}, Permissions: {file['permissions']}")
+
+    print("\n=== Shared Files ===")
+    for file in server_response.shared:
+        print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared_by']}, Permissions: {file['permissions']}")
+
+    print("\n=== Groups Files ===")
+    for file in server_response.group_files:
+        print(f"ID: {file['id']}, Name: {file['name']}, Group: {file['group']}, Permissions: {file['permissions']}")
+
 
 def groupCreateRequest(group_name: str) -> bytes:
     group_create_request = GroupCreateRequest(

@@ -50,6 +50,17 @@ class ReadResponse:
     encrypted_key: str
 
 @dataclass
+class ListRequest:
+    list_type: str
+    target_id: str
+
+@dataclass
+class ListResponse:
+    files: list
+    shared: list
+    group_files: list
+
+@dataclass
 class GroupCreateRequest:
     group_name: str
 
@@ -61,14 +72,16 @@ class GroupCreateResponse:
 class VaultError:
     error: str
 
-def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, AddRequest, ReadRequest, VaultError]:
+def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction,
+                                              ClientSecondInteraction, AddRequest, ReadRequest,
+                                              ListRequest, ListResponse, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
             "public_key": "adkhasjfbUISAFSF"
         }
     """
-    
+
     obj = json.loads(data.decode('utf-8')) # bytes -> str -> dict
 
     op_type = obj.get("type")
@@ -88,6 +101,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return ReadRequest(**args)
     elif op_type == "ReadResponse":
         return ReadResponse(**args)
+    elif op_type == "ListRequest":
+        return ListRequest(**args)
+    elif op_type == "ListResponse":
+        return ListResponse(**args)
     elif op_type == "VaultError":
         return VaultError(**args)
     elif op_type == "GroupCreateRequest":
@@ -97,7 +114,8 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
-def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction, AddRequest, ReadRequest, VaultError]) -> bytes:
+def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction,
+                                  AddRequest, ReadRequest, ListRequest, ListResponse, VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -119,6 +137,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
     elif isinstance(obj, ReadResponse):
         op_type = "ReadResponse"
         args = obj.__dict__
+    elif isinstance(obj, ListRequest):
+        op_type = "ListRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ListResponse):
+        op_type = "ListResponse"
+        args = obj.__dict__
     elif isinstance(obj, GroupCreateRequest):
         op_type = "GroupCreateRequest"
         args = obj.__dict__
@@ -130,7 +154,7 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     else:
         raise ValueError(f"Unknow type to serialize: {type(obj)}")
-    
+
     payload = {
         "type": op_type,
         "args": args

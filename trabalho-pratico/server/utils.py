@@ -134,6 +134,74 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
         return None
     return user_id
 
+def get_files_for_listing(list_type: str, target_id: str) -> dict:
+    """ Gets the files for listing. """
+    all_files = load_files()
+    user_groups = get_user_groups(target_id)
+
+    result = {
+        "personal": [],
+        "shared": [],
+        "group": [],
+    }
+
+    for file in all_files:
+        if file["owner"] == target_id:
+            if list_type == "group":
+                user_permissions = next(
+                    (permission["permissions"] for permission in file.get("permissions", {}).get("groups", [])
+                    if permission["groupname"] == f"Owner: {target_id}"), []
+                )
+            else:
+                user_permissions = next(
+                    (permission["permissions"] for permission in file.get("permissions", {}).get("users", [])
+                    if permission["username"] == f"Owner: {target_id}"), []
+                )
+            result["personal"].append({
+                "id": file["id"],
+                "name": file["name"],
+                "owner": file["owner"],
+                "permissions": user_permissions,
+            })
+
+        for permission in file.get("permissions", {}).get("users", []):
+            if permission["username"] == target_id:
+                result["shared"].append({
+                    "id": file["id"],
+                    "name": file["name"],
+                    "shared_by": file["owner"],
+                    "permissions": permission.get("permissions", []),
+                })
+                break
+
+        if list_type == "group":
+            for group_permission in file.get("permissions", {}).get("groups", []):
+                group_id = group_permission["groupname"]
+                if group_id == target_id and group_permission["permissions"] != []:
+                    result["shared"].append({
+                        "id": file["id"],
+                        "name": file["name"],
+                        "group": group_id,
+                        "permissions": group_permission["permissions"],
+                    })
+        else:
+            for group_permission in file.get("permissions", {}).get("groups", []):
+                group_id = group_permission["groupname"]
+                if group_id in user_groups and group_permission["permissions"] != []:
+                    result["group"].append({
+                        "id": file["id"],
+                        "name": file["name"],
+                        "group": group_id,
+                        "permissions": group_permission["permissions"],
+                    })
+
+    return result
+
+def get_user_groups(user_id: str) -> list:
+    """ Gets the groups of a user. """
+    groups = load_groups()
+    return [g["id"] for g in groups if user_id in g.get("members", [])]
+
 def get_next_group_id() -> str:
     """ Gets the next group ID. """
     groups = load_groups()

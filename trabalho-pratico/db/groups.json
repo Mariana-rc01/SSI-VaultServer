@@ -1,17 +1,22 @@
 [
   {
-    "id": "f1",
+    "id": "g1",
     "name": "group1",
     "members": []
   },
   {
-    "id": "f2",
+    "id": "g2",
     "name": "group2",
     "members": []
   },
   {
-    "id": "f3",
+    "id": "g3",
     "name": "group3",
+    "members": []
+  },
+  {
+    "id": "g4",
+    "name": "group4",
     "members": []
   }
 ]

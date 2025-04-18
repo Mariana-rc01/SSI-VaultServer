@@ -58,5 +58,25 @@
     },
     "created_at": "2025-04-13T23:22:22.585390Z",
     "location": "./storage/f3"
+  },
+  {
+    "id": "f4",
+    "name": "file.txt",
+    "size": 45,
+    "owner": "u3",
+    "permissions": {
+      "users": [
+        {
+          "username": "Owner: u3",
+          "key": "T/TMtE0sxH1KMS3Kgo6GV/sfUIDhEZsEWdRoelds0CxlZsV4nvCDHs1mM60lFW+VLiR8e+ksL6rMZbG9ySlHCwueH1PtTnA1HdU05Cy5bpIm9MO6ziLb9SvSr7fBxI2Vqfd5p7Ooxv8ws8a8B5MT7LXejL9XTnIYEEzQuTtA4BL9IJ/5cQ41LMsNSqMSVhmkBU5zH3MlUSjBnfhaTpHkvkJnn7jKhRtkejix93bdu3DoG86n9OameLpm7b0i1lO+4oQGUwkeVFiYt63GTzdZq2na4eekDugyX9l9tnOh6E4crlfYwA0LcdfkEnT1ZVSCw5U/ncM0V5z76sbeOz71uQ==",
+          "permissions": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    "created_at": "2025-04-18T12:42:22.658764Z",
+    "location": "./storage/f4"
   }
 ]
