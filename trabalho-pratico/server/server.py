@@ -7,6 +7,8 @@ from asyncio.streams import StreamReader, StreamWriter
 from utils.utils import (
     AddResponse,
     GroupCreateResponse,
+    ListRequest,
+    ListResponse,
     ReadResponse,
     VaultError,
     ClientFirstInteraction,
@@ -32,7 +34,8 @@ from utils.utils import (
     deserialize_request,
     serialize_response,
 )
-from server.utils import add_group_request, log_request, get_file_by_id, add_request, add_user, get_user_key
+from server.utils import (add_group_request, log_request, get_file_by_id, add_request,
+                          add_user, get_user_key, get_files_for_listing)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -161,13 +164,27 @@ class ServerWorker:
 
                 log_request(f"{self.id}", "read", [file_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, ListRequest):
+                files = get_files_for_listing(
+                    list_type = client_request.list_type,
+                    target_id = client_request.target_id,
+                )
+
+                response_data = ListResponse(
+                    files = files['personal'],
+                    shared = files['shared'],
+                    group_files = files['group'],
+                )
+
+                log_request(f"{self.id}", "list", [client_request.list_type, client_request.target_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
             elif (isinstance(client_request, GroupCreateRequest)):
                 group_name = client_request.group_name
 
                 group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
-                return encrypt(serialize_response(response_data), self.aesgcm)    
+                return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
         except Exception as e:

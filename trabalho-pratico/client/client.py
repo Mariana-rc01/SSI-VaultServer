@@ -7,6 +7,7 @@ from authentication.authenticator import terminal_interface
 
 from utils.utils import (
     GroupCreateResponse,
+    ListResponse,
     VaultError,
     ClientFirstInteraction,
     ServerFirstInteraction,
@@ -30,7 +31,7 @@ from utils.utils import (
     serialize_response,
     deserialize_request,
 )
-from client.utils import addRequest, groupCreateRequest, readRequest, readResponse
+from client.utils import addRequest, groupCreateRequest, listRequest, readRequest, readResponse
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -116,7 +117,7 @@ class Client:
         response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(), 
                                                   base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
                                                   base64.b64encode(client_certificate_subject.encode()).decode())
-        
+
         # Send client's certificate and signature
         writer.write(serialize_response(response_tosend))
         await writer.drain()
@@ -139,6 +140,19 @@ class Client:
                 elif isinstance(server_response, AddResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, ListResponse):
+                    print("\n=== Files ===")
+                    for file in server_response.files:
+                        print(f"ID: {file['id']}, Name: {file['name']}, Owner: {file['owner']}, Permissions: {file['permissions']}")
+
+                    print("\n=== Shared Files ===")
+                    for file in server_response.shared:
+                        print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared_by']}, Permissions: {file['permissions']}")
+
+                    print("\n=== Groups Files ===")
+                    for file in server_response.group_files:
+                        print(f"ID: {file['id']}, Name: {file['name']}, Group: {file['group']}, Permissions: {file['permissions']}")
+
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
 
@@ -156,6 +170,7 @@ class Client:
         print("\nPlease choose an command:")
         print("- add <file-path>")
         print("- read <file-id>")
+        print("- list [-u <user-id> | -g <group-id>]")
         print("- group create <group-name>")
         print("- exit")
         new_msg: str = input().strip()
@@ -167,7 +182,7 @@ class Client:
             json_bytes: Optional[bytes] = addRequest(file_path, client_public_key)
             if not json_bytes:
                 return b""
-            
+
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("read "):
             file_id: str = new_msg.split(" ", 1)[1]
@@ -175,7 +190,24 @@ class Client:
             json_bytes: bytes = readRequest(file_id)
             if not json_bytes:
                 return b""
-            
+
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("list"):
+            args = new_msg.split()
+            list_type = None
+            target_id = None
+
+            if len(args) >= 2:
+                if args[1] == "-u" and len(args) == 3:
+                    list_type = "user"
+                    target_id = args[2]
+                elif args[1] == "-g" and len(args) == 3:
+                    list_type = "group"
+                    target_id = args[2]
+
+            json_bytes: bytes = listRequest(list_type, target_id)
+            if not json_bytes:
+                return b""
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("group create "):
             group_name: str = new_msg.split(" ", 2)[2]
