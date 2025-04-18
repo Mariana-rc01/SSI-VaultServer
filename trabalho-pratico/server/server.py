@@ -188,7 +188,7 @@ class ServerWorker:
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
         except Exception as e:
-            return encrypt(VaultError("Error: {str(e)}".encode(), self.aesgcm))
+            return encrypt(VaultError(f"Error: {str(e)}".encode(), self.aesgcm))
 
 
 # Client/Server functionality

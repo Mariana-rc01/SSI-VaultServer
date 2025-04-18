@@ -355,5 +355,41 @@
     "timestamp": "2025-04-18T14:54:49.242896Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r32",
+    "userid": "u4",
+    "type": "list",
+    "args": [
+      "user",
+      "u4"
+    ],
+    "timestamp": "2025-04-18T17:14:55.804944Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r33",
+    "userid": "u4",
+    "type": "list",
+    "args": [
+      "user",
+      "u3"
+    ],
+    "timestamp": "2025-04-18T17:14:59.752882Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r34",
+    "userid": "u4",
+    "type": "list",
+    "args": [
+      "group",
+      "g2"
+    ],
+    "timestamp": "2025-04-18T17:15:06.228489Z",
+    "status": "success",
+    "error": ""
   }
 ]

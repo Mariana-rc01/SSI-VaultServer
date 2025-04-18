@@ -31,7 +31,7 @@ from utils.utils import (
     serialize_response,
     deserialize_request,
 )
-from client.utils import addRequest, groupCreateRequest, listRequest, readRequest, readResponse
+from client.utils import addRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -141,17 +141,7 @@ class Client:
                     print(f"Received {server_response.response}")
 
                 elif isinstance(server_response, ListResponse):
-                    print("\n=== Files ===")
-                    for file in server_response.files:
-                        print(f"ID: {file['id']}, Name: {file['name']}, Owner: {file['owner']}, Permissions: {file['permissions']}")
-
-                    print("\n=== Shared Files ===")
-                    for file in server_response.shared:
-                        print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared_by']}, Permissions: {file['permissions']}")
-
-                    print("\n=== Groups Files ===")
-                    for file in server_response.group_files:
-                        print(f"ID: {file['id']}, Name: {file['name']}, Group: {file['group']}, Permissions: {file['permissions']}")
+                    listResponse(server_response)
 
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
@@ -208,6 +198,7 @@ class Client:
             json_bytes: bytes = listRequest(list_type, target_id)
             if not json_bytes:
                 return b""
+
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("group create "):
             group_name: str = new_msg.split(" ", 2)[2]
@@ -215,6 +206,7 @@ class Client:
             json_bytes: bytes = groupCreateRequest(group_name)
             if not json_bytes:
                 return b""
+
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.strip() == "exit":
             return None
