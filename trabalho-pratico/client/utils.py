@@ -1,18 +1,24 @@
 import os, base64, json
 from utils.utils import(
     GroupCreateRequest,
+    GroupMembersResponse,
     ListRequest,
+    PublicKeyResponse,
+    ReadResponse,
     encrypt,
     decrypt,
     build_aesgcm,
     serialize_response,
     AddRequest,
     ReadRequest,
+    GroupMembersRequest,
+    PublicKeyRequest,
+    ShareRequest,
+    deserialize_request,
+    deserialize_public_key,
 )
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import pkcs12
-
 
 def addRequest(file_path: str, client_public_key) -> bytes:
     if not os.path.isfile(file_path):
@@ -112,3 +118,98 @@ def groupCreateRequest(group_name: str) -> bytes:
         group_name=group_name,
     )
     return serialize_response(group_create_request)
+
+async def shareRequest(file_id: str, target_id: str, permission: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
+    # 1º AES key for the file
+    get_key_request = ReadRequest(file_id)
+    writer.write(encrypt(serialize_response(get_key_request), aesgcm))
+    await writer.drain()
+    response = await reader.read(9999)
+
+    decrypted_msg: bytes = decrypt(response, aesgcm)
+    read_response: ReadResponse = deserialize_request(decrypted_msg)
+
+    if not isinstance(read_response, ReadResponse):
+        raise ValueError("Invalid response type for ReadRequest.")
+
+    encrypted_aes_key = base64.b64decode(read_response.encrypted_key)
+    aes_key = rsa_private_key.decrypt(
+        encrypted_aes_key,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
+
+    # 2º Encrypted keys for the target
+    encrypted_keys = {}
+    is_group = target_id.startswith("g")
+
+    if is_group:
+        # Request group members
+        group_members_request = GroupMembersRequest(target_id)
+        writer.write(encrypt(serialize_response(group_members_request), aesgcm))
+        await writer.drain()
+        response = await reader.read(9999)
+        decrypted_response: bytes = decrypt(response, aesgcm)
+        group_members_response = deserialize_request(decrypted_response)
+
+        if isinstance(group_members_response, GroupMembersResponse):
+            for member in group_members_response.members:
+                publicKey_request = PublicKeyRequest(member)
+                writer.write(encrypt(serialize_response(publicKey_request), aesgcm))
+                await writer.drain()
+                response = await reader.read(9999)
+                decrypted_response: bytes = decrypt(response, aesgcm)
+                publicKey_response = deserialize_request(decrypted_response)
+
+                if isinstance(publicKey_response, PublicKeyResponse):
+                    target_public_key = deserialize_public_key(
+                        base64.b64decode(publicKey_response.public_key)
+                    )
+
+                    encrypted_for_target = target_public_key.encrypt(
+                        aes_key,
+                        padding.OAEP(
+                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                            algorithm=hashes.SHA256(),
+                            label=None,
+                        ),
+                    )
+
+                    encrypted_keys[member] = base64.b64encode(encrypted_for_target).decode()
+    else:
+        # Request public key for the target user
+        publicKey_request = PublicKeyRequest(target_id)
+        writer.write(encrypt(serialize_response(publicKey_request), aesgcm))
+        await writer.drain()
+        response = await reader.read(9999)
+        decrypted_response: bytes = decrypt(response, aesgcm)
+        publicKey_response: PublicKeyResponse = deserialize_request(decrypted_response)
+
+        if isinstance(publicKey_response, PublicKeyResponse):
+            target_public_key = deserialize_public_key(
+                base64.b64decode(publicKey_response.public_key)
+            )
+
+            encrypted_for_target = target_public_key.encrypt(
+                aes_key,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None,
+                ),
+            )
+            encrypted_keys[target_id] = base64.b64encode(encrypted_for_target).decode()
+
+    # 3º ShareRequest
+    share_request = ShareRequest(
+        fileid=file_id,
+        target_id=target_id,
+        permissions=permission,
+        encrypted_keys=encrypted_keys,
+        is_group=is_group,
+    )
+
+    return serialize_response(share_request)

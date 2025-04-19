@@ -73,6 +73,14 @@
             "read",
             "write"
           ]
+        },
+        {
+          "username": "u4",
+          "key": "Y1eshEpj9aC7OKoJ7NDqDD3jwuSpPhVeCysVjzLLq6RuNBpxz/VZDqc+AU7R1E/KJsi5oZFhNm5g/MQQP7B9LLtImMM6xEvuoCFfseBwZGHBqfe96V9muPQ6UAXI6eq8FmkBsVPj7BOWB6IBdTeI54yWkgthVTuhu6XWARyh1vi+3lBezH39V9nEHQ6uiiWM3AdG5O/MRgTki/umsFZWKYhED3oJ+lZvQpKN8cchGPApx5lGuKpnDPe/vr6x/vWyldTkmD4OkhwL1kzmO5v7ORxF3NRjUdQYmzLiR0okUihYXZJR2VSwKOy57XNC6pxqHfIukpEHY35nhU+xT17k6Q==",
+          "permissions": [
+            "read",
+            "write"
+          ]
         }
       ]
     },

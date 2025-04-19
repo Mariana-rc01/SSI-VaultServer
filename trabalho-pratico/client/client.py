@@ -8,6 +8,7 @@ from authentication.authenticator import terminal_interface
 from utils.utils import (
     GroupCreateResponse,
     ListResponse,
+    ShareResponse,
     VaultError,
     ClientFirstInteraction,
     ServerFirstInteraction,
@@ -31,8 +32,7 @@ from utils.utils import (
     serialize_response,
     deserialize_request,
 )
-from client.utils import addRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse
-from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
+from client.utils import addRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse, shareRequest
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -60,10 +60,14 @@ class Client:
         self.aesgcm: Optional[AESGCM] = None
         self.rsa_private_key = rsa_private_key
         self.client_certificate = client_certificate
+        self.reader: Optional[asyncio.StreamReader] = None
+        self.writer: Optional[asyncio.StreamWriter] = None
 
     async def handshake(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
+        self.reader = reader
+        self.writer = writer
         """Performs the handshake with the server."""
         # Send public key to the server
         dh_private_key: DHPrivateKey = generate_private_key()
@@ -124,7 +128,7 @@ class Client:
 
         print("Handshake completed!")
 
-    def process(self, msg: bytes = b"") -> Optional[bytes]:
+    async def process(self, msg: bytes = b"") -> Optional[bytes]:
         """Processes a message (`bytestring`) sent by the SERVER.
         Returns the message to be sent as a response (`None` to
         terminate the connection)."""
@@ -142,6 +146,9 @@ class Client:
 
                 elif isinstance(server_response, ListResponse):
                     listResponse(server_response)
+
+                elif isinstance(server_response, ShareResponse):
+                    print(f"Received {server_response.response}")
 
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
@@ -161,6 +168,7 @@ class Client:
         print("- add <file-path>")
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
+        print("- share <file-id> <user-id> <permission>")
         print("- group create <group-name>")
         print("- exit")
         new_msg: str = input().strip()
@@ -200,6 +208,30 @@ class Client:
                 return b""
 
             return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("share "):
+            args = new_msg.split()
+            if len(args) != 4:
+                print("Invalid command.")
+                return b""
+
+            file_id: str = args[1]
+            target_id: str = args[2]
+            permission: str = args[3].upper()
+
+            try:
+                share_request = await shareRequest(
+                    file_id,
+                    target_id,
+                    permission,
+                    self.rsa_private_key,
+                    self.aesgcm,
+                    self.writer,
+                    self.reader,
+                )
+                return encrypt(share_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during share request: {e}")
+                return b""
         elif new_msg.startswith("group create "):
             group_name: str = new_msg.split(" ", 2)[2]
 
@@ -236,12 +268,12 @@ async def tcp_echo_client() -> None:
     if client.aesgcm is None:
         return
 
-    msg: Optional[bytes] = client.process()
+    msg: Optional[bytes] = await client.process()
     while msg:
         writer.write(msg)
         msg = await reader.read(max_msg_size)
         if msg:
-            msg = client.process(msg)
+            msg = await client.process(msg)
         else:
             break
     writer.write(b"\n")

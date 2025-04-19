@@ -7,9 +7,15 @@ from asyncio.streams import StreamReader, StreamWriter
 from utils.utils import (
     AddResponse,
     GroupCreateResponse,
+    GroupMembersRequest,
+    GroupMembersResponse,
     ListRequest,
     ListResponse,
+    PublicKeyRequest,
+    PublicKeyResponse,
     ReadResponse,
+    ShareRequest,
+    ShareResponse,
     VaultError,
     ClientFirstInteraction,
     ServerFirstInteraction,
@@ -34,8 +40,8 @@ from utils.utils import (
     deserialize_request,
     serialize_response,
 )
-from server.utils import (add_group_request, log_request, get_file_by_id, add_request,
-                          add_user, get_user_key, get_files_for_listing)
+from server.utils import (add_group_request, get_group_members, get_public_key, log_request, get_file_by_id, add_request,
+                          add_user, get_user_key, get_files_for_listing, share_file)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -178,6 +184,38 @@ class ServerWorker:
 
                 log_request(f"{self.id}", "list", [client_request.list_type, client_request.target_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupMembersRequest):
+                members = get_group_members(client_request.group_id)
+                return encrypt(serialize_response(GroupMembersResponse(members)), self.aesgcm)
+
+            elif isinstance(client_request, PublicKeyRequest):
+                public_key = get_public_key(client_request.user_id)
+                if public_key:
+                    response_data = PublicKeyResponse(public_key)
+                    log_request(f"{self.id}", "public_key", [client_request.user_id], "success")
+                else:
+                    response_data = VaultError("User not found")
+                    log_request(f"{self.id}", "public_key", [client_request.user_id], "failed", "public key not found")
+
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, ShareRequest):
+                file_info = get_file_by_id(client_request.fileid)
+
+                if not file_info:
+                    log_request(f"{self.id}", "share", [client_request.fileid], "failed", "file not found")
+                    response_data = VaultError("File not found.")
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                error_message = share_file(file_info, client_request, self.id)
+
+                if error_message:
+                    log_request(f"{self.id}", "share", [client_request.fileid], "failed", error_message)
+                    response_data = VaultError(error_message)
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                log_request(f"{self.id}", "share", [client_request.fileid], "success")
+                response_data = ShareResponse("File shared successfully.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
             elif (isinstance(client_request, GroupCreateRequest)):
                 group_name = client_request.group_name
 
@@ -188,8 +226,7 @@ class ServerWorker:
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
         except Exception as e:
-            return encrypt(VaultError(f"Error: {str(e)}".encode(), self.aesgcm))
-
+            return encrypt(serialize_response(VaultError(f"Error: {str(e)}")), self.aesgcm)
 
 # Client/Server functionality
 async def handle_echo(reader: StreamReader, writer: StreamWriter) -> None:
