@@ -261,5 +261,77 @@
     "timestamp": "2025-04-20T01:41:33.022803Z",
     "status": "failed",
     "error": "no access key"
+  },
+  {
+    "id": "r24",
+    "userid": "u1",
+    "type": "group_add_user",
+    "args": [
+      "g3",
+      "u3"
+    ],
+    "timestamp": "2025-04-20T02:15:56.442002Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r25",
+    "userid": "u1",
+    "type": "group_add_user",
+    "args": [
+      "g4",
+      "u3"
+    ],
+    "timestamp": "2025-04-20T02:16:25.115502Z",
+    "status": "failed",
+    "error": "Group not found"
+  },
+  {
+    "id": "r26",
+    "userid": "u1",
+    "type": "group_add_user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-20T02:16:41.165926Z",
+    "status": "failed",
+    "error": "Only group owner can add users"
+  },
+  {
+    "id": "r27",
+    "userid": "u1",
+    "type": "group_add_user",
+    "args": [
+      "g3",
+      "u3"
+    ],
+    "timestamp": "2025-04-20T02:20:44.460072Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r28",
+    "userid": "u1",
+    "type": "group_add_user",
+    "args": [
+      "g3",
+      "u3"
+    ],
+    "timestamp": "2025-04-20T02:20:58.352886Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r29",
+    "userid": "u1",
+    "type": "group_add_user",
+    "args": [
+      "g3",
+      "u3"
+    ],
+    "timestamp": "2025-04-20T02:21:05.352430Z",
+    "status": "success",
+    "error": ""
   }
 ]

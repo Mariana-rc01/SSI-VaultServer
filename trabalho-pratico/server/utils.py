@@ -246,6 +246,58 @@ def add_group_request(group_name: str, user_id: str) -> str:
 
     return group_id
 
+def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission: str) -> Optional[str]:
+    """Adds a user to a group or updates permissions if user already exists"""
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+
+    if not group:
+        return "Group not found"
+
+    if group["owner"] != user_id:
+        return "Only group owner can add users"
+
+    if permission == "R":
+        new_perms = ["read"]
+    elif permission == "W":
+        new_perms = ["read", "write"]
+    else:
+        return "Invalid permission"
+
+    member_exists = False
+    for member in group["members"]:
+        if member["username"] == add_user_id:
+            member_exists = True
+            for perm in new_perms:
+                if perm not in member["permissions"]:
+                    member["permissions"].append(perm)
+            break
+
+    if not member_exists:
+        group["members"].append({
+            "username": add_user_id,
+            "permissions": new_perms
+        })
+
+    users = load_users()
+    user_found = False
+    for user in users:
+        if user["id"] == add_user_id:
+            user_found = True
+            if "groups" not in user:
+                user["groups"] = []
+            if group_id not in user["groups"]:
+                user["groups"].append(group_id)
+            break
+
+    if not user_found:
+        return "User to add not found in system"
+
+    save_groups(groups)
+    save_users(users)
+
+    return None
+
 def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
     """ Shares a file with a user or group. """
     if file_info["owner"] != user_id:

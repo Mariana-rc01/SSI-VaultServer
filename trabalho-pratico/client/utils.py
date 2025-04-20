@@ -1,5 +1,6 @@
 import os, base64, json
 from utils.utils import(
+    GroupAddUserRequest,
     GroupCreateRequest,
     GroupMembersResponse,
     ListRequest,
@@ -118,6 +119,14 @@ def groupCreateRequest(group_name: str) -> bytes:
         group_name=group_name,
     )
     return serialize_response(group_create_request)
+
+def groupAddUserRequest(group_id: str, user_id: str, permission: str) -> bytes:
+    group_add_user_request = GroupAddUserRequest(
+        group_id = group_id,
+        user_id = user_id,
+        permission = permission,
+    )
+    return serialize_response(group_add_user_request)
 
 async def shareRequest(file_id: str, target_id: str, permission: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
     # 1º AES key for the file

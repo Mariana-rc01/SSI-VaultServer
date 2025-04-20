@@ -38,6 +38,13 @@
           "read",
           "write"
         ]
+      },
+      {
+        "username": "u3",
+        "permissions": [
+          "read",
+          "write"
+        ]
       }
     ]
   }

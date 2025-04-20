@@ -6,6 +6,8 @@ from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
     AddResponse,
+    GroupAddUserRequest,
+    GroupAddUserResponse,
     GroupCreateResponse,
     GroupMembersRequest,
     GroupMembersResponse,
@@ -40,7 +42,7 @@ from utils.utils import (
     deserialize_request,
     serialize_response,
 )
-from server.utils import (add_group_request, get_group_members, get_public_key, log_request, get_file_by_id, add_request,
+from server.utils import (add_group_request, add_user_to_group, get_group_members, get_public_key, log_request, get_file_by_id, add_request,
                           add_user, get_user_key, get_files_for_listing, share_file)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -222,6 +224,21 @@ class ServerWorker:
                 group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddUserRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+                permission = client_request.permission
+
+                error_message = add_user_to_group(self.id, group_id, user_id, permission)
+
+                if error_message:
+                    log_request(f"{self.id}", "group_add_user", [group_id, user_id], "failed", error_message)
+                    response_data = VaultError(error_message)
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                log_request(f"{self.id}", "group_add_user", [group_id, user_id], "success")
+                response_data = GroupAddUserResponse(f"User {user_id} added to group {group_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)

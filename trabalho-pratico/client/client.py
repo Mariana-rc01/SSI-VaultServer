@@ -6,6 +6,7 @@ from typing import Optional
 from authentication.authenticator import terminal_interface
 
 from utils.utils import (
+    GroupAddUserResponse,
     GroupCreateResponse,
     ListResponse,
     ShareResponse,
@@ -32,7 +33,7 @@ from utils.utils import (
     serialize_response,
     deserialize_request,
 )
-from client.utils import addRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse, shareRequest
+from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse, shareRequest
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -149,6 +150,9 @@ class Client:
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, GroupAddUserResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, VaultError):
                     print(f"Error: {server_response.error}")
 
@@ -166,6 +170,7 @@ class Client:
         print("- list [-u <user-id> | -g <group-id>]")
         print("- share <file-id> <user-id> <permission>")
         print("- group create <group-name>")
+        print("- group add-user <group-id> <user-id> <permission>")
         print("- exit")
         new_msg: str = input().strip()
         if new_msg.startswith("add "):
@@ -214,6 +219,10 @@ class Client:
             target_id: str = args[2]
             permission: str = args[3].upper()
 
+            if permission not in ["R", "W"]:
+                print("Invalid permission.")
+                return b""
+
             try:
                 share_request = await shareRequest(
                     file_id,
@@ -232,6 +241,25 @@ class Client:
             group_name: str = new_msg.split(" ", 2)[2]
 
             json_bytes: bytes = groupCreateRequest(group_name)
+            if not json_bytes:
+                return b""
+
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("group add-user "):
+            args = new_msg.split()
+            if len(args) != 5:
+                print("Invalid command.")
+                return b""
+
+            group_id: str = args[2]
+            user_id: str = args[3]
+            permission: str = args[4].upper()
+
+            if permission not in ["R", "W"]:
+                print("Invalid permission.")
+                return b""
+
+            json_bytes: bytes = groupAddUserRequest(group_id, user_id, permission)
             if not json_bytes:
                 return b""
 

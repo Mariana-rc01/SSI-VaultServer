@@ -97,6 +97,16 @@ class GroupCreateResponse:
     response: str
 
 @dataclass
+class GroupAddUserRequest:
+    group_id: str
+    user_id: str
+    permission: str
+
+@dataclass
+class GroupAddUserResponse:
+    response: str
+
+@dataclass
 class VaultError:
     error: str
 
@@ -104,7 +114,8 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               ClientSecondInteraction, AddRequest, ReadRequest,
                                               ListRequest, ListResponse, ShareRequest, ShareResponse,
                                               PublicKeyRequest, PublicKeyResponse,
-                                              GroupMembersRequest, GroupMembersResponse, VaultError]:
+                                              GroupMembersRequest, GroupMembersResponse,
+                                              GroupAddUserRequest, GroupAddUserResponse, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -153,13 +164,18 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return GroupCreateRequest(**args)
     elif op_type == "GroupCreateResponse":
         return GroupCreateResponse(**args)
+    elif op_type == "GroupAddUserRequest":
+        return GroupAddUserRequest(**args)
+    elif op_type == "GroupAddUserResponse":
+        return GroupAddUserResponse(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
 def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction,
                                   AddRequest, ReadRequest, ListRequest, ListResponse, ShareRequest,
                                   ShareResponse, PublicKeyRequest, PublicKeyResponse,
-                                  GroupMembersRequest, GroupMembersResponse, VaultError]) -> bytes:
+                                  GroupMembersRequest, GroupMembersResponse,
+                                  GroupAddUserRequest, GroupAddUserResponse ,VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -210,6 +226,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, GroupCreateResponse):
         op_type = "GroupCreateResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserRequest):
+        op_type = "GroupAddUserRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserResponse):
+        op_type = "GroupAddUserResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"
