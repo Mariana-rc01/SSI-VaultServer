@@ -60,14 +60,10 @@ class Client:
         self.aesgcm: Optional[AESGCM] = None
         self.rsa_private_key = rsa_private_key
         self.client_certificate = client_certificate
-        self.reader: Optional[asyncio.StreamReader] = None
-        self.writer: Optional[asyncio.StreamWriter] = None
 
     async def handshake(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
-        self.reader = reader
-        self.writer = writer
         """Performs the handshake with the server."""
         # Send public key to the server
         dh_private_key: DHPrivateKey = generate_private_key()
@@ -128,7 +124,7 @@ class Client:
 
         print("Handshake completed!")
 
-    async def process(self, msg: bytes = b"") -> Optional[bytes]:
+    async def process(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, msg: bytes = b"") -> Optional[bytes]:
         """Processes a message (`bytestring`) sent by the SERVER.
         Returns the message to be sent as a response (`None` to
         terminate the connection)."""
@@ -225,8 +221,8 @@ class Client:
                     permission,
                     self.rsa_private_key,
                     self.aesgcm,
-                    self.writer,
-                    self.reader,
+                    writer,
+                    reader,
                 )
                 return encrypt(share_request, self.aesgcm)
             except Exception as e:
@@ -268,12 +264,12 @@ async def tcp_echo_client() -> None:
     if client.aesgcm is None:
         return
 
-    msg: Optional[bytes] = await client.process()
+    msg: Optional[bytes] = await client.process(reader, writer)
     while msg:
         writer.write(msg)
         msg = await reader.read(max_msg_size)
         if msg:
-            msg = await client.process(msg)
+            msg = await client.process(reader, writer, msg)
         else:
             break
     writer.write(b"\n")
