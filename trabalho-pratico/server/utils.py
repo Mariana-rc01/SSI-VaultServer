@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Any
 
 from utils.utils import ShareRequest, serialize_public_key_rsa
+from server.utils_db import load_users, save_users, load_groups, save_groups, load_files, save_files, get_next_file_id, get_next_group_id
 
 FILES_JSON = "./db/files.json"
 LOGS_JSON = "./db/logs.json"
@@ -33,18 +34,6 @@ def log_request(user_id: str, type: str, args: List[Any], status: str, error: st
     with open(LOGS_JSON, "w") as f:
         json.dump(logs, f, indent=2)
 
-def load_files() -> List[Dict[str, Any]]:
-    """ Loads the files from the JSON file. """
-    if os.path.exists(FILES_JSON):
-        with open(FILES_JSON, "r") as f:
-            return json.load(f)
-    return []
-
-def save_files(files: List[Dict[str, Any]]) -> None:
-    """ Saves the files to the JSON file. """
-    with open(FILES_JSON, "w") as f:
-        json.dump(files, f, indent=2)
-
 def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
     """ Gets the file by its ID. """
     files = load_files()
@@ -70,11 +59,6 @@ def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
                 if key_entry.get("username") == user_id:
                     return key_entry.get("key")
     return None
-
-def get_next_file_id() -> str:
-    """ Gets the next file ID. """
-    files = load_files()
-    return f"f{len(files)+1}"
 
 def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key: Any) -> str:
     """ Adds a file request. """
@@ -212,13 +196,6 @@ def get_user_groups(user_id: str) -> list:
     groups = load_groups()
     return [g["id"] for g in groups if user_id in g.get("members", [])]
 
-def load_users() -> List[Dict[str, Any]]:
-    """ Loads the users from the JSON file. """
-    if os.path.exists(USERS_JSON):
-        with open(USERS_JSON, "r") as f:
-            return json.load(f)
-    return []
-
 def get_public_key(user_id: str) -> Optional[str]:
     """ Gets the public key of a user. """
     users = load_users()
@@ -235,36 +212,35 @@ def get_group_members(group_id: str) -> list:
         []
     )
 
-def get_next_group_id() -> str:
-    """ Gets the next group ID. """
-    groups = load_groups()
-    return f"g{len(groups)+1}"
-
-def load_groups() -> List[Dict[str, Any]]:
-    """ Loads the groups from the JSON file. """
-    if os.path.exists(GROUPS_JSON):
-        with open(GROUPS_JSON, "r") as f:
-            return json.load(f)
-    return []
-
-def save_groups(groups: List[Dict[str, Any]]) -> None:
-    """ Saves the groups to the JSON file. """
-    with open(GROUPS_JSON, "w") as f:
-        json.dump(groups, f, indent=2)
-
 def add_group_request(group_name: str, user_id: str) -> str:
     """ Adds a group request. """
     group_id = get_next_group_id()
 
     groups = load_groups()
+    users = load_users()
 
     groups.append({
         "id": group_id,
         "name": group_name,
-        "members": [],
+        "owner": user_id,
+        "members": [
+            {
+                "username": user_id,
+                "permissions": ["read", "write"]
+            }
+        ]
     })
 
     save_groups(groups)
+
+    for user in users:
+        if user['id'] == user_id:
+            if 'groups' not in user:
+                user['groups'] = []
+            user['groups'].append(group_id)
+            break
+
+    save_users(users)
 
     log_request(user_id, "group create", [group_id, group_name], "success")
 
