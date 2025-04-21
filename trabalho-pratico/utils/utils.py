@@ -61,6 +61,34 @@ class ListResponse:
     group_files: list
 
 @dataclass
+class ShareRequest:
+    fileid: str
+    target_id: str
+    permissions: list
+    encrypted_keys: dict
+    is_group: bool
+
+@dataclass
+class ShareResponse:
+    response: str
+
+@dataclass
+class PublicKeyRequest:
+    user_id: str
+
+@dataclass
+class PublicKeyResponse:
+    public_key: str
+
+@dataclass
+class GroupMembersRequest:
+    group_id: str
+
+@dataclass
+class GroupMembersResponse:
+    members: list
+
+@dataclass
 class GroupCreateRequest:
     group_name: str
 
@@ -74,7 +102,9 @@ class VaultError:
 
 def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction,
                                               ClientSecondInteraction, AddRequest, ReadRequest,
-                                              ListRequest, ListResponse, VaultError]:
+                                              ListRequest, ListResponse, ShareRequest, ShareResponse,
+                                              PublicKeyRequest, PublicKeyResponse,
+                                              GroupMembersRequest, GroupMembersResponse, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -105,6 +135,18 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return ListRequest(**args)
     elif op_type == "ListResponse":
         return ListResponse(**args)
+    elif op_type == "ShareRequest":
+        return ShareRequest(**args)
+    elif op_type == "ShareResponse":
+        return ShareResponse(**args)
+    elif op_type == "PublicKeyResquest":
+        return PublicKeyRequest(**args)
+    elif op_type == "PublicKeyResponse":
+        return PublicKeyResponse(**args)
+    elif op_type == "GroupMembersRequest":
+        return GroupMembersRequest(**args)
+    elif op_type == "GroupMembersResponse":
+        return GroupMembersResponse(**args)
     elif op_type == "VaultError":
         return VaultError(**args)
     elif op_type == "GroupCreateRequest":
@@ -115,7 +157,9 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
 def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction,
-                                  AddRequest, ReadRequest, ListRequest, ListResponse, VaultError]) -> bytes:
+                                  AddRequest, ReadRequest, ListRequest, ListResponse, ShareRequest,
+                                  ShareResponse, PublicKeyRequest, PublicKeyResponse,
+                                  GroupMembersRequest, GroupMembersResponse, VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -142,6 +186,24 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, ListResponse):
         op_type = "ListResponse"
+        args = obj.__dict__
+    elif isinstance(obj, ShareRequest):
+        op_type = "ShareRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ShareResponse):
+        op_type = "ShareResponse"
+        args = obj.__dict__
+    elif isinstance(obj, PublicKeyRequest):
+        op_type = "PublicKeyResquest"
+        args = obj.__dict__
+    elif isinstance(obj, PublicKeyResponse):
+        op_type = "PublicKeyResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupMembersRequest):
+        op_type = "GroupMembersRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupMembersResponse):
+        op_type = "GroupMembersResponse"
         args = obj.__dict__
     elif isinstance(obj, GroupCreateRequest):
         op_type = "GroupCreateRequest"

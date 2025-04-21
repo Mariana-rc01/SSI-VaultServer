@@ -391,5 +391,49 @@
     "timestamp": "2025-04-18T17:15:06.228489Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r35",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-19T02:38:54.190202Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r36",
+    "userid": "u3",
+    "type": "public_key",
+    "args": [
+      "u4"
+    ],
+    "timestamp": "2025-04-19T02:38:54.193450Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r37",
+    "userid": "u3",
+    "type": "share",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-19T02:38:54.195160Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r38",
+    "userid": "u4",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-19T02:39:08.230601Z",
+    "status": "success",
+    "error": ""
   }
 ]

@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 
-from utils.utils import serialize_public_key_rsa
+from utils.utils import ShareRequest, serialize_public_key_rsa
 
 FILES_JSON = "./db/files.json"
 LOGS_JSON = "./db/logs.json"
@@ -54,11 +54,21 @@ def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
-    """ Gets the file by its ID. """
+    """ Gets the encryption key for a user or group member with read permission. """
     users = file_info.get("permissions", {}).get("users", [])
     for user in users:
-        if user.get("username") == f"Owner: {user_id}":
+        if user.get("username") == f"Owner: {user_id}" and "read" in user.get("permissions", []):
             return user.get("key")
+        elif user.get("username") == user_id and "read" in user.get("permissions", []):
+            return user.get("key")
+
+    user_groups = get_user_groups(user_id)
+    for group_permission in file_info.get("permissions", {}).get("groups", []):
+        group_id = group_permission["groupname"]
+        if group_id in user_groups and "read" in group_permission.get("permissions", []):
+            for key_entry in group_permission.get("keys", []):
+                if key_entry.get("username") == user_id:
+                    return key_entry.get("key")
     return None
 
 def get_next_file_id() -> str:
@@ -202,6 +212,29 @@ def get_user_groups(user_id: str) -> list:
     groups = load_groups()
     return [g["id"] for g in groups if user_id in g.get("members", [])]
 
+def load_users() -> List[Dict[str, Any]]:
+    """ Loads the users from the JSON file. """
+    if os.path.exists(USERS_JSON):
+        with open(USERS_JSON, "r") as f:
+            return json.load(f)
+    return []
+
+def get_public_key(user_id: str) -> Optional[str]:
+    """ Gets the public key of a user. """
+    users = load_users()
+    for user in users:
+        if user["id"] == user_id:
+            return user["public_key"]
+    return None
+
+def get_group_members(group_id: str) -> list:
+    """ Gets the members of a group. """
+    groups = load_groups()
+    return next(
+        (g["members"] for g in groups if g["id"] == group_id),
+        []
+    )
+
 def get_next_group_id() -> str:
     """ Gets the next group ID. """
     groups = load_groups()
@@ -236,3 +269,76 @@ def add_group_request(group_name: str, user_id: str) -> str:
     log_request(user_id, "group create", [group_id, group_name], "success")
 
     return group_id
+
+def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
+    """ Shares a file with a user or group. """
+    if file_info["owner"] != user_id:
+        return "You are not the owner of this file."
+
+    if client_request.is_group:
+        if "groups" not in file_info["permissions"]:
+            file_info["permissions"]["groups"] = []
+
+        group_permission = next(
+            (g for g in file_info["permissions"]["groups"] if g["groupname"] == client_request.target_id),
+            None
+        )
+
+        if not group_permission:
+            group_permission = {
+                "groupname": client_request.target_id,
+                "keys": [],
+                "permissions": ["read"] if client_request.permissions == "R" else ["read", "write"]
+            }
+            file_info["permissions"]["groups"].append(group_permission)
+
+        for user_id, encrypted_key in client_request.encrypted_keys.items():
+            key_entry = next(
+                (k for k in group_permission["keys"] if k["username"] == user_id),
+                None
+            )
+            if key_entry:
+                key_entry["key"] = encrypted_key
+            else:
+                group_permission["keys"].append({
+                    "username": user_id,
+                    "key": encrypted_key
+                })
+    else:
+        if "users" not in file_info["permissions"]:
+            file_info["permissions"]["users"] = []
+
+        user_entry = next(
+            (u for u in file_info["permissions"]["users"] if u["username"] == client_request.target_id),
+            None
+        )
+
+        if user_entry:
+            user_entry["key"] = client_request.encrypted_keys[client_request.target_id]
+            new_perms = user_entry["permissions"]
+            if client_request.permissions == "R":
+                if "read" not in new_perms:
+                    new_perms.append("read")
+            elif client_request.permissions == "W":
+                if "write" not in new_perms:
+                    new_perms.append("write")
+                if "read" not in new_perms:
+                    new_perms.append("read")
+            user_entry["permissions"] = new_perms
+        else:
+            new_perms = ["read"] if client_request.permissions == "R" else ["read", "write"]
+            encrypted_key = client_request.encrypted_keys[client_request.target_id]
+            file_info["permissions"]["users"].append({
+                "username": client_request.target_id,
+                "key": encrypted_key,
+                "permissions": new_perms
+            })
+
+    files = load_files()
+    for f in files:
+        if f["id"] == file_info["id"]:
+            f.update(file_info)
+            break
+    save_files(files)
+
+    return None

@@ -2,12 +2,20 @@
     {
         "id": "g1",
         "name": "group1",
+        "owner": "u1",
         "members": [
             {
-                "username": "user1"
+                "username": "u1",
+                "permissions": [
+                    "read",
+                    "write"
+                ]
             },
             {
-                "username": "user2"
+                "username": "user2",
+                "permissions": [
+                    "read"
+                ]
             }
         ]
     },
