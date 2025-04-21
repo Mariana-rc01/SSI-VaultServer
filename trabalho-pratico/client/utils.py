@@ -1,5 +1,7 @@
 import os, base64, json
 from utils.utils import(
+    DeleteUserGroupRequest,
+    ClientFirstInteraction,
     GroupCreateRequest,
     ListRequest,
     encrypt,
@@ -112,3 +114,10 @@ def groupCreateRequest(group_name: str) -> bytes:
         group_name=group_name,
     )
     return serialize_response(group_create_request)
+
+def deleteGroupUserRequest(group_id: str, user_id: str) -> bytes:
+    delete_group_user_request = DeleteUserGroupRequest(
+        group_id=group_id,
+        user_id=user_id,
+    )
+    return serialize_response(delete_group_user_request)

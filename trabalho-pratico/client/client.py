@@ -6,6 +6,7 @@ from typing import Optional
 from authentication.authenticator import terminal_interface
 
 from utils.utils import (
+    DeleteUserGroupRequest,
     GroupCreateResponse,
     ListResponse,
     VaultError,
@@ -31,7 +32,7 @@ from utils.utils import (
     serialize_response,
     deserialize_request,
 )
-from client.utils import addRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse
+from client.utils import addRequest, deleteGroupUserRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -149,6 +150,9 @@ class Client:
                 elif isinstance(server_response, VaultError):
                     print(f"Error: {server_response.error}")
 
+                elif isinstance(server_response, DeleteUserGroupRequest):
+                    print(f"Received {server_response.response}")
+
                 else:
                     print(f"Unknown response type: {type(server_response)}")
                     return None
@@ -162,6 +166,7 @@ class Client:
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
         print("- group create <group-name>")
+        print("- group delete-user <group-id> <user-id>")
         print("- exit")
         new_msg: str = input().strip()
         if new_msg.startswith("add "):
@@ -204,6 +209,17 @@ class Client:
             group_name: str = new_msg.split(" ", 2)[2]
 
             json_bytes: bytes = groupCreateRequest(group_name)
+            if not json_bytes:
+                return b""
+
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("group delete-user "):
+            args = new_msg.split()
+
+            group_id: str = args[2]
+            user_id: str = args[3]
+
+            json_bytes: bytes = deleteGroupUserRequest(group_id, user_id)
             if not json_bytes:
                 return b""
 

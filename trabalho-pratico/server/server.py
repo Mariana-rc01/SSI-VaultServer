@@ -6,6 +6,7 @@ from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
     AddResponse,
+    DeleteUserGroupRequest,
     GroupCreateResponse,
     ListRequest,
     ListResponse,
@@ -34,7 +35,7 @@ from utils.utils import (
     deserialize_request,
     serialize_response,
 )
-from server.utils import (add_group_request, log_request, get_file_by_id, add_request,
+from server.utils import (add_group_request, delete_user_group_request, log_request, get_file_by_id, add_request,
                           add_user, get_user_key, get_files_for_listing)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -184,6 +185,17 @@ class ServerWorker:
                 group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, DeleteUserGroupRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+
+                if not group_id:
+                    return encrypt(VaultError("Error: Group ID is required.").encode(), self.aesgcm)
+                
+                delete_user_group_request(group_id, user_id)
+
+                response_data = AddResponse(f"user {user_id} deleted from group {group_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)

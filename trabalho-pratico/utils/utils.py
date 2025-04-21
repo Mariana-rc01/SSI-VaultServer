@@ -69,6 +69,15 @@ class GroupCreateResponse:
     response: str
 
 @dataclass
+class DeleteUserGroupRequest:
+    user_id: str
+    group_id: str
+
+@dataclass
+class DeleteUserGroupResponse:
+    response: str
+
+@dataclass
 class VaultError:
     error: str
 
@@ -109,6 +118,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return VaultError(**args)
     elif op_type == "GroupCreateRequest":
         return GroupCreateRequest(**args)
+    elif op_type == "DeleteUserGroupRequest":
+        return DeleteUserGroupRequest(**args)
+    elif op_type == "DeleteUserGroupResponse":
+        return DeleteUserGroupResponse(**args)
     elif op_type == "GroupCreateResponse":
         return GroupCreateResponse(**args)
     else:
@@ -148,6 +161,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, GroupCreateResponse):
         op_type = "GroupCreateResponse"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteUserGroupRequest):
+        op_type = "DeleteUserGroupRequest"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteUserGroupResponse):
+        op_type = "DeleteUserGroupResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"

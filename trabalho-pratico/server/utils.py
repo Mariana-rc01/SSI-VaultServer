@@ -236,3 +236,22 @@ def add_group_request(group_name: str, user_id: str) -> str:
     log_request(user_id, "group create", [group_id, group_name], "success")
 
     return group_id
+
+def delete_user_group_request(group_id: str, user_id: str) -> None:
+    """Deletes a user from a group."""
+    groups = load_groups()
+
+    for group in groups:
+        if group["id"] == group_id:
+            for member in group.get("members", []):
+                if member.get("username") == user_id:
+                    group["members"].remove(member)
+                    save_groups(groups)
+                    log_request(user_id, "group delete-user", [group_id, user_id], "success")
+                    return
+            # User not found in group
+            log_request(user_id, "group delete-user", [group_id, user_id], "failed", "user not in group")
+            return
+
+    # Group not found
+    log_request(user_id, "group delete-user", [group_id, user_id], "failed", "group not found")
