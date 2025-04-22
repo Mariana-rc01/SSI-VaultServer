@@ -120,6 +120,14 @@ class GroupAddUserResponse:
     response: str
 
 @dataclass
+class GroupListRequest:
+    pass
+
+@dataclass
+class GroupListResponse:
+    groups: list
+
+@dataclass
 class VaultError:
     error: str
 
@@ -130,7 +138,7 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               GroupMembersRequest, GroupMembersResponse,
                                               GroupAddUserRequest, GroupAddUserResponse,
                                               GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
-                                              VaultError]:
+                                              GroupListRequest, GroupListResponse, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -187,6 +195,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return GroupAddUserRequirementsRequest(**args)
     elif op_type == "GroupAddUserRequirementsResponse":
         return GroupAddUserRequirementsResponse(**args)
+    elif op_type == "GroupListRequest":
+        return GroupListRequest()
+    elif op_type == "GroupListResponse":
+        return GroupListResponse(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
@@ -196,7 +208,7 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   GroupMembersRequest, GroupMembersResponse,
                                   GroupAddUserRequest, GroupAddUserResponse,
                                   GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
-                                  VaultError]) -> bytes:
+                                  GroupListRequest, GroupListResponse, VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -259,6 +271,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, GroupAddUserRequirementsResponse):
         op_type = "GroupAddUserRequirementsResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupListRequest):
+        op_type = "GroupListRequest"
+        args = {}
+    elif isinstance(obj, GroupListResponse):
+        op_type = "GroupListResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"

@@ -8,6 +8,8 @@ from authentication.authenticator import terminal_interface
 from utils.utils import (
     GroupAddUserResponse,
     GroupCreateResponse,
+    GroupListRequest,
+    GroupListResponse,
     ListResponse,
     ShareResponse,
     VaultError,
@@ -34,7 +36,7 @@ from utils.utils import (
     deserialize_request,
     max_msg_size,
 )
-from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse, shareRequest
+from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, groupList, listRequest, listResponse, readRequest, readResponse, shareRequest
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -153,6 +155,9 @@ class Client:
                 elif isinstance(server_response, GroupAddUserResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, GroupListResponse):
+                    groupList(server_response)
+
                 elif isinstance(server_response, VaultError):
                     print(f"Error: {server_response.error}")
 
@@ -171,6 +176,7 @@ class Client:
         print("- share <file-id> <user-id> <permission>")
         print("- group create <group-name>")
         print("- group add-user <group-id> <user-id> <permission>")
+        print("- group list")
         print("- exit")
         new_msg: str = input().strip()
         if new_msg.startswith("add "):
@@ -255,10 +261,6 @@ class Client:
             user_id: str = args[3]
             permission: str = args[4].upper()
 
-            if permission not in ["R", "W"]:
-                print("Invalid permission.")
-                return b""
-
             try:
                 groupAddUser_request = await groupAddUserRequest(
                     group_id, user_id, permission, self.rsa_private_key, self.aesgcm, writer, reader
@@ -267,6 +269,10 @@ class Client:
             except Exception as e:
                 print(f"Error during share request: {e}")
                 return b""
+        elif new_msg.startswith("group list"):
+            request = GroupListRequest()
+            serialized_request = serialize_response(request)
+            return encrypt(serialized_request, self.aesgcm)
         elif new_msg.strip() == "exit":
             return None
         else:

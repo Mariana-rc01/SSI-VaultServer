@@ -4,6 +4,7 @@ from utils.utils import(
     GroupAddUserRequirementsRequest,
     GroupAddUserRequirementsResponse,
     GroupCreateRequest,
+    GroupListResponse,
     GroupMembersResponse,
     ListRequest,
     PublicKeyResponse,
@@ -26,6 +27,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 
 def addRequest(file_path: str, client_public_key) -> bytes:
+    """ Add a file request. """
     if not os.path.isfile(file_path):
         print(f"Error: File '{file_path}' does not exist.")
         return b""
@@ -58,12 +60,14 @@ def addRequest(file_path: str, client_public_key) -> bytes:
     return serialize_response(add_request)
 
 def readRequest(file_id: str) -> bytes:
+    """ Read a file request. """
     read_request = ReadRequest(
         fileid=file_id,
     )
     return serialize_response(read_request)
 
 def readResponse(decrypted_msg: bytes, client_private_key) -> None:
+    """ Decrypts the file and prints its content. """
     if not decrypted_msg:
         print("Error: Decrypted message is empty.")
         return
@@ -98,6 +102,7 @@ def readResponse(decrypted_msg: bytes, client_private_key) -> None:
         print("\nError decrypting:", e)
 
 def listRequest(list_type: str, target_id: str) -> bytes:
+    """ List files, shared files, or group files request. """
     list_request = ListRequest(
         list_type = list_type if list_type else None,
         target_id = target_id if target_id else "",
@@ -105,6 +110,7 @@ def listRequest(list_type: str, target_id: str) -> bytes:
     return serialize_response(list_request)
 
 def listResponse(server_response: bytes) -> None:
+    """ Displays the list of files, shared files, and group files. """
     print("\n=== Files ===")
     for file in server_response.files:
         print(f"ID: {file['id']}, Name: {file['name']}, Owner: {file['owner']}, Permissions: {file['permissions']}")
@@ -119,12 +125,14 @@ def listResponse(server_response: bytes) -> None:
 
 
 def groupCreateRequest(group_name: str) -> bytes:
+    """ Create a group request. """
     group_create_request = GroupCreateRequest(
         group_name=group_name,
     )
     return serialize_response(group_create_request)
 
 async def groupAddUserRequest(group_id: str, user_id: str, permission: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
+    """ Add a user to a group request. """
     try:
         # 1º Requirements: encrypted_keys for each file shared with the group or owner, owner's public_key
         requirements = GroupAddUserRequirementsRequest(
@@ -181,6 +189,10 @@ async def groupAddUserRequest(group_id: str, user_id: str, permission: str, rsa_
         return b""
 
 async def shareRequest(file_id: str, target_id: str, permission: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
+    """ Share a file with a user or group. """
+    if permission not in ["R", "W"]:
+        raise ValueError("Invalid permission")
+
     # 1º AES key for the file
     get_key_request = ReadRequest(file_id)
     writer.write(encrypt(serialize_response(get_key_request), aesgcm))
@@ -273,3 +285,15 @@ async def shareRequest(file_id: str, target_id: str, permission: str, rsa_privat
     )
 
     return serialize_response(share_request)
+
+
+def groupList(server_response: GroupListResponse) -> None:
+    """ Displays the list of groups. """
+    if not server_response.groups:
+        print("No groups found")
+        return
+
+    print("\n=== Groups ===")
+    for group in server_response.groups:
+        print(f"Group ID: {group['id']}")
+        print(f"Permissions: {', '.join(group['permissions'] or 'None')}\n")

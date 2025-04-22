@@ -2,10 +2,10 @@
   {
     "id": "g1",
     "name": "group1",
-    "owner": "u1",
+    "owner": "u2",
     "members": [
       {
-        "userid": "u1",
+        "userid": "u2",
         "permissions": [
           "read",
           "write"
@@ -16,10 +16,10 @@
   {
     "id": "g2",
     "name": "group2",
-    "owner": "u2",
+    "owner": "u1",
     "members": [
       {
-        "userid": "u2",
+        "userid": "u1",
         "permissions": [
           "read",
           "write"
@@ -27,6 +27,19 @@
       },
       {
         "userid": "u3",
+        "permissions": [
+          "read"
+        ]
+      },
+      {
+        "userid": "u4",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
+        "userid": "u5",
         "permissions": [
           "read"
         ]

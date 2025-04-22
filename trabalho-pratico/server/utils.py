@@ -200,6 +200,22 @@ def get_user_groups(user_id: str) -> list:
         return []
     return user.get("groups", [])
 
+def get_user_permissions_by_group(user_id: str) -> list:
+    """ Gets the permissions of a user in all groups. """
+    groups = load_groups()
+    user_groups = []
+
+    for group in groups:
+        member = next((m for m in group.get("members", []) if m["userid"] == user_id), None)
+
+        if member:
+            user_groups.append({
+                "id": group["id"],
+                "permissions": member.get("permissions", [])
+            })
+
+    return user_groups
+
 def get_public_key(user_id: str) -> Optional[str]:
     """ Gets the public key of a user. """
     users = load_users()
@@ -415,7 +431,8 @@ def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
         for group_perm in file.get("permissions", {}).get("groups", []):
             if group_perm["groupid"] == group_id:
                 for key_entry in group_perm.get("keys", []):
-                    print(f"Key entry found: {key_entry}")
-                    encrypted_keys[file["id"]] = key_entry["key"]
+                    if key_entry["userid"] == requester_id:
+                        encrypted_keys[file["id"]] = key_entry["key"]
+                        break
 
     return encrypted_keys

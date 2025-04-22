@@ -11,6 +11,8 @@ from utils.utils import (
     GroupAddUserRequirementsResponse,
     GroupAddUserResponse,
     GroupCreateResponse,
+    GroupListRequest,
+    GroupListResponse,
     GroupMembersRequest,
     GroupMembersResponse,
     ListRequest,
@@ -45,8 +47,10 @@ from utils.utils import (
     serialize_response,
     max_msg_size
 )
-from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, get_group_members, get_public_key, log_request, get_file_by_id, add_request,
-                          add_user, get_user_key, get_files_for_listing, share_file)
+from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements,
+                          get_group_members, get_public_key, get_user_permissions_by_group,
+                          log_request, get_file_by_id, add_request, add_user, get_user_key,
+                          get_files_for_listing, share_file)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -248,7 +252,6 @@ class ServerWorker:
                 user_id = client_request.user_id
 
                 requirements = add_user_to_group_requirements(self.id, group_id)
-                print(requirements)
                 if "error" in requirements:
                     log_request(self.id, "group_add_user_requirements", [group_id, user_id], "failed", requirements["error"])
                     return encrypt(serialize_response(VaultError(requirements["error"])), self.aesgcm)
@@ -265,6 +268,12 @@ class ServerWorker:
                 )
 
                 log_request(self.id, "group_add_user_requirements", [group_id, user_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupListRequest):
+                groups = get_user_permissions_by_group(self.id)
+
+                response_data = GroupListResponse(groups)
+                log_request(f"{self.id}", "group_list", [], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
