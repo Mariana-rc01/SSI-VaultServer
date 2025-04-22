@@ -46,17 +46,17 @@ def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
     """ Gets the encryption key for a user or group member with read permission. """
     users = file_info.get("permissions", {}).get("users", [])
     for user in users:
-        if user.get("username") == f"Owner: {user_id}" and "read" in user.get("permissions", []):
+        if user.get("userid") == f"Owner: {user_id}" and "read" in user.get("permissions", []):
             return user.get("key")
-        elif user.get("username") == user_id and "read" in user.get("permissions", []):
+        elif user.get("userid") == user_id and "read" in user.get("permissions", []):
             return user.get("key")
 
     user_groups = get_user_groups(user_id)
     for group_permission in file_info.get("permissions", {}).get("groups", []):
-        group_id = group_permission["groupname"]
+        group_id = group_permission["gropid"]
         if group_id in user_groups and "read" in group_permission.get("permissions", []):
             for key_entry in group_permission.get("keys", []):
-                if key_entry.get("username") == user_id:
+                if key_entry.get("userid") == user_id:
                     return key_entry.get("key")
     return None
 
@@ -71,7 +71,7 @@ def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key:
     permissions = {
         "users": [
             {
-                "username": f"Owner: {owner_id}",
+                "userid": f"Owner: {owner_id}",
                 "key": owner_public_key,
                 "permissions": ["read", "write"]
             }
@@ -108,13 +108,13 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
 
     user_id = f"u{len(users)+1}"
     for user in users:
-        if user["username"] == client_subject:
+        if user["userid"] == client_subject:
             return user["id"]
 
     try:
         users.append({
             "id": user_id,
-            "username": client_subject,
+            "userid": client_subject,
             "public_key": base64.b64encode(serialize_public_key_rsa(public_key)).decode(),
             "groups": []
         })
@@ -144,12 +144,12 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
             if list_type == "group":
                 user_permissions = next(
                     (permission["permissions"] for permission in file.get("permissions", {}).get("groups", [])
-                    if permission["groupname"] == f"Owner: {target_id}"), []
+                    if permission["gropid"] == f"Owner: {target_id}"), []
                 )
             else:
                 user_permissions = next(
                     (permission["permissions"] for permission in file.get("permissions", {}).get("users", [])
-                    if permission["username"] == f"Owner: {target_id}"), []
+                    if permission["userid"] == f"Owner: {target_id}"), []
                 )
             result["personal"].append({
                 "id": file["id"],
@@ -159,7 +159,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
             })
 
         for permission in file.get("permissions", {}).get("users", []):
-            if permission["username"] == target_id:
+            if permission["userid"] == target_id:
                 result["shared"].append({
                     "id": file["id"],
                     "name": file["name"],
@@ -170,7 +170,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
 
         if list_type == "group":
             for group_permission in file.get("permissions", {}).get("groups", []):
-                group_id = group_permission["groupname"]
+                group_id = group_permission["gropid"]
                 if group_id == target_id and group_permission["permissions"] != []:
                     result["shared"].append({
                         "id": file["id"],
@@ -180,7 +180,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
                     })
         else:
             for group_permission in file.get("permissions", {}).get("groups", []):
-                group_id = group_permission["groupname"]
+                group_id = group_permission["gropid"]
                 if group_id in user_groups and group_permission["permissions"] != []:
                     result["group"].append({
                         "id": file["id"],
@@ -225,7 +225,7 @@ def add_group_request(group_name: str, user_id: str) -> str:
         "owner": user_id,
         "members": [
             {
-                "username": user_id,
+                "userid": user_id,
                 "permissions": ["read", "write"]
             }
         ]
@@ -266,7 +266,7 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
     member_exists = False
     for member in group["members"]:
-        if member["username"] == add_user_id:
+        if member["userid"] == add_user_id:
             member_exists = True
             for perm in new_perms:
                 if perm not in member["permissions"]:
@@ -275,7 +275,7 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
     if not member_exists:
         group["members"].append({
-            "username": add_user_id,
+            "userid": add_user_id,
             "permissions": new_perms
         })
 
@@ -308,13 +308,13 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
             file_info["permissions"]["groups"] = []
 
         group_permission = next(
-            (g for g in file_info["permissions"]["groups"] if g["groupname"] == client_request.target_id),
+            (g for g in file_info["permissions"]["groups"] if g["gropid"] == client_request.target_id),
             None
         )
 
         if not group_permission:
             group_permission = {
-                "groupname": client_request.target_id,
+                "gropid": client_request.target_id,
                 "keys": [],
                 "permissions": ["read"] if client_request.permissions == "R" else ["read", "write"]
             }
@@ -322,14 +322,14 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
 
         for user_id, encrypted_key in client_request.encrypted_keys.items():
             key_entry = next(
-                (k for k in group_permission["keys"] if k["username"] == user_id),
+                (k for k in group_permission["keys"] if k["userid"] == user_id),
                 None
             )
             if key_entry:
                 key_entry["key"] = encrypted_key
             else:
                 group_permission["keys"].append({
-                    "username": user_id,
+                    "userid": user_id,
                     "key": encrypted_key
                 })
     else:
@@ -337,7 +337,7 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
             file_info["permissions"]["users"] = []
 
         user_entry = next(
-            (u for u in file_info["permissions"]["users"] if u["username"] == client_request.target_id),
+            (u for u in file_info["permissions"]["users"] if u["userid"] == client_request.target_id),
             None
         )
 
@@ -357,7 +357,7 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
             new_perms = ["read"] if client_request.permissions == "R" else ["read", "write"]
             encrypted_key = client_request.encrypted_keys[client_request.target_id]
             file_info["permissions"]["users"].append({
-                "username": client_request.target_id,
+                "userid": client_request.target_id,
                 "key": encrypted_key,
                 "permissions": new_perms
             })

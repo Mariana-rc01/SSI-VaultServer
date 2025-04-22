@@ -2,13 +2,19 @@
   {
     "id": "g1",
     "name": "group1",
-    "owner": "u2",
+    "owner": "u1",
     "members": [
       {
-        "username": "u2",
+        "userid": "u1",
         "permissions": [
           "read",
           "write"
+        ]
+      },
+      {
+        "userid": "u2",
+        "permissions": [
+          "read"
         ]
       }
     ]
@@ -19,7 +25,7 @@
     "owner": "u2",
     "members": [
       {
-        "username": "u2",
+        "userid": "u2",
         "permissions": [
           "read",
           "write"
@@ -30,17 +36,17 @@
   {
     "id": "g3",
     "name": "group3",
-    "owner": "u1",
+    "owner": "u3",
     "members": [
       {
-        "username": "u1",
+        "userid": "u3",
         "permissions": [
           "read",
           "write"
         ]
       },
       {
-        "username": "u3",
+        "userid": "u1",
         "permissions": [
           "read",
           "write"
