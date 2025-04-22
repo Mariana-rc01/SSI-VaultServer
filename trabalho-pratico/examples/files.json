@@ -7,26 +7,21 @@
         "permissions": {
             "users": [
                 {
-                    "username": "u1 -> owner",
+                    "userid": "Owner: u1",
                     "key": "symmetric key encrypted with the owner's public key (RSA)",
                     "permissions": ["read", "write"]
-                },
-                {
-                    "username": "u2",
-                    "key": "lfjhgdls",
-                    "permissions": ["read"]
                 }
             ],
             "groups": [
                 {
-                    "groupname": "g1",
+                    "groupid": "g1",
                     "keys": [
                         {
-                            "username": "u1",
+                            "userid": "u1",
                             "key": "kfdvdrgbhtybkusdfwa"
                         },
                         {
-                            "username": "u2",
+                            "userid": "u2",
                             "key": "lfjhbgfbgdls"
                         }
                     ],
@@ -49,17 +44,17 @@
         "permissions": {
             "users": [
                 {
-                    "username": "u1",
+                    "userid": "u1",
                     "permissions": ["read"]
                 },
                 {
-                    "username": "u2",
+                    "userid": "u2",
                     "permissions": ["read", "write"]
                 }
             ],
             "groups": [
                 {
-                    "groupname": "g1",
+                    "groupid": "g1",
                     "permissions": ["read"]
                 }
             ],

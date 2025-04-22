@@ -6,7 +6,13 @@ from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
     AddResponse,
+    GroupAddUserRequest,
+    GroupAddUserRequirementsRequest,
+    GroupAddUserRequirementsResponse,
+    GroupAddUserResponse,
     GroupCreateResponse,
+    GroupListRequest,
+    GroupListResponse,
     GroupMembersRequest,
     GroupMembersResponse,
     ListRequest,
@@ -39,14 +45,16 @@ from utils.utils import (
     certificate_create,
     deserialize_request,
     serialize_response,
+    max_msg_size
 )
-from server.utils import (add_group_request, get_group_members, get_public_key, log_request, get_file_by_id, add_request,
-                          add_user, get_user_key, get_files_for_listing, share_file)
+from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements,
+                          get_group_members, get_public_key, get_user_permissions_by_group,
+                          log_request, get_file_by_id, add_request, add_user, get_user_key,
+                          get_files_for_listing, share_file)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
 conn_port = 7777
-max_msg_size = 9999
 
 STORAGE_DIR = "./storage"
 os.makedirs(STORAGE_DIR, exist_ok=True)
@@ -222,6 +230,50 @@ class ServerWorker:
                 group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddUserRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+                permission = client_request.permission
+                encrypted_keys = client_request.encrypted_keys
+
+                error_message = add_user_to_group(self.id, group_id, user_id, permission, encrypted_keys)
+
+                if error_message:
+                    log_request(f"{self.id}", "group add user", [group_id, user_id], "failed", error_message)
+                    response_data = VaultError(error_message)
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                log_request(f"{self.id}", "group add user", [group_id, user_id], "success")
+                response_data = GroupAddUserResponse(f"User {user_id} added to group {group_id}.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddUserRequirementsRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+
+                requirements = add_user_to_group_requirements(self.id, group_id)
+                if "error" in requirements:
+                    log_request(self.id, "group add user requirements", [group_id, user_id], "failed", requirements["error"])
+                    return encrypt(serialize_response(VaultError(requirements["error"])), self.aesgcm)
+
+                public_key = get_public_key(user_id)
+
+                if not public_key:
+                    log_request(self.id, "group add user requirements", [group_id, user_id], "failed", "Target user not found")
+                    return encrypt(serialize_response(VaultError("Target user not found")), self.aesgcm)
+
+                response_data = GroupAddUserRequirementsResponse(
+                    encrypted_keys=requirements,
+                    public_key=public_key
+                )
+
+                log_request(self.id, "group add user requirements", [group_id, user_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupListRequest):
+                groups = get_user_permissions_by_group(self.id)
+
+                response_data = GroupListResponse(groups)
+                log_request(f"{self.id}", "group list", [], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
