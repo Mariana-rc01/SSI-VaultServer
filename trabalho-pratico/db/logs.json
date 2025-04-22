@@ -136,7 +136,7 @@
   {
     "id": "r13",
     "userid": "u1",
-    "type": "group_add_user_requirements",
+    "type": "group add user requirements",
     "args": [
       "g2",
       "u3"
@@ -148,7 +148,7 @@
   {
     "id": "r14",
     "userid": "u1",
-    "type": "group_add_user",
+    "type": "group add user",
     "args": [
       "g2",
       "u3"
@@ -226,7 +226,7 @@
   {
     "id": "r21",
     "userid": "u1",
-    "type": "group_add_user_requirements",
+    "type": "group add user requirements",
     "args": [
       "g2",
       "u4"
@@ -238,7 +238,7 @@
   {
     "id": "r22",
     "userid": "u1",
-    "type": "group_add_user",
+    "type": "group add user",
     "args": [
       "g2",
       "u4"
@@ -316,7 +316,7 @@
   {
     "id": "r29",
     "userid": "u1",
-    "type": "group_add_user_requirements",
+    "type": "group add user requirements",
     "args": [
       "g2",
       "u5"
@@ -328,7 +328,7 @@
   {
     "id": "r30",
     "userid": "u1",
-    "type": "group_add_user",
+    "type": "group add user",
     "args": [
       "g2",
       "u5"
@@ -362,7 +362,7 @@
   {
     "id": "r33",
     "userid": "u1",
-    "type": "group_list",
+    "type": "group list",
     "args": [],
     "timestamp": "2025-04-22T17:44:16.687305Z",
     "status": "success",

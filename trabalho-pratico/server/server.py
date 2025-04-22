@@ -240,11 +240,11 @@ class ServerWorker:
                 error_message = add_user_to_group(self.id, group_id, user_id, permission, encrypted_keys)
 
                 if error_message:
-                    log_request(f"{self.id}", "group_add_user", [group_id, user_id], "failed", error_message)
+                    log_request(f"{self.id}", "group add user", [group_id, user_id], "failed", error_message)
                     response_data = VaultError(error_message)
                     return encrypt(serialize_response(response_data), self.aesgcm)
 
-                log_request(f"{self.id}", "group_add_user", [group_id, user_id], "success")
+                log_request(f"{self.id}", "group add user", [group_id, user_id], "success")
                 response_data = GroupAddUserResponse(f"User {user_id} added to group {group_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, GroupAddUserRequirementsRequest):
@@ -253,13 +253,13 @@ class ServerWorker:
 
                 requirements = add_user_to_group_requirements(self.id, group_id)
                 if "error" in requirements:
-                    log_request(self.id, "group_add_user_requirements", [group_id, user_id], "failed", requirements["error"])
+                    log_request(self.id, "group add user requirements", [group_id, user_id], "failed", requirements["error"])
                     return encrypt(serialize_response(VaultError(requirements["error"])), self.aesgcm)
 
                 public_key = get_public_key(user_id)
 
                 if not public_key:
-                    log_request(self.id, "group_add_user_requirements", [group_id, user_id], "failed", "Target user not found")
+                    log_request(self.id, "group add user requirements", [group_id, user_id], "failed", "Target user not found")
                     return encrypt(serialize_response(VaultError("Target user not found")), self.aesgcm)
 
                 response_data = GroupAddUserRequirementsResponse(
@@ -267,13 +267,13 @@ class ServerWorker:
                     public_key=public_key
                 )
 
-                log_request(self.id, "group_add_user_requirements", [group_id, user_id], "success")
+                log_request(self.id, "group add user requirements", [group_id, user_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, GroupListRequest):
                 groups = get_user_permissions_by_group(self.id)
 
                 response_data = GroupListResponse(groups)
-                log_request(f"{self.id}", "group_list", [], "success")
+                log_request(f"{self.id}", "group list", [], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
