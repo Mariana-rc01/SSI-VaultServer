@@ -11,6 +11,7 @@ from utils.utils import (
     GroupListRequest,
     GroupListResponse,
     ListResponse,
+    ReplaceResponse,
     ShareResponse,
     VaultError,
     ClientFirstInteraction,
@@ -36,7 +37,7 @@ from utils.utils import (
     deserialize_request,
     max_msg_size,
 )
-from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, groupList, listRequest, listResponse, readRequest, readResponse, shareRequest
+from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, groupList, listRequest, listResponse, readRequest, readResponse, replaceRequest, shareRequest
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -149,6 +150,9 @@ class Client:
                 elif isinstance(server_response, ShareResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, ReplaceResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
 
@@ -174,6 +178,7 @@ class Client:
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
         print("- share <file-id> <user-id> --permission=[r|w]")
+        print("- replace <file-id> <file-path>")
         print("- group create <group-name>")
         print("- group add-user <group-id> <user-id> --permission=[r|w]")
         print("- group list")
@@ -242,6 +247,28 @@ class Client:
                 return encrypt(share_request, self.aesgcm)
             except Exception as e:
                 print(f"Error during share request: {e}")
+                return b""
+        elif new_msg.startswith("replace "):
+            args = new_msg.split(" ", 2)
+            if len(args) != 3:
+                print("Invalid command.")
+                return b""
+
+            file_id: str = args[1]
+            file_path: str = args[2]
+
+            try:
+                replace_request = await replaceRequest(
+                    file_id,
+                    file_path,
+                    self.rsa_private_key,
+                    self.aesgcm,
+                    writer,
+                    reader,
+                )
+                return encrypt(replace_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during replace request: {e}")
                 return b""
         elif new_msg.startswith("group create "):
             group_name: str = new_msg.split(" ", 2)[2]

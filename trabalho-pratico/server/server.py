@@ -20,6 +20,10 @@ from utils.utils import (
     PublicKeyRequest,
     PublicKeyResponse,
     ReadResponse,
+    ReplaceRequest,
+    ReplaceRequirementsRequest,
+    ReplaceRequirementsResponse,
+    ReplaceResponse,
     ShareRequest,
     ShareResponse,
     VaultError,
@@ -47,10 +51,10 @@ from utils.utils import (
     serialize_response,
     max_msg_size
 )
-from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements,
-                          get_group_members, get_public_key, get_user_permissions_by_group,
+from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, check_write_permission,
+                          get_group_members, get_public_key, get_user_permissions_by_group, get_user_write_key,
                           log_request, get_file_by_id, add_request, add_user, get_user_key,
-                          get_files_for_listing, share_file)
+                          get_files_for_listing, replace_file, replace_file_requirements, share_file)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -192,6 +196,24 @@ class ServerWorker:
 
                 log_request(f"{self.id}", "list", [client_request.list_type, client_request.target_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, ReplaceRequirementsRequest):
+                encrypted_key = replace_file_requirements(client_request, self.id)
+                if encrypted_key is None:
+                    return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
+
+                response_data = ReplaceRequirementsResponse(
+                    encrypted_key=encrypted_key
+                )
+                log_request(self.id, "replace", [client_request.file_id], "requirements_success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+
+            elif isinstance(client_request, ReplaceRequest):
+                response = replace_file(client_request, self.id)
+                if response is None:
+                    log_request(self.id, "replace", [client_request.file_id], "failed", "Error replacing file")
+                    return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
+
+                return encrypt(serialize_response(ReplaceResponse("File replaced successfully")), self.aesgcm)
             elif isinstance(client_request, GroupMembersRequest):
                 members = get_group_members(client_request.group_id)
                 return encrypt(serialize_response(GroupMembersResponse(members)), self.aesgcm)
