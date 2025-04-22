@@ -10,12 +10,6 @@
           "read",
           "write"
         ]
-      },
-      {
-        "userid": "u2",
-        "permissions": [
-          "read"
-        ]
       }
     ]
   },
@@ -30,26 +24,11 @@
           "read",
           "write"
         ]
-      }
-    ]
-  },
-  {
-    "id": "g3",
-    "name": "group3",
-    "owner": "u3",
-    "members": [
+      },
       {
         "userid": "u3",
         "permissions": [
-          "read",
-          "write"
-        ]
-      },
-      {
-        "userid": "u1",
-        "permissions": [
-          "read",
-          "write"
+          "read"
         ]
       }
     ]

@@ -10,6 +10,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography import x509
 import datetime
 
+max_msg_size: int = 9999
+
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2
 
@@ -97,10 +99,21 @@ class GroupCreateResponse:
     response: str
 
 @dataclass
+class GroupAddUserRequirementsRequest:
+    group_id: str
+    user_id: str
+
+@dataclass
+class GroupAddUserRequirementsResponse:
+    encrypted_keys: dict
+    public_key: str
+
+@dataclass
 class GroupAddUserRequest:
     group_id: str
     user_id: str
     permission: str
+    encrypted_keys: dict
 
 @dataclass
 class GroupAddUserResponse:
@@ -115,7 +128,9 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               ListRequest, ListResponse, ShareRequest, ShareResponse,
                                               PublicKeyRequest, PublicKeyResponse,
                                               GroupMembersRequest, GroupMembersResponse,
-                                              GroupAddUserRequest, GroupAddUserResponse, VaultError]:
+                                              GroupAddUserRequest, GroupAddUserResponse,
+                                              GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
+                                              VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -168,6 +183,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return GroupAddUserRequest(**args)
     elif op_type == "GroupAddUserResponse":
         return GroupAddUserResponse(**args)
+    elif op_type == "GroupAddUserRequirementsRequest":
+        return GroupAddUserRequirementsRequest(**args)
+    elif op_type == "GroupAddUserRequirementsResponse":
+        return GroupAddUserRequirementsResponse(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
@@ -175,7 +194,9 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   AddRequest, ReadRequest, ListRequest, ListResponse, ShareRequest,
                                   ShareResponse, PublicKeyRequest, PublicKeyResponse,
                                   GroupMembersRequest, GroupMembersResponse,
-                                  GroupAddUserRequest, GroupAddUserResponse ,VaultError]) -> bytes:
+                                  GroupAddUserRequest, GroupAddUserResponse,
+                                  GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
+                                  VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -232,6 +253,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, GroupAddUserResponse):
         op_type = "GroupAddUserResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserRequirementsRequest):
+        op_type = "GroupAddUserRequirementsRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserRequirementsResponse):
+        op_type = "GroupAddUserRequirementsResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"

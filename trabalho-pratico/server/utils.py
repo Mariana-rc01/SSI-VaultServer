@@ -53,11 +53,12 @@ def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
 
     user_groups = get_user_groups(user_id)
     for group_permission in file_info.get("permissions", {}).get("groups", []):
-        group_id = group_permission["gropid"]
+        group_id = group_permission["groupid"]
         if group_id in user_groups and "read" in group_permission.get("permissions", []):
             for key_entry in group_permission.get("keys", []):
                 if key_entry.get("userid") == user_id:
                     return key_entry.get("key")
+
     return None
 
 def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key: Any) -> str:
@@ -108,13 +109,13 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
 
     user_id = f"u{len(users)+1}"
     for user in users:
-        if user["userid"] == client_subject:
+        if user["username"] == client_subject:
             return user["id"]
 
     try:
         users.append({
             "id": user_id,
-            "userid": client_subject,
+            "username": client_subject,
             "public_key": base64.b64encode(serialize_public_key_rsa(public_key)).decode(),
             "groups": []
         })
@@ -144,7 +145,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
             if list_type == "group":
                 user_permissions = next(
                     (permission["permissions"] for permission in file.get("permissions", {}).get("groups", [])
-                    if permission["gropid"] == f"Owner: {target_id}"), []
+                    if permission["groupid"] == f"Owner: {target_id}"), []
                 )
             else:
                 user_permissions = next(
@@ -170,7 +171,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
 
         if list_type == "group":
             for group_permission in file.get("permissions", {}).get("groups", []):
-                group_id = group_permission["gropid"]
+                group_id = group_permission["groupid"]
                 if group_id == target_id and group_permission["permissions"] != []:
                     result["shared"].append({
                         "id": file["id"],
@@ -180,7 +181,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
                     })
         else:
             for group_permission in file.get("permissions", {}).get("groups", []):
-                group_id = group_permission["gropid"]
+                group_id = group_permission["groupid"]
                 if group_id in user_groups and group_permission["permissions"] != []:
                     result["group"].append({
                         "id": file["id"],
@@ -192,9 +193,12 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
     return result
 
 def get_user_groups(user_id: str) -> list:
-    """ Gets the groups of a user. """
-    groups = load_groups()
-    return [g["id"] for g in groups if user_id in g.get("members", [])]
+    """ Gets the groups of a user from the users database. """
+    users = load_users()
+    user = next((u for u in users if u["id"] == user_id), None)
+    if not user:
+        return []
+    return user.get("groups", [])
 
 def get_public_key(user_id: str) -> Optional[str]:
     """ Gets the public key of a user. """
@@ -246,9 +250,12 @@ def add_group_request(group_name: str, user_id: str) -> str:
 
     return group_id
 
-def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission: str) -> Optional[str]:
-    """Adds a user to a group or updates permissions if user already exists"""
+def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission: str, encrypted_keys: dict) -> Optional[str]:
+    """Adds a user to a group with specified permissions."""
     groups = load_groups()
+    users = load_users()
+    files = load_files()
+
     group = next((g for g in groups if g["id"] == group_id), None)
 
     if not group:
@@ -279,13 +286,11 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
             "permissions": new_perms
         })
 
-    users = load_users()
     user_found = False
     for user in users:
         if user["id"] == add_user_id:
             user_found = True
-            if "groups" not in user:
-                user["groups"] = []
+            user.setdefault("groups", [])
             if group_id not in user["groups"]:
                 user["groups"].append(group_id)
             break
@@ -293,8 +298,30 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
     if not user_found:
         return "User to add not found in system"
 
+    for file in files:
+        for group_perm in file["permissions"].get("groups", []):
+            if group_perm["groupid"] == group_id:
+                group_perm.setdefault("keys", [])
+
+                key_entry = next(
+                    (k for k in group_perm["keys"] if k["userid"] == add_user_id),
+                    None
+                )
+
+                file_key = encrypted_keys.get(file["id"])
+
+                if file_key:
+                    if key_entry:
+                        key_entry["key"] = file_key
+                    else:
+                        group_perm["keys"].append({
+                            "userid": add_user_id,
+                            "key": file_key
+                        })
+
     save_groups(groups)
     save_users(users)
+    save_files(files)
 
     return None
 
@@ -308,13 +335,13 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
             file_info["permissions"]["groups"] = []
 
         group_permission = next(
-            (g for g in file_info["permissions"]["groups"] if g["gropid"] == client_request.target_id),
+            (g for g in file_info["permissions"]["groups"] if g["groupid"] == client_request.target_id),
             None
         )
 
         if not group_permission:
             group_permission = {
-                "gropid": client_request.target_id,
+                "groupid": client_request.target_id,
                 "keys": [],
                 "permissions": ["read"] if client_request.permissions == "R" else ["read", "write"]
             }
@@ -370,3 +397,25 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
     save_files(files)
 
     return None
+
+def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
+    """ Get the keys to add a user to a group """
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+    if not group:
+        return {"error": "Group not found"}
+
+    if group["owner"] != requester_id:
+        return {"error": "Only group owner can add users"}
+
+    files = load_files()
+    encrypted_keys = {}
+
+    for file in files:
+        for group_perm in file.get("permissions", {}).get("groups", []):
+            if group_perm["groupid"] == group_id:
+                for key_entry in group_perm.get("keys", []):
+                    print(f"Key entry found: {key_entry}")
+                    encrypted_keys[file["id"]] = key_entry["key"]
+
+    return encrypted_keys

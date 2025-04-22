@@ -1,11 +1,14 @@
 import os, base64, json
 from utils.utils import(
     GroupAddUserRequest,
+    GroupAddUserRequirementsRequest,
+    GroupAddUserRequirementsResponse,
     GroupCreateRequest,
     GroupMembersResponse,
     ListRequest,
     PublicKeyResponse,
     ReadResponse,
+    VaultError,
     encrypt,
     decrypt,
     build_aesgcm,
@@ -17,6 +20,7 @@ from utils.utils import(
     ShareRequest,
     deserialize_request,
     deserialize_public_key,
+    max_msg_size
 )
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
@@ -120,20 +124,68 @@ def groupCreateRequest(group_name: str) -> bytes:
     )
     return serialize_response(group_create_request)
 
-def groupAddUserRequest(group_id: str, user_id: str, permission: str) -> bytes:
-    group_add_user_request = GroupAddUserRequest(
-        group_id = group_id,
-        user_id = user_id,
-        permission = permission,
-    )
-    return serialize_response(group_add_user_request)
+async def groupAddUserRequest(group_id: str, user_id: str, permission: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
+    try:
+        # 1º Requirements: encrypted_keys for each file shared with the group or owner, owner's public_key
+        requirements = GroupAddUserRequirementsRequest(
+            group_id = group_id,
+            user_id = user_id,
+        )
+        writer.write(encrypt(serialize_response(requirements), aesgcm))
+        await writer.drain()
+
+        response = await reader.read(max_msg_size)
+        decrypted_msg: bytes = decrypt(response, aesgcm)
+        requirements_response = deserialize_request(decrypted_msg)
+
+        if isinstance(requirements_response, VaultError):
+            raise ValueError(f"Erro do servidor: {requirements_response.error}")
+
+        if not isinstance(requirements_response, GroupAddUserRequirementsResponse):
+            raise ValueError("Invalid response type for GroupAddUserRequirementsRequest.")
+
+        # 2º Encrypted keys for the user to add
+        encrypted_keys = {}
+        target_public_key = deserialize_public_key(base64.b64decode(requirements_response.public_key))
+        for file_id, encrypted_key in requirements_response.encrypted_keys.items():
+            aes_key = rsa_private_key.decrypt(
+                base64.b64decode(encrypted_key),
+                padding.OAEP(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+
+            encrypted_for_target = target_public_key.encrypt(
+                aes_key,
+                padding.OAEP(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+
+            encrypted_keys[file_id] = base64.b64encode(encrypted_for_target).decode()
+
+        # 3º GroupAddUserRequest
+        group_add_user_request = GroupAddUserRequest(
+            group_id = group_id,
+            user_id = user_id,
+            permission = permission,
+            encrypted_keys = encrypted_keys
+        )
+        return serialize_response(group_add_user_request)
+    except Exception as e:
+        print("\nError in groupAddUserRequest:", e)
+        return b""
 
 async def shareRequest(file_id: str, target_id: str, permission: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
     # 1º AES key for the file
     get_key_request = ReadRequest(file_id)
     writer.write(encrypt(serialize_response(get_key_request), aesgcm))
     await writer.drain()
-    response = await reader.read(9999)
+    response = await reader.read(max_msg_size)
 
     decrypted_msg: bytes = decrypt(response, aesgcm)
     read_response: ReadResponse = deserialize_request(decrypted_msg)
@@ -160,19 +212,18 @@ async def shareRequest(file_id: str, target_id: str, permission: str, rsa_privat
         group_members_request = GroupMembersRequest(target_id)
         writer.write(encrypt(serialize_response(group_members_request), aesgcm))
         await writer.drain()
-        response = await reader.read(9999)
+        response = await reader.read(max_msg_size)
         decrypted_response: bytes = decrypt(response, aesgcm)
         group_members_response = deserialize_request(decrypted_response)
 
         if isinstance(group_members_response, GroupMembersResponse):
             for member in group_members_response.members:
-                publicKey_request = PublicKeyRequest(member)
+                publicKey_request = PublicKeyRequest(member["userid"])
                 writer.write(encrypt(serialize_response(publicKey_request), aesgcm))
                 await writer.drain()
-                response = await reader.read(9999)
+                response = await reader.read(max_msg_size)
                 decrypted_response: bytes = decrypt(response, aesgcm)
                 publicKey_response = deserialize_request(decrypted_response)
-
                 if isinstance(publicKey_response, PublicKeyResponse):
                     target_public_key = deserialize_public_key(
                         base64.b64decode(publicKey_response.public_key)
@@ -187,13 +238,13 @@ async def shareRequest(file_id: str, target_id: str, permission: str, rsa_privat
                         ),
                     )
 
-                    encrypted_keys[member] = base64.b64encode(encrypted_for_target).decode()
+                    encrypted_keys[member["userid"]] = base64.b64encode(encrypted_for_target).decode()
     else:
         # Request public key for the target user
         publicKey_request = PublicKeyRequest(target_id)
         writer.write(encrypt(serialize_response(publicKey_request), aesgcm))
         await writer.drain()
-        response = await reader.read(9999)
+        response = await reader.read(max_msg_size)
         decrypted_response: bytes = decrypt(response, aesgcm)
         publicKey_response: PublicKeyResponse = deserialize_request(decrypted_response)
 

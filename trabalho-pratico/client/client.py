@@ -32,6 +32,7 @@ from utils.utils import (
     serialize_certificate,
     serialize_response,
     deserialize_request,
+    max_msg_size,
 )
 from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse, shareRequest
 from cryptography.x509 import Certificate
@@ -42,7 +43,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.x509.oid import NameOID
 
 conn_port: int = 7777
-max_msg_size: int = 9999
 
 SERVER_COMMOM_NAME: str = "S"
 
@@ -259,11 +259,14 @@ class Client:
                 print("Invalid permission.")
                 return b""
 
-            json_bytes: bytes = groupAddUserRequest(group_id, user_id, permission)
-            if not json_bytes:
+            try:
+                groupAddUser_request = await groupAddUserRequest(
+                    group_id, user_id, permission, self.rsa_private_key, self.aesgcm, writer, reader
+                )
+                return encrypt(groupAddUser_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during share request: {e}")
                 return b""
-
-            return encrypt(json_bytes, self.aesgcm)
         elif new_msg.strip() == "exit":
             return None
         else:
