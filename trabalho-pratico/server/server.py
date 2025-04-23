@@ -6,6 +6,8 @@ from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
     AddResponse,
+    DeleteRequest,
+    DeleteResponse,
     GroupAddUserRequest,
     GroupAddUserRequirementsRequest,
     GroupAddUserRequirementsResponse,
@@ -51,7 +53,7 @@ from utils.utils import (
     serialize_response,
     max_msg_size
 )
-from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, check_write_permission,
+from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, check_write_permission, delete_file,
                           get_group_members, get_public_key, get_user_permissions_by_group, get_user_write_key,
                           log_request, get_file_by_id, add_request, add_user, get_user_key,
                           get_files_for_listing, replace_file, replace_file_requirements, share_file)
@@ -196,21 +198,24 @@ class ServerWorker:
 
                 log_request(f"{self.id}", "list", [client_request.list_type, client_request.target_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, DeleteRequest):
+                file_id = client_request.file_id
+                response = delete_file(file_id, self.id)
+                if response is None:
+                    return encrypt(serialize_response(VaultError("Error deleting file")), self.aesgcm)
+                return encrypt(serialize_response(DeleteResponse("File deleted successfully")), self.aesgcm)
             elif isinstance(client_request, ReplaceRequirementsRequest):
                 encrypted_key = replace_file_requirements(client_request, self.id)
                 if encrypted_key is None:
                     return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
 
-                response_data = ReplaceRequirementsResponse(
-                    encrypted_key=encrypted_key
-                )
+                response_data = ReplaceRequirementsResponse(encrypted_key)
                 log_request(self.id, "replace", [client_request.file_id], "requirements_success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
 
             elif isinstance(client_request, ReplaceRequest):
                 response = replace_file(client_request, self.id)
                 if response is None:
-                    log_request(self.id, "replace", [client_request.file_id], "failed", "Error replacing file")
                     return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
 
                 return encrypt(serialize_response(ReplaceResponse("File replaced successfully")), self.aesgcm)

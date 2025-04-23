@@ -83,6 +83,14 @@ class PublicKeyResponse:
     public_key: str
 
 @dataclass
+class DeleteRequest:
+    file_id: str
+
+@dataclass
+class DeleteResponse:
+    response: str
+
+@dataclass
 class ReplaceRequirementsRequest:
     file_id: str
 
@@ -157,7 +165,8 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
                                               GroupListRequest, GroupListResponse,
                                               ReplaceRequirementsRequest, ReplaceRequirementsResponse,
-                                              ReplaceRequest, ReplaceResponse, VaultError]:
+                                              ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
+                                              VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -196,6 +205,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return PublicKeyRequest(**args)
     elif op_type == "PublicKeyResponse":
         return PublicKeyResponse(**args)
+    elif op_type == "DeleteRequest":
+        return DeleteRequest(**args)
+    elif op_type == "DeleteResponse":
+        return DeleteResponse(**args)
     elif op_type == "ReplaceRequirementsRequest":
         return ReplaceRequirementsRequest(**args)
     elif op_type == "ReplaceRequirementsResponse":
@@ -237,7 +250,8 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
                                   GroupListRequest, GroupListResponse,
                                   ReplaceRequirementsRequest, ReplaceRequirementsResponse,
-                                  ReplaceRequest, ReplaceResponse, VaultError]) -> bytes:
+                                  ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
+                                  VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -276,6 +290,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, PublicKeyResponse):
         op_type = "PublicKeyResponse"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteRequest):
+        op_type = "DeleteRequest"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteResponse):
+        op_type = "DeleteResponse"
         args = obj.__dict__
     elif isinstance(obj, ReplaceRequirementsRequest):
         op_type = "ReplaceRequirementsRequest"

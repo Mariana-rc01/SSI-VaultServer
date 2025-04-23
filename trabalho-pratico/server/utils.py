@@ -492,6 +492,96 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
         log_request(user_id, "replace", [client_request.file_id], "failed", str(e))
         return None
 
+def delete_file(file_id: str, user_id: str) -> Optional[str]:
+    """Handles file deletion and access revocation following the new rules"""
+    files = load_files()
+    file_info = next((f for f in files if f["id"] == file_id), None)
+
+    if not file_info:
+        return "File not found"
+
+    file_owner = file_info["owner"]
+    file_permissions = file_info.get("permissions", {})
+    groups = load_groups()
+
+    # 1st check if the user is the owner of the file
+    if file_owner == user_id:
+        try:
+            os.remove(file_info["location"])
+        except Exception as e:
+            return f"Error deleting file: {str(e)}"
+
+        new_files = [f for f in files if f["id"] != file_id]
+        save_files(new_files)
+        log_request(user_id, "delete", [file_id], "success", "")
+        return "User has no access to this file"
+
+    # 2nd Group owner with owner as "Owner: user_id" in the group
+    for group_perm in file_permissions.get("groups", []):
+        group = next((g for g in groups if g["id"] == group_perm["groupid"]), None)
+
+        if group and group["owner"] == user_id:
+            member_ids_in_file = [k["userid"] for k in group_perm.get("keys", [])]
+
+            # Search for "Owner: <file_owner>" explicitly
+            if f"Owner: {file_owner}" in member_ids_in_file:
+                try:
+                    os.remove(file_info["location"])
+                    files = [f for f in files if f["id"] != file_id]
+                    save_files(files)
+                    log_request(user_id, "delete", [file_id], "success", "")
+                    return "User has no access to this file"
+                except Exception as e:
+                    return f"Error deleting file: {str(e)}"
+
+    # 3rd Group owner with owner not in the group
+    modified = False
+    new_groups = []
+
+    for group_perm in file_permissions.get("groups", []):
+        group = next((g for g in groups if g["id"] == group_perm["groupid"]), None)
+
+        if group and group["owner"] == user_id:
+            members = [m["userid"] for m in group.get("members", [])]
+            if file_owner not in members:
+                modified = True
+            else:
+                new_groups.append(group_perm)
+        else:
+            new_groups.append(group_perm)
+
+    if modified:
+        file_info["permissions"]["groups"] = new_groups
+        files = [f if f["id"] != file_id else file_info for f in files]
+        save_files(files)
+        log_request(user_id, "delete", [file_id], "success", "")
+
+    # 4th Remove all references to the user
+    had_access = False
+
+    # Remove the user from the users permissions
+    original_users = file_permissions.get("users", [])
+    new_users = [u for u in original_users if u["userid"] != user_id]
+    if len(new_users) < len(original_users):
+        had_access = True
+    file_permissions["users"] = new_users
+
+    # Remove the user from the group permissions
+    for group_perm in file_permissions.get("groups", []):
+        original_keys = group_perm.get("keys", [])
+        new_keys = [k for k in original_keys if k["userid"] != user_id]
+        if len(new_keys) < len(original_keys):
+            had_access = True
+            group_perm["keys"] = new_keys
+
+    if had_access:
+        files = [f if f["id"] != file_id else file_info for f in files]
+        save_files(files)
+        log_request(user_id, "delete", [file_id], "success", "User access revoked")
+        return "User has no access to this file"
+
+    return "User has no access to this file"
+
 def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
     """ Get the keys to add a user to a group """
     groups = load_groups()

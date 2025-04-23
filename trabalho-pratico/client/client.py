@@ -6,6 +6,8 @@ from typing import Optional
 from authentication.authenticator import terminal_interface
 
 from utils.utils import (
+    DeleteRequest,
+    DeleteResponse,
     GroupAddUserResponse,
     GroupCreateResponse,
     GroupListRequest,
@@ -37,7 +39,9 @@ from utils.utils import (
     deserialize_request,
     max_msg_size,
 )
-from client.utils import addRequest, groupAddUserRequest, groupCreateRequest, groupList, listRequest, listResponse, readRequest, readResponse, replaceRequest, shareRequest
+from client.utils import (addRequest, groupAddUserRequest, groupCreateRequest, groupList,
+                          listRequest, listResponse, readRequest, readResponse, replaceRequest,
+                          shareRequest)
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -150,6 +154,9 @@ class Client:
                 elif isinstance(server_response, ShareResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, DeleteResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, ReplaceResponse):
                     print(f"Received {server_response.response}")
 
@@ -178,6 +185,7 @@ class Client:
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
         print("- share <file-id> <user-id> --permission=[r|w]")
+        print("- delete <file-id>")
         print("- replace <file-id> <file-path>")
         print("- group create <group-name>")
         print("- group add-user <group-id> <user-id> --permission=[r|w]")
@@ -248,6 +256,12 @@ class Client:
             except Exception as e:
                 print(f"Error during share request: {e}")
                 return b""
+        elif new_msg.startswith("delete "):
+            file_id: str = new_msg.split(" ", 1)[1]
+
+            request = DeleteRequest(file_id)
+            json_bytes = serialize_response(request)
+            return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("replace "):
             args = new_msg.split(" ", 2)
             if len(args) != 3:

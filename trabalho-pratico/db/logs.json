@@ -642,5 +642,82 @@
     "timestamp": "2025-04-23T00:09:50.463227Z",
     "status": "failed",
     "error": "No write permission"
+  },
+  {
+    "id": "r59",
+    "userid": "u5",
+    "type": "delete",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T01:09:46.786606Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r60",
+    "userid": "u5",
+    "type": "delete",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:09:59.967949Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r61",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:34.448950Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r62",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u1"
+    ],
+    "timestamp": "2025-04-23T01:39:34.452709Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r63",
+    "userid": "u2",
+    "type": "share",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:34.460010Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r64",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:47.049807Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r65",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:47.051756Z",
+    "status": "success",
+    "error": "User access revoked"
   }
 ]
