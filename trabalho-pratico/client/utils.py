@@ -307,7 +307,7 @@ async def replaceRequest(file_id: str, file_path: str, rsa_private_key, aesgcm, 
         requirements_response = deserialize_request(decrypted_msg)
 
         if not isinstance(requirements_response, ReplaceRequirementsResponse):
-            raise ValueError("Invalid response type for ReplaceRequirementsRequest.")
+            return print("Invalid operation.")
 
         # 2º Decrypt AES key with RSA private key
         encrypted_aes_key = base64.b64decode(requirements_response.encrypted_key)
