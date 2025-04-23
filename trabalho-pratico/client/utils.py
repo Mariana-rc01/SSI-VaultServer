@@ -9,6 +9,10 @@ from utils.utils import(
     ListRequest,
     PublicKeyResponse,
     ReadResponse,
+    ReplaceRequest,
+    ReplaceRequirementsRequest,
+    ReplaceRequirementsResponse,
+    ReplaceResponse,
     VaultError,
     encrypt,
     decrypt,
@@ -286,6 +290,51 @@ async def shareRequest(file_id: str, target_id: str, permission: str, rsa_privat
 
     return serialize_response(share_request)
 
+async def replaceRequest(file_id: str, file_path: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
+    """ Replace a file request. """
+    if not os.path.isfile(file_path):
+        print(f"Error: File '{file_path}' does not exist.")
+        return b""
+
+    try:
+        # 1º AES key for the file
+        requeriments_request = ReplaceRequirementsRequest(file_id)
+        writer.write(encrypt(serialize_response(requeriments_request), aesgcm))
+        await writer.drain()
+
+        response = await reader.read(max_msg_size)
+        decrypted_msg: bytes = decrypt(response, aesgcm)
+        requirements_response = deserialize_request(decrypted_msg)
+
+        if not isinstance(requirements_response, ReplaceRequirementsResponse):
+            return print("Invalid operation.")
+
+        # 2º Decrypt AES key with RSA private key
+        encrypted_aes_key = base64.b64decode(requirements_response.encrypted_key)
+        aes_key = rsa_private_key.decrypt(
+            encrypted_aes_key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None,
+            ),
+        )
+
+        # 3º Encrypt the new file with the AES key
+        aesgcm_file = build_aesgcm(aes_key)
+        with open(file_path, "rb") as file:
+            file_data: bytes = file.read()
+        encrypted_file: bytes = encrypt(file_data, aesgcm_file)
+
+        # 4º Send ReplaceRequest
+        replace_request = ReplaceRequest(
+            file_id = file_id,
+            encrypted_file = base64.b64encode(encrypted_file).decode(),
+        )
+        return serialize_response(replace_request)
+    except Exception as e:
+        print(f"Replace error: {e}")
+        return b""
 
 def groupList(server_response: GroupListResponse) -> None:
     """ Displays the list of groups. """

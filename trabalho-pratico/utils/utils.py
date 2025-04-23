@@ -83,6 +83,31 @@ class PublicKeyResponse:
     public_key: str
 
 @dataclass
+class DeleteRequest:
+    file_id: str
+
+@dataclass
+class DeleteResponse:
+    response: str
+
+@dataclass
+class ReplaceRequirementsRequest:
+    file_id: str
+
+@dataclass
+class ReplaceRequirementsResponse:
+    encrypted_key: str
+
+@dataclass
+class ReplaceRequest:
+    file_id: str
+    encrypted_file: str
+
+@dataclass
+class ReplaceResponse:
+    response: str
+
+@dataclass
 class GroupMembersRequest:
     group_id: str
 
@@ -138,7 +163,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               GroupMembersRequest, GroupMembersResponse,
                                               GroupAddUserRequest, GroupAddUserResponse,
                                               GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
-                                              GroupListRequest, GroupListResponse, VaultError]:
+                                              GroupListRequest, GroupListResponse,
+                                              ReplaceRequirementsRequest, ReplaceRequirementsResponse,
+                                              ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
+                                              VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -177,6 +205,18 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return PublicKeyRequest(**args)
     elif op_type == "PublicKeyResponse":
         return PublicKeyResponse(**args)
+    elif op_type == "DeleteRequest":
+        return DeleteRequest(**args)
+    elif op_type == "DeleteResponse":
+        return DeleteResponse(**args)
+    elif op_type == "ReplaceRequirementsRequest":
+        return ReplaceRequirementsRequest(**args)
+    elif op_type == "ReplaceRequirementsResponse":
+        return ReplaceRequirementsResponse(**args)
+    elif op_type == "ReplaceRequest":
+        return ReplaceRequest(**args)
+    elif op_type == "ReplaceResponse":
+        return ReplaceResponse(**args)
     elif op_type == "GroupMembersRequest":
         return GroupMembersRequest(**args)
     elif op_type == "GroupMembersResponse":
@@ -208,7 +248,10 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   GroupMembersRequest, GroupMembersResponse,
                                   GroupAddUserRequest, GroupAddUserResponse,
                                   GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
-                                  GroupListRequest, GroupListResponse, VaultError]) -> bytes:
+                                  GroupListRequest, GroupListResponse,
+                                  ReplaceRequirementsRequest, ReplaceRequirementsResponse,
+                                  ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
+                                  VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -247,6 +290,24 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, PublicKeyResponse):
         op_type = "PublicKeyResponse"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteRequest):
+        op_type = "DeleteRequest"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteResponse):
+        op_type = "DeleteResponse"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceRequirementsRequest):
+        op_type = "ReplaceRequirementsRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceRequirementsResponse):
+        op_type = "ReplaceRequirementsResponse"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceRequest):
+        op_type = "ReplaceRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceResponse):
+        op_type = "ReplaceResponse"
         args = obj.__dict__
     elif isinstance(obj, GroupMembersRequest):
         op_type = "GroupMembersRequest"

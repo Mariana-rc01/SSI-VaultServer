@@ -3,15 +3,8 @@
         "id": "f1",
         "name": "file1.txt",
         "size": 1234,
-        "owner": "u1",
+        "owner": "u2",
         "permissions": {
-            "users": [
-                {
-                    "userid": "Owner: u1",
-                    "key": "symmetric key encrypted with the owner's public key (RSA)",
-                    "permissions": ["read", "write"]
-                }
-            ],
             "groups": [
                 {
                     "groupid": "g1",
@@ -21,7 +14,7 @@
                             "key": "kfdvdrgbhtybkusdfwa"
                         },
                         {
-                            "userid": "u2",
+                            "userid": "Owner: u2",
                             "key": "lfjhbgfbgdls"
                         }
                     ],
@@ -44,7 +37,7 @@
         "permissions": {
             "users": [
                 {
-                    "userid": "u1",
+                    "userid": "Owner: u1",
                     "permissions": ["read"]
                 },
                 {
