@@ -26,6 +26,8 @@ from utils.utils import (
     ReplaceRequirementsRequest,
     ReplaceRequirementsResponse,
     ReplaceResponse,
+    DetailsRequest,
+    DetailsResponse,
     ShareRequest,
     ShareResponse,
     VaultError,
@@ -219,6 +221,25 @@ class ServerWorker:
                     return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
 
                 return encrypt(serialize_response(ReplaceResponse("File replaced successfully")), self.aesgcm)
+            elif isinstance(client_request, DetailsRequest):
+                file_id = client_request.file_id
+                file_info = get_file_by_id(file_id)
+
+                if not file_info:
+                    log_request(f"{self.id}", "details", [file_id], "failed", "file not found")
+                    return encrypt(serialize_response(VaultError("File not found")), self.aesgcm)
+
+                response_data = DetailsResponse(
+                    file_id = file_info["id"],
+                    file_name = file_info["name"],
+                    file_size = file_info["size"],
+                    owner = file_info["owner"],
+                    permissions = file_info["permissions"],
+                    created_at = file_info["created_at"]
+                )
+
+                log_request(f"{self.id}", "details", [file_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, GroupMembersRequest):
                 members = get_group_members(client_request.group_id)
                 return encrypt(serialize_response(GroupMembersResponse(members)), self.aesgcm)
