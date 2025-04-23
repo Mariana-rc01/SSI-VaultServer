@@ -16,6 +16,8 @@ from utils.utils import (
     ReplaceResponse,
     DetailsRequest,
     DetailsResponse,
+    RevokeRequest,
+    RevokeResponse,
     ShareResponse,
     VaultError,
     ClientFirstInteraction,
@@ -165,6 +167,9 @@ class Client:
                 elif isinstance(server_response, DetailsResponse):
                     detailsResponse(server_response)
 
+                elif isinstance(server_response, RevokeResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
 
@@ -189,10 +194,11 @@ class Client:
         print("- add <file-path>")
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
-        print("- share <file-id> <user-id> --permission=[r|w]")
+        print("- share <file-id> <target-id> --permission=[r|w]")
         print("- delete <file-id>")
         print("- replace <file-id> <file-path>")
         print("- details <file-id>")
+        print("- revoke <file-id> <target-id>")
         print("- group create <group-name>")
         print("- group add-user <group-id> <user-id> --permission=[r|w]")
         print("- group list")
@@ -303,6 +309,18 @@ class Client:
             if not json_bytes:
                 return b""
 
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("revoke "):
+            args = new_msg.split(" ", 2)
+            if len(args) != 3:
+                print("Invalid command.")
+                return b""
+
+            file_id: str = args[1]
+            target_id: str = args[2]
+
+            request = RevokeRequest(file_id, target_id)
+            json_bytes = serialize_response(request)
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("group add-user "):
             args = new_msg.split()

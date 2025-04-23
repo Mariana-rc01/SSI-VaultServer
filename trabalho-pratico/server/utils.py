@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 
-from utils.utils import ReplaceRequest, ShareRequest, serialize_public_key_rsa
+from utils.utils import ReplaceRequest, RevokeRequest, ShareRequest, serialize_public_key_rsa
 from server.utils_db import load_users, save_users, load_groups, save_groups, load_files, save_files, get_next_file_id, get_next_group_id
 
 FILES_JSON = "./db/files.json"
@@ -491,6 +491,43 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
     except Exception as e:
         log_request(user_id, "replace", [client_request.file_id], "failed", str(e))
         return None
+
+def revoke_file_access(client_request: RevokeRequest, client_id: str) -> Optional[str]:
+    """ Revokes access to a file for a user or group. """
+
+    if client_request.target_id == client_id:
+        return
+
+    file_info = get_file_by_id(client_request.file_id)
+    if not file_info:
+        return
+
+    if file_info["owner"] != client_id:
+        return
+
+    permissions = file_info.get("permissions", {})
+    if "g" in client_request.target_id:
+        group_permissions = permissions.get("groups", [])
+        for group_perm in group_permissions:
+            if group_perm["groupid"] == client_request.target_id:
+                group_permissions.remove(group_perm)
+                break
+    else:
+        user_permissions = permissions.get("users", [])
+        for user_perm in user_permissions:
+            if user_perm["userid"] == client_request.target_id:
+                user_permissions.remove(user_perm)
+                break
+    file_info["permissions"] = permissions
+    files = load_files()
+    for f in files:
+        if f["id"] == file_info["id"]:
+            f.update(file_info)
+            break
+    save_files(files)
+    log_request(client_request.target_id, "revoke", [client_request.file_id], "success")
+
+    return "Access revoked successfully"
 
 def delete_file(file_id: str, user_id: str) -> Optional[str]:
     """Handles file deletion and access revocation following the new rules"""

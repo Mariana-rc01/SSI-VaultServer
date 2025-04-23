@@ -121,6 +121,15 @@ class DetailsResponse:
     created_at: str
 
 @dataclass
+class RevokeRequest:
+    file_id: str
+    target_id: str
+
+@dataclass
+class RevokeResponse:
+    response: str
+
+@dataclass
 class GroupMembersRequest:
     group_id: str
 
@@ -179,7 +188,7 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               GroupListRequest, GroupListResponse,
                                               ReplaceRequirementsRequest, ReplaceRequirementsResponse,
                                               ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
-                                              DetailsRequest, DetailsResponse,
+                                              DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
                                               VaultError]:
     """
         "type": "ClientFirstInteraction",
@@ -235,6 +244,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return DetailsRequest(**args)
     elif op_type == "DetailsResponse":
         return DetailsResponse(**args)
+    elif op_type == "RevokeRequest":
+        return RevokeRequest(**args)
+    elif op_type == "RevokeResponse":
+        return RevokeResponse(**args)
     elif op_type == "GroupMembersRequest":
         return GroupMembersRequest(**args)
     elif op_type == "GroupMembersResponse":
@@ -269,7 +282,7 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   GroupListRequest, GroupListResponse,
                                   ReplaceRequirementsRequest, ReplaceRequirementsResponse,
                                   ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
-                                  DetailsRequest, DetailsResponse,
+                                  DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
                                   VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
@@ -333,6 +346,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, DetailsResponse):
         op_type = "DetailsResponse"
+        args = obj.__dict__
+    elif isinstance(obj, RevokeRequest):
+        op_type = "RevokeRequest"
+        args = obj.__dict__
+    elif isinstance(obj, RevokeResponse):
+        op_type = "RevokeResponse"
         args = obj.__dict__
     elif isinstance(obj, GroupMembersRequest):
         op_type = "GroupMembersRequest"
