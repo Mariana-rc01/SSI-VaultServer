@@ -13,6 +13,7 @@ from utils.utils import(
     ReplaceRequirementsRequest,
     ReplaceRequirementsResponse,
     ReplaceResponse,
+    DetailsResponse,
     VaultError,
     encrypt,
     decrypt,
@@ -29,6 +30,7 @@ from utils.utils import(
 )
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
+from datetime import datetime
 
 def addRequest(file_path: str, client_public_key) -> bytes:
     """ Add a file request. """
@@ -335,6 +337,29 @@ async def replaceRequest(file_id: str, file_path: str, rsa_private_key, aesgcm, 
     except Exception as e:
         print(f"Replace error: {e}")
         return b""
+
+def detailsResponse(file_details: DetailsResponse) -> None:
+    """ Displays the details of a file. """
+    if not file_details:
+        print("No details found")
+        return
+
+    print("\n=== File Details ===")
+    print(f"File ID: {file_details.file_id}")
+    print(f"File Name: {file_details.file_name}")
+    print(f"File Size: {file_details.file_size} bytes")
+    print(f"Owner: {file_details.owner}")
+    if file_details.permissions and 'users' in file_details.permissions:
+        print("Permissions:")
+        for user in file_details.permissions['users']:
+            user_id = user.get('userid', 'Unknown User')
+            user_permissions = ', '.join(user.get('permissions', [])) or 'None'
+            print(f"  - {user_id}: {user_permissions}")
+    else:
+        print("Permissions: None")
+    created_at = datetime.strptime(file_details.created_at, "%Y-%m-%dT%H:%M:%S.%fZ")
+    readable_date = created_at.strftime("%d-%m-%Y %H:%M:%S")
+    print(f"Created At: {readable_date}\n")
 
 def groupList(server_response: GroupListResponse) -> None:
     """ Displays the list of groups. """

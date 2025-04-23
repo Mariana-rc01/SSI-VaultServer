@@ -719,5 +719,105 @@
     "timestamp": "2025-04-23T01:39:47.051756Z",
     "status": "success",
     "error": "User access revoked"
+  },
+  {
+    "id": "r66",
+    "userid": "u1",
+    "type": "list",
+    "args": [
+      "user",
+      "u1"
+    ],
+    "timestamp": "2025-04-23T18:29:17.451050Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r67",
+    "userid": "u3",
+    "type": "revoke",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-23T18:44:15.393617Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r68",
+    "userid": "g2",
+    "type": "revoke",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-23T18:45:53.974330Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r69",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-23T18:46:34.713008Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r70",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u1"
+    ],
+    "timestamp": "2025-04-23T18:46:34.718431Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r71",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u3"
+    ],
+    "timestamp": "2025-04-23T18:46:34.720070Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r72",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u4"
+    ],
+    "timestamp": "2025-04-23T18:46:34.721485Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r73",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u5"
+    ],
+    "timestamp": "2025-04-23T18:46:34.722817Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r74",
+    "userid": "u2",
+    "type": "share",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-23T18:46:34.724625Z",
+    "status": "success",
+    "error": ""
   }
 ]

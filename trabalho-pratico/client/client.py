@@ -14,6 +14,10 @@ from utils.utils import (
     GroupListResponse,
     ListResponse,
     ReplaceResponse,
+    DetailsRequest,
+    DetailsResponse,
+    RevokeRequest,
+    RevokeResponse,
     ShareResponse,
     VaultError,
     ClientFirstInteraction,
@@ -41,7 +45,7 @@ from utils.utils import (
 )
 from client.utils import (addRequest, groupAddUserRequest, groupCreateRequest, groupList,
                           listRequest, listResponse, readRequest, readResponse, replaceRequest,
-                          shareRequest)
+                          shareRequest, detailsResponse)
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -122,7 +126,7 @@ class Client:
             NameOID.COMMON_NAME
         )[0].value
 
-        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(), 
+        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(),
                                                   base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
                                                   base64.b64encode(client_certificate_subject.encode()).decode())
 
@@ -160,6 +164,12 @@ class Client:
                 elif isinstance(server_response, ReplaceResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, DetailsResponse):
+                    detailsResponse(server_response)
+
+                elif isinstance(server_response, RevokeResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
 
@@ -184,14 +194,16 @@ class Client:
         print("- add <file-path>")
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
-        print("- share <file-id> <user-id> --permission=[r|w]")
+        print("- share <file-id> <target-id> --permission=[r|w]")
         print("- delete <file-id>")
         print("- replace <file-id> <file-path>")
+        print("- details <file-id>")
+        print("- revoke <file-id> <target-id>")
         print("- group create <group-name>")
         print("- group add-user <group-id> <user-id> --permission=[r|w]")
         print("- group list")
         print("- exit")
-        new_msg: str = input().strip()
+        new_msg: str = input(">> ").strip()
         if new_msg.startswith("add "):
             file_path: str = new_msg.split(" ", 1)[1]
 
@@ -284,6 +296,12 @@ class Client:
             except Exception as e:
                 print(f"Error during replace request: {e}")
                 return b""
+        elif new_msg.startswith("details "):
+            file_id: str = new_msg.split(" ", 1)[1]
+
+            request = DetailsRequest(file_id)
+            json_bytes = serialize_response(request)
+            return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("group create "):
             group_name: str = new_msg.split(" ", 2)[2]
 
@@ -291,6 +309,18 @@ class Client:
             if not json_bytes:
                 return b""
 
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("revoke "):
+            args = new_msg.split(" ", 2)
+            if len(args) != 3:
+                print("Invalid command.")
+                return b""
+
+            file_id: str = args[1]
+            target_id: str = args[2]
+
+            request = RevokeRequest(file_id, target_id)
+            json_bytes = serialize_response(request)
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("group add-user "):
             args = new_msg.split()

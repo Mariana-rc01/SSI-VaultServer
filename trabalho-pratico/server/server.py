@@ -26,6 +26,8 @@ from utils.utils import (
     ReplaceRequirementsRequest,
     ReplaceRequirementsResponse,
     ReplaceResponse,
+    DetailsRequest,
+    DetailsResponse,
     ShareRequest,
     ShareResponse,
     VaultError,
@@ -35,6 +37,8 @@ from utils.utils import (
     AddRequest,
     ReadRequest,
     GroupCreateRequest,
+    RevokeRequest,
+    RevokeResponse,
     encrypt,
     decrypt,
     is_signature_valid,
@@ -56,7 +60,7 @@ from utils.utils import (
 from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, check_write_permission, delete_file,
                           get_group_members, get_public_key, get_user_permissions_by_group, get_user_write_key,
                           log_request, get_file_by_id, add_request, add_user, get_user_key,
-                          get_files_for_listing, replace_file, replace_file_requirements, share_file)
+                          get_files_for_listing, replace_file, replace_file_requirements, share_file, revoke_file_access)
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -219,6 +223,30 @@ class ServerWorker:
                     return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
 
                 return encrypt(serialize_response(ReplaceResponse("File replaced successfully")), self.aesgcm)
+            elif isinstance(client_request, DetailsRequest):
+                file_id = client_request.file_id
+                file_info = get_file_by_id(file_id)
+
+                if not file_info:
+                    log_request(f"{self.id}", "details", [file_id], "failed", "file not found")
+                    return encrypt(serialize_response(VaultError("File not found")), self.aesgcm)
+
+                response_data = DetailsResponse(
+                    file_id = file_info["id"],
+                    file_name = file_info["name"],
+                    file_size = file_info["size"],
+                    owner = file_info["owner"],
+                    permissions = file_info["permissions"],
+                    created_at = file_info["created_at"]
+                )
+
+                log_request(f"{self.id}", "details", [file_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, RevokeRequest):
+                response = revoke_file_access(client_request, self.id)
+                if response is None:
+                    return encrypt(serialize_response(VaultError("Error revoking access")), self.aesgcm)
+                return encrypt(serialize_response(RevokeResponse("Target id access revoked")), self.aesgcm)
             elif isinstance(client_request, GroupMembersRequest):
                 members = get_group_members(client_request.group_id)
                 return encrypt(serialize_response(GroupMembersResponse(members)), self.aesgcm)
