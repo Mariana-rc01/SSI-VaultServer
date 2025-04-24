@@ -1,13 +1,24 @@
 import asyncio
 import base64
-import argparse
 from typing import Optional
 
 from authentication.authenticator import terminal_interface
 
 from utils.utils import (
+    DeleteRequest,
+    DeleteResponse,
+    GroupAddUserResponse,
     GroupCreateResponse,
+    GroupDeleteRequest,
+    GroupDeleteResponse,
+    GroupListRequest,
+    GroupListResponse,
     ListResponse,
+    ReplaceResponse,
+    DetailsRequest,
+    DetailsResponse,
+    RevokeRequest,
+    RevokeResponse,
     ShareResponse,
     VaultError,
     ClientFirstInteraction,
@@ -15,6 +26,7 @@ from utils.utils import (
     ClientSecondInteraction,
     AddResponse,
     ReadResponse,
+    GroupAddResponse,
     generate_derived_key,
     generate_private_key,
     generate_public_key,
@@ -31,8 +43,11 @@ from utils.utils import (
     serialize_certificate,
     serialize_response,
     deserialize_request,
+    max_msg_size,
 )
-from client.utils import addRequest, groupCreateRequest, listRequest, listResponse, readRequest, readResponse, shareRequest
+from client.utils import (addRequest, groupAddUserRequest, groupCreateRequest, groupList,
+                          listRequest, listResponse, readRequest, readResponse, replaceRequest,
+                          shareRequest, detailsResponse, groupAddRequest)
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -41,7 +56,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.x509.oid import NameOID
 
 conn_port: int = 7777
-max_msg_size: int = 9999
 
 SERVER_COMMOM_NAME: str = "S"
 
@@ -114,7 +128,7 @@ class Client:
             NameOID.COMMON_NAME
         )[0].value
 
-        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(), 
+        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(),
                                                   base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
                                                   base64.b64encode(client_certificate_subject.encode()).decode())
 
@@ -146,7 +160,31 @@ class Client:
                 elif isinstance(server_response, ShareResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, DeleteResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, ReplaceResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, DetailsResponse):
+                    detailsResponse(server_response)
+
+                elif isinstance(server_response, RevokeResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, GroupCreateResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, GroupDeleteResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, GroupAddUserResponse):
+                    print(f"Received {server_response.response}")
+
+                elif isinstance(server_response, GroupListResponse):
+                    groupList(server_response)
+
+                elif isinstance(server_response, GroupAddResponse):
                     print(f"Received {server_response.response}")
 
                 elif isinstance(server_response, VaultError):
@@ -164,10 +202,18 @@ class Client:
         print("- add <file-path>")
         print("- read <file-id>")
         print("- list [-u <user-id> | -g <group-id>]")
-        print("- share <file-id> <user-id> <permission>")
+        print("- share <file-id> <target-id> --permission=[r|w]")
+        print("- delete <file-id>")
+        print("- replace <file-id> <file-path>")
+        print("- details <file-id>")
+        print("- revoke <file-id> <target-id>")
         print("- group create <group-name>")
+        print("- group delete <group-id>")
+        print("- group add-user <group-id> <user-id> --permission=[r|w]")
+        print("- group list")
+        print("- group add <group-id> <file-path>")
         print("- exit")
-        new_msg: str = input().strip()
+        new_msg: str = input(">> ").strip()
         if new_msg.startswith("add "):
             file_path: str = new_msg.split(" ", 1)[1]
 
@@ -214,6 +260,10 @@ class Client:
             target_id: str = args[2]
             permission: str = args[3].upper()
 
+            if permission not in ["R", "W"]:
+                print("Invalid permission.")
+                return b""
+
             try:
                 share_request = await shareRequest(
                     file_id,
@@ -228,6 +278,40 @@ class Client:
             except Exception as e:
                 print(f"Error during share request: {e}")
                 return b""
+        elif new_msg.startswith("delete "):
+            file_id: str = new_msg.split(" ", 1)[1]
+
+            request = DeleteRequest(file_id)
+            json_bytes = serialize_response(request)
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("replace "):
+            args = new_msg.split(" ", 2)
+            if len(args) != 3:
+                print("Invalid command.")
+                return b""
+
+            file_id: str = args[1]
+            file_path: str = args[2]
+
+            try:
+                replace_request = await replaceRequest(
+                    file_id,
+                    file_path,
+                    self.rsa_private_key,
+                    self.aesgcm,
+                    writer,
+                    reader,
+                )
+                return encrypt(replace_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during replace request: {e}")
+                return b""
+        elif new_msg.startswith("details "):
+            file_id: str = new_msg.split(" ", 1)[1]
+
+            request = DetailsRequest(file_id)
+            json_bytes = serialize_response(request)
+            return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("group create "):
             group_name: str = new_msg.split(" ", 2)[2]
 
@@ -236,6 +320,67 @@ class Client:
                 return b""
 
             return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("group delete "):
+            group_id: str = new_msg.split(" ", 2)[2]
+
+            request = GroupDeleteRequest(group_id)
+            json_bytes = serialize_response(request)
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("revoke "):
+            args = new_msg.split(" ", 2)
+            if len(args) != 3:
+                print("Invalid command.")
+                return b""
+
+            file_id: str = args[1]
+            target_id: str = args[2]
+
+            request = RevokeRequest(file_id, target_id)
+            json_bytes = serialize_response(request)
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("group add-user "):
+            args = new_msg.split()
+            if len(args) != 5:
+                print("Invalid command.")
+                return b""
+
+            group_id: str = args[2]
+            user_id: str = args[3]
+            permission: str = args[4].upper()
+
+            try:
+                groupAddUser_request = await groupAddUserRequest(
+                    group_id, user_id, permission, self.rsa_private_key, self.aesgcm, writer, reader
+                )
+                return encrypt(groupAddUser_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during share request: {e}")
+                return b""
+        elif new_msg.startswith("group list"):
+            request = GroupListRequest()
+            serialized_request = serialize_response(request)
+            return encrypt(serialized_request, self.aesgcm)
+        elif new_msg.startswith("group add "):
+            args = new_msg[len("group add "):].split(" ", 1)
+            if len(args) != 2:
+                print("Invalid command.")
+                return b""
+
+            group_id: str = args[0]
+            file_path: str = args[1]
+
+            try:
+                group_add_request = await groupAddRequest(
+                    file_path,
+                    group_id,
+                    self.aesgcm,
+                    writer,
+                    reader,
+                )
+                return encrypt(group_add_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during group add request: {e}")
+                return b""
         elif new_msg.strip() == "exit":
             return None
         else:

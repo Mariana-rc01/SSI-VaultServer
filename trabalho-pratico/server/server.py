@@ -1,12 +1,20 @@
 import asyncio
 import os
 import base64
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
     AddResponse,
+    DeleteRequest,
+    DeleteResponse,
+    GroupAddUserRequest,
+    GroupAddUserRequirementsRequest,
+    GroupAddUserRequirementsResponse,
+    GroupAddUserResponse,
     GroupCreateResponse,
+    GroupListRequest,
+    GroupListResponse,
     GroupMembersRequest,
     GroupMembersResponse,
     ListRequest,
@@ -14,6 +22,12 @@ from utils.utils import (
     PublicKeyRequest,
     PublicKeyResponse,
     ReadResponse,
+    ReplaceRequest,
+    ReplaceRequirementsRequest,
+    ReplaceRequirementsResponse,
+    ReplaceResponse,
+    DetailsRequest,
+    DetailsResponse,
     ShareRequest,
     ShareResponse,
     VaultError,
@@ -23,6 +37,14 @@ from utils.utils import (
     AddRequest,
     ReadRequest,
     GroupCreateRequest,
+    GroupDeleteRequest,
+    GroupDeleteResponse,
+    RevokeRequest,
+    RevokeResponse,
+    GroupAddRequest,
+    GroupAddResponse,
+    GroupPublicKeysRequest,
+    GroupPublicKeysResponse,
     encrypt,
     decrypt,
     is_signature_valid,
@@ -39,14 +61,18 @@ from utils.utils import (
     certificate_create,
     deserialize_request,
     serialize_response,
+    max_msg_size
 )
-from server.utils import (add_group_request, get_group_members, get_public_key, log_request, get_file_by_id, add_request,
-                          add_user, get_user_key, get_files_for_listing, share_file)
+from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, delete_file,
+                          get_group_members, get_public_key, get_user_permissions_by_group,
+                          log_request, get_file_by_id, add_request, add_user, get_user_key,
+                          get_files_for_listing, replace_file, replace_file_requirements, share_file,
+                          revoke_file_access, group_add_request, group_delete)
+from server.utils_db import get_group_public_keys
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
 conn_port = 7777
-max_msg_size = 9999
 
 STORAGE_DIR = "./storage"
 os.makedirs(STORAGE_DIR, exist_ok=True)
@@ -87,7 +113,7 @@ class ServerWorker:
         signature = sign_message_with_rsa(both_public_keys, rsa_private_key)
         serialized_certificate = serialize_certificate(server_certificate)
 
-        response_tosend = ServerFirstInteraction(base64.b64encode(serialized_public_key).decode(), 
+        response_tosend = ServerFirstInteraction(base64.b64encode(serialized_public_key).decode(),
                                                  base64.b64encode(signature).decode(),
                                                  base64.b64encode(serialized_certificate).decode())
 
@@ -184,6 +210,51 @@ class ServerWorker:
 
                 log_request(f"{self.id}", "list", [client_request.list_type, client_request.target_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, DeleteRequest):
+                file_id = client_request.file_id
+                response = delete_file(file_id, self.id)
+                if response is None:
+                    return encrypt(serialize_response(VaultError("Error deleting file")), self.aesgcm)
+                return encrypt(serialize_response(DeleteResponse("File deleted successfully")), self.aesgcm)
+            elif isinstance(client_request, ReplaceRequirementsRequest):
+                encrypted_key = replace_file_requirements(client_request, self.id)
+                if encrypted_key is None:
+                    return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
+
+                response_data = ReplaceRequirementsResponse(encrypted_key)
+                log_request(self.id, "replace", [client_request.file_id], "requirements_success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+
+            elif isinstance(client_request, ReplaceRequest):
+                response = replace_file(client_request, self.id)
+                if response is None:
+                    return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
+
+                return encrypt(serialize_response(ReplaceResponse("File replaced successfully")), self.aesgcm)
+            elif isinstance(client_request, DetailsRequest):
+                file_id = client_request.file_id
+                file_info = get_file_by_id(file_id)
+
+                if not file_info:
+                    log_request(f"{self.id}", "details", [file_id], "failed", "file not found")
+                    return encrypt(serialize_response(VaultError("File not found")), self.aesgcm)
+
+                response_data = DetailsResponse(
+                    file_id = file_info["id"],
+                    file_name = file_info["name"],
+                    file_size = file_info["size"],
+                    owner = file_info["owner"],
+                    permissions = file_info["permissions"],
+                    created_at = file_info["created_at"]
+                )
+
+                log_request(f"{self.id}", "details", [file_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, RevokeRequest):
+                response = revoke_file_access(client_request, self.id)
+                if response is None:
+                    return encrypt(serialize_response(VaultError("Error revoking access")), self.aesgcm)
+                return encrypt(serialize_response(RevokeResponse("Target id access revoked")), self.aesgcm)
             elif isinstance(client_request, GroupMembersRequest):
                 members = get_group_members(client_request.group_id)
                 return encrypt(serialize_response(GroupMembersResponse(members)), self.aesgcm)
@@ -222,6 +293,84 @@ class ServerWorker:
                 group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupDeleteRequest):
+                group_id = client_request.group_id
+                error_message = group_delete(group_id, self.id)
+
+                if error_message:
+                    log_request(f"{self.id}", "group delete", [group_id], "failed", error_message)
+                    response_data = VaultError(error_message)
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                log_request(f"{self.id}", "group delete", [group_id], "success")
+                response_data = GroupDeleteResponse(f"Group {group_id} deleted.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddUserRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+                permission = client_request.permission
+                encrypted_keys = client_request.encrypted_keys
+
+                error_message = add_user_to_group(self.id, group_id, user_id, permission, encrypted_keys)
+
+                if error_message:
+                    log_request(f"{self.id}", "group add user", [group_id, user_id], "failed", error_message)
+                    response_data = VaultError(error_message)
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                log_request(f"{self.id}", "group add user", [group_id, user_id], "success")
+                response_data = GroupAddUserResponse(f"User {user_id} added to group {group_id}.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddUserRequirementsRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+
+                requirements = add_user_to_group_requirements(self.id, group_id)
+                if "error" in requirements:
+                    log_request(self.id, "group add user requirements", [group_id, user_id], "failed", requirements["error"])
+                    return encrypt(serialize_response(VaultError(requirements["error"])), self.aesgcm)
+
+                public_key = get_public_key(user_id)
+
+                if not public_key:
+                    log_request(self.id, "group add user requirements", [group_id, user_id], "failed", "Target user not found")
+                    return encrypt(serialize_response(VaultError("Target user not found")), self.aesgcm)
+
+                response_data = GroupAddUserRequirementsResponse(
+                    encrypted_keys=requirements,
+                    public_key=public_key
+                )
+
+                log_request(self.id, "group add user requirements", [group_id, user_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupListRequest):
+                groups = get_user_permissions_by_group(self.id)
+
+                response_data = GroupListResponse(groups)
+                log_request(f"{self.id}", "group list", [], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupPublicKeysRequest):
+                group_id = client_request.group_id
+                public_keys = get_group_public_keys(group_id, self.id)
+
+                if public_keys == []:
+                    log_request(f"{self.id}", "group public keys", [group_id], "failed", "public key not found or no write permission")
+                    response_data = VaultError("Invalid operation.")
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                response_data = GroupPublicKeysResponse(public_keys)
+                log_request(f"{self.id}", "group public keys", [group_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddRequest):
+                file_id = group_add_request(client_request, self.id)
+
+                if file_id is None:
+                    log_request(f"{self.id}", "group add", [client_request.file_id], "failed", "file not found")
+                    response_data = VaultError("Invalid operation.")
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                response_data = GroupAddResponse(f"File added to group successfully with id {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)

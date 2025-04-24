@@ -1,23 +1,23 @@
 [
   {
     "id": "r1",
-    "userid": "u1",
+    "userid": "u2",
     "type": "add",
     "args": [
       "f1"
     ],
-    "timestamp": "2025-04-13T23:21:23.657155Z",
+    "timestamp": "2025-04-22T17:33:00.922281Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r2",
-    "userid": "u1",
+    "userid": "u2",
     "type": "add",
     "args": [
       "f2"
     ],
-    "timestamp": "2025-04-13T23:22:12.479997Z",
+    "timestamp": "2025-04-22T17:33:07.178062Z",
     "status": "success",
     "error": ""
   },
@@ -28,18 +28,18 @@
     "args": [
       "f3"
     ],
-    "timestamp": "2025-04-13T23:22:22.586567Z",
+    "timestamp": "2025-04-22T17:33:13.748355Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r4",
-    "userid": "u1",
-    "type": "add",
+    "userid": "u2",
+    "type": "read",
     "args": [
-      "f4"
+      "f2"
     ],
-    "timestamp": "2025-04-15T12:20:08.840867Z",
+    "timestamp": "2025-04-22T17:33:38.725746Z",
     "status": "success",
     "error": ""
   },
@@ -48,391 +48,1145 @@
     "userid": "u1",
     "type": "read",
     "args": [
-      "f4"
+      "f1"
     ],
-    "timestamp": "2025-04-15T12:20:12.683742Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-22T17:33:44.445300Z",
+    "status": "failed",
+    "error": "no access key"
   },
   {
     "id": "r6",
-    "userid": "f1",
-    "type": "group_create",
+    "userid": "u1",
+    "type": "read",
     "args": [
-      "ola"
+      "f2"
     ],
-    "timestamp": "2025-04-16T11:47:30.073565Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-22T17:33:57.029662Z",
+    "status": "failed",
+    "error": "no access key"
   },
   {
     "id": "r7",
-    "userid": "f2",
-    "type": "group_create",
+    "userid": "u1",
+    "type": "read",
     "args": [
-      "ola"
+      "f3"
     ],
-    "timestamp": "2025-04-16T12:01:24.657079Z",
+    "timestamp": "2025-04-22T17:34:20.379293Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r8",
-    "userid": "u3",
-    "type": "add",
+    "userid": "u1",
+    "type": "read",
     "args": [
-      "f5"
+      "f3"
     ],
-    "timestamp": "2025-04-16T13:16:13.847976Z",
+    "timestamp": "2025-04-22T17:34:33.423923Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r9",
-    "userid": "u3",
-    "type": "read",
+    "userid": "u1",
+    "type": "public_key",
     "args": [
-      "f5"
+      "u3"
     ],
-    "timestamp": "2025-04-16T13:16:18.928144Z",
+    "timestamp": "2025-04-22T17:34:33.426621Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r10",
-    "userid": "f3",
-    "type": "group_create",
+    "userid": "u1",
+    "type": "share",
     "args": [
-      "group3"
+      "f3"
     ],
-    "timestamp": "2025-04-16T13:16:31.079849Z",
+    "timestamp": "2025-04-22T17:34:33.431647Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r11",
-    "userid": "u3",
-    "type": "read",
+    "userid": "u2",
+    "type": "group create",
     "args": [
-      "f1"
+      "g1",
+      "group1"
     ],
-    "timestamp": "2025-04-18T12:41:58.339956Z",
-    "status": "failed",
-    "error": "no access key"
+    "timestamp": "2025-04-22T17:34:50.101573Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r12",
-    "userid": "u3",
-    "type": "add",
+    "userid": "u1",
+    "type": "group create",
     "args": [
-      "f4"
+      "g2",
+      "group2"
     ],
-    "timestamp": "2025-04-18T12:42:22.659207Z",
+    "timestamp": "2025-04-22T17:35:12.192125Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r13",
-    "userid": "u3",
-    "type": "read",
+    "userid": "u1",
+    "type": "group add user requirements",
     "args": [
-      "f4"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-18T12:42:30.674576Z",
+    "timestamp": "2025-04-22T17:35:22.397632Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r14",
-    "userid": "u3",
-    "type": "read",
+    "userid": "u1",
+    "type": "group add user",
     "args": [
-      "f3"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-18T12:42:50.204666Z",
-    "status": "failed",
-    "error": "no access key"
+    "timestamp": "2025-04-22T17:35:22.399912Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r15",
-    "userid": "u3",
+    "userid": "u2",
     "type": "read",
     "args": [
-      "f4"
+      "f1"
     ],
-    "timestamp": "2025-04-18T14:28:07.493106Z",
+    "timestamp": "2025-04-22T17:35:43.612466Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r16",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "public_key",
     "args": [
-      "user",
-      "u3"
+      "u1"
     ],
-    "timestamp": "2025-04-18T14:30:08.869798Z",
+    "timestamp": "2025-04-22T17:35:43.615126Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r17",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "public_key",
     "args": [
-      "user",
-      "u1"
+      "u3"
     ],
-    "timestamp": "2025-04-18T14:30:16.736826Z",
+    "timestamp": "2025-04-22T17:35:43.616017Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r18",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "share",
     "args": [
-      "user",
-      "u3"
+      "f1"
     ],
-    "timestamp": "2025-04-18T14:33:02.508576Z",
+    "timestamp": "2025-04-22T17:35:43.617206Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r19",
     "userid": "u3",
-    "type": "list",
+    "type": "read",
     "args": [
-      "user",
-      "u1"
+      "f3"
     ],
-    "timestamp": "2025-04-18T14:39:44.521729Z",
+    "timestamp": "2025-04-22T17:37:44.974532Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r20",
     "userid": "u3",
-    "type": "list",
+    "type": "read",
     "args": [
-      "user",
-      "u3"
+      "f1"
     ],
-    "timestamp": "2025-04-18T14:40:37.794802Z",
+    "timestamp": "2025-04-22T17:37:49.699139Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r21",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u1",
+    "type": "group add user requirements",
     "args": [
-      "user",
-      "u3"
+      "g2",
+      "u4"
     ],
-    "timestamp": "2025-04-18T14:41:08.569200Z",
+    "timestamp": "2025-04-22T17:40:24.850786Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r22",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u1",
+    "type": "group add user",
     "args": [
-      "user",
-      "u3"
+      "g2",
+      "u4"
     ],
-    "timestamp": "2025-04-18T14:41:25.240947Z",
+    "timestamp": "2025-04-22T17:40:24.854352Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r23",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "add",
     "args": [
-      "group",
-      "f2"
+      "f4"
     ],
-    "timestamp": "2025-04-18T14:46:21.827458Z",
+    "timestamp": "2025-04-22T17:42:46.890041Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r24",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "read",
     "args": [
-      "user",
-      "u3"
+      "f4"
     ],
-    "timestamp": "2025-04-18T14:46:41.856693Z",
+    "timestamp": "2025-04-22T17:43:03.419760Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r25",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "public_key",
     "args": [
-      "group",
-      "f2"
+      "u1"
     ],
-    "timestamp": "2025-04-18T14:47:05.643930Z",
+    "timestamp": "2025-04-22T17:43:03.423087Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r26",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "public_key",
     "args": [
-      "group",
-      "g2"
+      "u3"
     ],
-    "timestamp": "2025-04-18T14:47:10.371894Z",
+    "timestamp": "2025-04-22T17:43:03.427319Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r27",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "public_key",
     "args": [
-      "group",
-      "f2"
+      "u4"
     ],
-    "timestamp": "2025-04-18T14:49:20.643753Z",
+    "timestamp": "2025-04-22T17:43:03.428633Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r28",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u2",
+    "type": "share",
     "args": [
-      "user",
-      "f2"
+      "f4"
     ],
-    "timestamp": "2025-04-18T14:50:18.033152Z",
+    "timestamp": "2025-04-22T17:43:03.430420Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r29",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u1",
+    "type": "group add user requirements",
     "args": [
-      "group",
-      "f2"
+      "g2",
+      "u5"
     ],
-    "timestamp": "2025-04-18T14:52:35.366950Z",
+    "timestamp": "2025-04-22T17:43:46.404810Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r30",
-    "userid": "u3",
-    "type": "list",
+    "userid": "u1",
+    "type": "group add user",
     "args": [
-      "group",
-      "f2"
+      "g2",
+      "u5"
     ],
-    "timestamp": "2025-04-18T14:53:08.384085Z",
+    "timestamp": "2025-04-22T17:43:46.409997Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r31",
-    "userid": "u4",
-    "type": "group create",
+    "userid": "u5",
+    "type": "read",
     "args": [
-      "g4",
-      "group4"
+      "f1"
     ],
-    "timestamp": "2025-04-18T14:54:49.242896Z",
+    "timestamp": "2025-04-22T17:44:01.108411Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r32",
-    "userid": "u4",
-    "type": "list",
+    "userid": "u5",
+    "type": "read",
     "args": [
-      "user",
-      "u4"
+      "f4"
     ],
-    "timestamp": "2025-04-18T17:14:55.804944Z",
+    "timestamp": "2025-04-22T17:44:04.756516Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r33",
-    "userid": "u4",
-    "type": "list",
-    "args": [
-      "user",
-      "u3"
-    ],
-    "timestamp": "2025-04-18T17:14:59.752882Z",
+    "userid": "u1",
+    "type": "group list",
+    "args": [],
+    "timestamp": "2025-04-22T17:44:16.687305Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r34",
-    "userid": "u4",
-    "type": "list",
+    "userid": "u1",
+    "type": "replace",
     "args": [
-      "group",
-      "g2"
+      "f1"
     ],
-    "timestamp": "2025-04-18T17:15:06.228489Z",
-    "status": "success",
+    "timestamp": "2025-04-22T23:58:05.349679Z",
+    "status": "requirements_success",
     "error": ""
   },
   {
     "id": "r35",
-    "userid": "u3",
-    "type": "read",
+    "userid": "u1",
+    "type": "replace",
     "args": [
-      "f4"
+      "f1"
     ],
-    "timestamp": "2025-04-19T02:38:54.190202Z",
+    "timestamp": "2025-04-22T23:58:05.353044Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r36",
-    "userid": "u3",
-    "type": "public_key",
+    "userid": "u1",
+    "type": "read",
     "args": [
-      "u4"
+      "f1"
     ],
-    "timestamp": "2025-04-19T02:38:54.193450Z",
+    "timestamp": "2025-04-22T23:58:09.216947Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r37",
     "userid": "u3",
-    "type": "share",
+    "type": "replace",
     "args": [
-      "f4"
+      "f3"
     ],
-    "timestamp": "2025-04-19T02:38:54.195160Z",
-    "status": "success",
+    "timestamp": "2025-04-22T23:59:04.037284Z",
+    "status": "requirements_success",
     "error": ""
   },
   {
     "id": "r38",
-    "userid": "u4",
+    "userid": "u3",
+    "type": "replace",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-22T23:59:04.040660Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r39",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-22T23:59:09.081617Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r40",
+    "userid": "u2",
     "type": "read",
     "args": [
       "f4"
     ],
-    "timestamp": "2025-04-19T02:39:08.230601Z",
+    "timestamp": "2025-04-23T00:00:07.769007Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r41",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u3"
+    ],
+    "timestamp": "2025-04-23T00:00:07.771765Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r42",
+    "userid": "u2",
+    "type": "share",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:00:07.773547Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r43",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-23T00:00:27.334243Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r44",
+    "userid": "u3",
+    "type": "replace",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:00:39.408475Z",
+    "status": "requirements_success",
+    "error": ""
+  },
+  {
+    "id": "r45",
+    "userid": "u3",
+    "type": "replace",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:00:39.412048Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r46",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:00:45.097617Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r47",
+    "userid": "u2",
+    "type": "replace",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:08:11.339078Z",
+    "status": "requirements_success",
+    "error": ""
+  },
+  {
+    "id": "r48",
+    "userid": "u2",
+    "type": "replace",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:08:11.342480Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r49",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:08:14.777633Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r50",
+    "userid": "u3",
+    "type": "replace",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:08:33.971624Z",
+    "status": "requirements_success",
+    "error": ""
+  },
+  {
+    "id": "r51",
+    "userid": "u3",
+    "type": "replace",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:08:33.977689Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r52",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T00:08:39.497160Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r53",
+    "userid": "u5",
+    "type": "add",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T00:09:11.034773Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r54",
+    "userid": "u5",
+    "type": "read",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T00:09:27.102167Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r55",
+    "userid": "u5",
+    "type": "public_key",
+    "args": [
+      "u2"
+    ],
+    "timestamp": "2025-04-23T00:09:27.106048Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r56",
+    "userid": "u5",
+    "type": "share",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T00:09:27.111180Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r57",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T00:09:40.298950Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r58",
+    "userid": "u2",
+    "type": "replace",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T00:09:50.463227Z",
+    "status": "failed",
+    "error": "No write permission"
+  },
+  {
+    "id": "r59",
+    "userid": "u5",
+    "type": "delete",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-23T01:09:46.786606Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r60",
+    "userid": "u5",
+    "type": "delete",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:09:59.967949Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r61",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:34.448950Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r62",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u1"
+    ],
+    "timestamp": "2025-04-23T01:39:34.452709Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r63",
+    "userid": "u2",
+    "type": "share",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:34.460010Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r64",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:47.049807Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r65",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-23T01:39:47.051756Z",
+    "status": "success",
+    "error": "User access revoked"
+  },
+  {
+    "id": "r66",
+    "userid": "u1",
+    "type": "list",
+    "args": [
+      "user",
+      "u1"
+    ],
+    "timestamp": "2025-04-23T18:29:17.451050Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r67",
+    "userid": "u3",
+    "type": "revoke",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-23T18:44:15.393617Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r68",
+    "userid": "g2",
+    "type": "revoke",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-23T18:45:53.974330Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r69",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-23T18:46:34.713008Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r70",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u1"
+    ],
+    "timestamp": "2025-04-23T18:46:34.718431Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r71",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u3"
+    ],
+    "timestamp": "2025-04-23T18:46:34.720070Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r72",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u4"
+    ],
+    "timestamp": "2025-04-23T18:46:34.721485Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r73",
+    "userid": "u2",
+    "type": "public_key",
+    "args": [
+      "u5"
+    ],
+    "timestamp": "2025-04-23T18:46:34.722817Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r74",
+    "userid": "u2",
+    "type": "share",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-23T18:46:34.724625Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r75",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:18:43.340626Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r76",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:23:41.884793Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r77",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:25:25.312245Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r78",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:27:45.741550Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r79",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:29:15.289833Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r80",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:30:34.713156Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r81",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:31:52.116399Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r82",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:33:14.987106Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r83",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:34:40.507776Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r84",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:37:13.101693Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r85",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:39:02.679354Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r86",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:39:59.542578Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r87",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:41:36.598619Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r88",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:43:04.192295Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r89",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:44:19.490526Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r90",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:46:59.138682Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r91",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:49:41.209120Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r92",
+    "userid": "u5",
+    "type": "group add",
+    "args": [
+      "f5",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-24T01:49:41.215491Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r93",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-24T01:50:46.638892Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r94",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-24T01:55:28.783237Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r95",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:55:42.354971Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r96",
+    "userid": "u1",
+    "type": "group add",
+    "args": [
+      "f5",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-24T01:55:42.361934Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r97",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:14:49.246635Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r98",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:14:49.248083Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r99",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-24T02:18:09.145768Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r100",
+    "userid": "u1",
+    "type": "group create",
+    "args": [
+      "g2",
+      "test"
+    ],
+    "timestamp": "2025-04-24T02:21:44.442159Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r101",
+    "userid": "u1",
+    "type": "group add user requirements",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-24T02:22:08.490600Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r102",
+    "userid": "u1",
+    "type": "group add user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-24T02:22:08.494932Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r103",
+    "userid": "u1",
+    "type": "group add user requirements",
+    "args": [
+      "g2",
+      "u4"
+    ],
+    "timestamp": "2025-04-24T02:22:35.062733Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r104",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:23:23.328588Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r105",
+    "userid": "u1",
+    "type": "group add",
+    "args": [
+      "f5",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-24T02:23:23.334378Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r106",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:24:10.675786Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r107",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:24:10.677727Z",
     "status": "success",
     "error": ""
   }

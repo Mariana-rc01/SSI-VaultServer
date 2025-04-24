@@ -10,6 +10,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography import x509
 import datetime
 
+max_msg_size: int = 9999
+
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2
 
@@ -81,6 +83,53 @@ class PublicKeyResponse:
     public_key: str
 
 @dataclass
+class DeleteRequest:
+    file_id: str
+
+@dataclass
+class DeleteResponse:
+    response: str
+
+@dataclass
+class ReplaceRequirementsRequest:
+    file_id: str
+
+@dataclass
+class ReplaceRequirementsResponse:
+    encrypted_key: str
+
+@dataclass
+class ReplaceRequest:
+    file_id: str
+    encrypted_file: str
+
+@dataclass
+class ReplaceResponse:
+    response: str
+
+@dataclass
+class DetailsRequest:
+    file_id: str
+
+@dataclass
+class DetailsResponse:
+    file_id: str
+    file_name: str
+    file_size: int
+    owner: str
+    permissions: list
+    created_at: str
+
+@dataclass
+class RevokeRequest:
+    file_id: str
+    target_id: str
+
+@dataclass
+class RevokeResponse:
+    response: str
+
+@dataclass
 class GroupMembersRequest:
     group_id: str
 
@@ -97,6 +146,62 @@ class GroupCreateResponse:
     response: str
 
 @dataclass
+class GroupDeleteRequest:
+    group_id: str
+
+@dataclass
+class GroupDeleteResponse:
+    response: str
+
+@dataclass
+class GroupAddUserRequirementsRequest:
+    group_id: str
+    user_id: str
+
+@dataclass
+class GroupAddUserRequirementsResponse:
+    encrypted_keys: dict
+    public_key: str
+
+@dataclass
+class GroupAddUserRequest:
+    group_id: str
+    user_id: str
+    permission: str
+    encrypted_keys: dict
+
+@dataclass
+class GroupAddUserResponse:
+    response: str
+
+@dataclass
+class GroupListRequest:
+    pass
+
+@dataclass
+class GroupListResponse:
+    groups: list
+
+@dataclass
+class GroupAddRequest:
+    group_id: str
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: list
+
+@dataclass
+class GroupAddResponse:
+    response: str
+
+@dataclass
+class GroupPublicKeysRequest:
+    group_id: str
+
+@dataclass
+class GroupPublicKeysResponse:
+    public_keys: list
+
+@dataclass
 class VaultError:
     error: str
 
@@ -104,7 +209,17 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               ClientSecondInteraction, AddRequest, ReadRequest,
                                               ListRequest, ListResponse, ShareRequest, ShareResponse,
                                               PublicKeyRequest, PublicKeyResponse,
-                                              GroupMembersRequest, GroupMembersResponse, VaultError]:
+                                              GroupMembersRequest, GroupMembersResponse,
+                                              GroupAddUserRequest, GroupAddUserResponse,
+                                              GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
+                                              GroupListRequest, GroupListResponse,
+                                              ReplaceRequirementsRequest, ReplaceRequirementsResponse,
+                                              ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
+                                              DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
+                                              GroupAddRequest, GroupAddResponse,
+                                              GroupPublicKeysRequest, GroupPublicKeysResponse,
+                                              GroupDeleteRequest, GroupDeleteResponse,
+                                              VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -143,6 +258,26 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return PublicKeyRequest(**args)
     elif op_type == "PublicKeyResponse":
         return PublicKeyResponse(**args)
+    elif op_type == "DeleteRequest":
+        return DeleteRequest(**args)
+    elif op_type == "DeleteResponse":
+        return DeleteResponse(**args)
+    elif op_type == "ReplaceRequirementsRequest":
+        return ReplaceRequirementsRequest(**args)
+    elif op_type == "ReplaceRequirementsResponse":
+        return ReplaceRequirementsResponse(**args)
+    elif op_type == "ReplaceRequest":
+        return ReplaceRequest(**args)
+    elif op_type == "ReplaceResponse":
+        return ReplaceResponse(**args)
+    elif op_type == "DetailsRequest":
+        return DetailsRequest(**args)
+    elif op_type == "DetailsResponse":
+        return DetailsResponse(**args)
+    elif op_type == "RevokeRequest":
+        return RevokeRequest(**args)
+    elif op_type == "RevokeResponse":
+        return RevokeResponse(**args)
     elif op_type == "GroupMembersRequest":
         return GroupMembersRequest(**args)
     elif op_type == "GroupMembersResponse":
@@ -153,13 +288,47 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return GroupCreateRequest(**args)
     elif op_type == "GroupCreateResponse":
         return GroupCreateResponse(**args)
+    elif op_type == "GroupDeleteRequest":
+        return GroupDeleteRequest(**args)
+    elif op_type == "GroupDeleteResponse":
+        return GroupDeleteResponse(**args)
+    elif op_type == "GroupAddUserRequest":
+        return GroupAddUserRequest(**args)
+    elif op_type == "GroupAddUserResponse":
+        return GroupAddUserResponse(**args)
+    elif op_type == "GroupAddUserRequirementsRequest":
+        return GroupAddUserRequirementsRequest(**args)
+    elif op_type == "GroupAddUserRequirementsResponse":
+        return GroupAddUserRequirementsResponse(**args)
+    elif op_type == "GroupListRequest":
+        return GroupListRequest()
+    elif op_type == "GroupListResponse":
+        return GroupListResponse(**args)
+    elif op_type == "GroupAddRequest":
+        return GroupAddRequest(**args)
+    elif op_type == "GroupAddResponse":
+        return GroupAddResponse(**args)
+    elif op_type == "GroupPublicKeysRequest":
+        return GroupPublicKeysRequest(**args)
+    elif op_type == "GroupPublicKeysResponse":
+        return GroupPublicKeysResponse(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
 def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction,
                                   AddRequest, ReadRequest, ListRequest, ListResponse, ShareRequest,
                                   ShareResponse, PublicKeyRequest, PublicKeyResponse,
-                                  GroupMembersRequest, GroupMembersResponse, VaultError]) -> bytes:
+                                  GroupMembersRequest, GroupMembersResponse,
+                                  GroupAddUserRequest, GroupAddUserResponse,
+                                  GroupAddUserRequirementsRequest, GroupAddUserRequirementsResponse,
+                                  GroupListRequest, GroupListResponse,
+                                  ReplaceRequirementsRequest, ReplaceRequirementsResponse,
+                                  ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
+                                  DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
+                                  GroupAddRequest, GroupAddResponse,
+                                  GroupPublicKeysRequest, GroupPublicKeysResponse,
+                                  GroupDeleteRequest, GroupDeleteResponse,
+                                  VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -199,6 +368,36 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
     elif isinstance(obj, PublicKeyResponse):
         op_type = "PublicKeyResponse"
         args = obj.__dict__
+    elif isinstance(obj, DeleteRequest):
+        op_type = "DeleteRequest"
+        args = obj.__dict__
+    elif isinstance(obj, DeleteResponse):
+        op_type = "DeleteResponse"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceRequirementsRequest):
+        op_type = "ReplaceRequirementsRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceRequirementsResponse):
+        op_type = "ReplaceRequirementsResponse"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceRequest):
+        op_type = "ReplaceRequest"
+        args = obj.__dict__
+    elif isinstance(obj, ReplaceResponse):
+        op_type = "ReplaceResponse"
+        args = obj.__dict__
+    elif isinstance(obj, DetailsRequest):
+        op_type = "DetailsRequest"
+        args = obj.__dict__
+    elif isinstance(obj, DetailsResponse):
+        op_type = "DetailsResponse"
+        args = obj.__dict__
+    elif isinstance(obj, RevokeRequest):
+        op_type = "RevokeRequest"
+        args = obj.__dict__
+    elif isinstance(obj, RevokeResponse):
+        op_type = "RevokeResponse"
+        args = obj.__dict__
     elif isinstance(obj, GroupMembersRequest):
         op_type = "GroupMembersRequest"
         args = obj.__dict__
@@ -210,6 +409,42 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, GroupCreateResponse):
         op_type = "GroupCreateResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupDeleteRequest):
+        op_type = "GroupDeleteRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupDeleteResponse):
+        op_type = "GroupDeleteResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserRequest):
+        op_type = "GroupAddUserRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserResponse):
+        op_type = "GroupAddUserResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserRequirementsRequest):
+        op_type = "GroupAddUserRequirementsRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddUserRequirementsResponse):
+        op_type = "GroupAddUserRequirementsResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupListRequest):
+        op_type = "GroupListRequest"
+        args = {}
+    elif isinstance(obj, GroupListResponse):
+        op_type = "GroupListResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddRequest):
+        op_type = "GroupAddRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddResponse):
+        op_type = "GroupAddResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupPublicKeysRequest):
+        op_type = "GroupPublicKeysRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupPublicKeysResponse):
+        op_type = "GroupPublicKeysResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"
