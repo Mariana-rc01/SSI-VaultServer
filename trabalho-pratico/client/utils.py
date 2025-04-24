@@ -12,8 +12,10 @@ from utils.utils import(
     ReplaceRequest,
     ReplaceRequirementsRequest,
     ReplaceRequirementsResponse,
-    ReplaceResponse,
     DetailsResponse,
+    GroupAddRequest,
+    GroupPublicKeysRequest,
+    GroupPublicKeysResponse,
     VaultError,
     encrypt,
     decrypt,
@@ -61,6 +63,41 @@ def addRequest(file_path: str, client_public_key) -> bytes:
         filename=filename,
         encrypted_file=encrypted_file_b64,
         encrypted_aes_key=encrypted_aes_key_b64,
+    )
+
+    return serialize_response(add_request)
+
+def groupAddRequest(file_path: str, list_of_members_public_keys: list) -> bytes:
+    """ Add a file to a group request. """
+    if not os.path.isfile(file_path):
+        print(f"Error: File '{file_path}' does not exist.")
+        return b""
+
+    aes_key = os.urandom(32)
+
+    aesgcm_file = build_aesgcm(aes_key)
+    file_data: bytes = open(file_path, "rb").read()
+    encrypted_file: bytes = encrypt(file_data, aesgcm_file)
+
+    encrypted_file_b64: str = base64.b64encode(encrypted_file).decode()
+    filename: str = os.path.basename(file_path)
+
+    encrypted_keys = {}
+    for public_key in list_of_members_public_keys:
+        encrypted_aes_key = public_key.encrypt(
+            aes_key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None,
+            ),
+        )
+        encrypted_keys[public_key] = base64.b64encode(encrypted_aes_key).decode()
+
+    add_request = AddRequest(
+        filename=filename,
+        encrypted_file=encrypted_file_b64,
+        encrypted_aes_key=encrypted_keys,
     )
 
     return serialize_response(add_request)
@@ -291,6 +328,65 @@ async def shareRequest(file_id: str, target_id: str, permission: str, rsa_privat
     )
 
     return serialize_response(share_request)
+
+async def groupAddRequest(file_path: str, group_id: str, aesgcm, writer, reader) -> bytes:
+    """ Add a file to a group request. """
+
+    # 1º Get public keys for the group
+    group_public_keys_request = GroupPublicKeysRequest(
+        group_id = group_id
+    )
+
+    writer.write(encrypt(serialize_response(group_public_keys_request), aesgcm))
+    await writer.drain()
+
+    response = await reader.read(max_msg_size)
+    decrypted_msg: bytes = decrypt(response, aesgcm)
+    group_public_keys_response = deserialize_request(decrypted_msg)
+
+    if not isinstance(group_public_keys_response, GroupPublicKeysResponse):
+        raise ValueError("Invalid response type for GroupPublicKeysRequest.")
+
+    if not group_public_keys_response.public_keys:
+        raise ValueError("No public keys found for the group.")
+
+    group_public_keys = {}
+    for member in group_public_keys_response.public_keys:
+        group_public_keys[member["userid"]] = deserialize_public_key(
+            base64.b64decode(member["public_key"])
+        )
+
+    aes_key = os.urandom(32)
+
+    # 2º Encrypted keys for the group
+    encrypted_keys = {}
+    for user_id, public_key in group_public_keys.items():
+        encrypted_aes_key = public_key.encrypt(
+            aes_key,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None,
+            ),
+        )
+        encrypted_keys[user_id] = base64.b64encode(encrypted_aes_key).decode()
+
+    # 3º Encrypt the file with the AES key and get the filename
+    aesgcm_file = build_aesgcm(aes_key)
+    file_data: bytes = open(file_path, "rb").read()
+    encrypted_file: bytes = encrypt(file_data, aesgcm_file)
+    encrypted_file_b64: str = base64.b64encode(encrypted_file).decode()
+    filename: str = os.path.basename(file_path)
+
+    # 4º GroupAddRequest
+    group_add_request = GroupAddRequest(
+        group_id = group_id,
+        filename = filename,
+        encrypted_file = encrypted_file_b64,
+        encrypted_aes_key = encrypted_keys
+    )
+
+    return serialize_response(group_add_request)
 
 async def replaceRequest(file_id: str, file_path: str, rsa_private_key, aesgcm, writer, reader) -> bytes:
     """ Replace a file request. """

@@ -15,33 +15,7 @@
           ]
         }
       ],
-      "groups": [
-        {
-          "groupid": "g2",
-          "keys": [
-            {
-              "userid": "u1",
-              "key": "e6aGwEGcd44ScmkTUX4VZ9Hoc8o1ZmyQ4UfLSyD1kuMibtfu9ns9TXhOkU/EwmTdv5yOHC0n24xmaQdG17wxHTKwDT9HZLfglhLCOx7cD9jKExPp+h+rt8By7FnmOkKuMBAKviPCdEfbHX1/JuoXvEoOBNPtgpjTpYLwREICYNToF7Y8+qZxGCo8826wiY8JyclBi34PSHZtboTjGn/zF3qjWN3Aq0T5K/C3ob1RsFN6X7wlY7sKFNMGZ7Pk0tCI4e+BSqZExcikV1GXcx91QNF/V3zoUBNy0xxzORlB6o+9WB3yXsRHJITEVBWIhiaOYNZy9LMsN8yX9XeN0uQwAA=="
-            },
-            {
-              "userid": "u3",
-              "key": "BjO9jfRegwsdKYXzchc7/nRCbVQdEkPCfYpz2EGBvA6avZKutoln2oKVCs++mSmLcPTJKQrbCPzbD275PktsKnsbTMfQLgtb7zbOWHx12g6HeaGTQL2w07MKOmN4agBTu52InCnlTdJi7Asc8a5fycsbvUKVbhvRH5IpXPDRHHwmcKgu159LkGSNNXOLNZhXxovYn8xzPmkNkBeYXr1fK3VN9CBpzDIghMZaCDD/dHHBZC1l8e1RdO6TNrAH7BdIPsXthO0saluPc1cs4DMPpbwp1RzQhG8rgkqBJTI4TqdSTC+evgXL5RK1xBSSCczzYEDz9PflvnE7qlooOMoHDA=="
-            },
-            {
-              "userid": "u4",
-              "key": "wfoQ8Iv7R6joCbq/KYwdf/sqbgfBbCXbtNRFjHq4REZTqQ0lCkdi6eeV1YXHG/6Q3VAa+6m/HzEPv5mOrhyACOPhKy/7WEx8UIA6W9qXqCo4c7I01enHthxbzdMulRlKFzlZP9cNRLuBowOz7JYYkBM+qRuNZ+uEBz8DnEukwu0mUr61oeQ/pdNfFRQzJ3TC610o8VbWlNBggYphYxidA4ymEvVshBl26ZJuIHB1THzP8DlW6HG2Vz8nI41BFQe+vkM0FanUV5ziT5UVNTx1yOiO0NIZ6BO7vSY0V/JQ1nzY9HXacLBKNAQTrGm9WuydjGgEysSh4CHLvGhaUY3VbQ=="
-            },
-            {
-              "userid": "u5",
-              "key": "b0x2ZpYUL80fxGt0DnR3Jzp7oVketZASw8BKJ29ikVEPRv5cQm2lz59Qk0m7cd3UynLc9LlscP4wNnLW2qDYT8GgGLeH6qrareNrTg1dvi4nBBaqjlyy9K6L1yc9js+MLrUK0xqV5EZdBcykEVqqTpJIRLby8NDAF5jceeBKfPNehHu1CXPREqkjV3HTFbgGU2Izma57hH1qNwSY4WJKZq+uEoysaszfRqFEe8vyZp/3WL11VYgXJtedK77H33NRJnDbtxJ4wvL1Aai4H1JV0rCHysYI6IS2p8jizte76ins1CyeG36TjcqBDCj5SCtq8OMk/6opvj7pGe+aqPYXQA=="
-            }
-          ],
-          "permissions": [
-            "read",
-            "write"
-          ]
-        }
-      ]
+      "groups": []
     },
     "created_at": "2025-04-22T17:33:00.922033Z",
     "location": "./storage/f1"

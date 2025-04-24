@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 FILES_JSON = "./db/files.json"
@@ -67,3 +67,19 @@ def get_next_group_id() -> str:
     """ Gets the next group ID. """
     groups = load_groups()
     return get_next_id(groups, "g")
+
+def get_group_public_keys(group_id: str, user_id: str) -> List:
+    """ Gets the public keys of a group. """
+    groups = load_groups()
+    for group in groups:
+        if group["id"] == group_id:
+            for member in group["members"]:
+                if member["userid"] == user_id and "write" in member["permissions"]:
+                    public_keys = []
+                    for member in group["members"]:
+                        users = load_users()
+                        for user in users:
+                            if user["id"] == member["userid"]:
+                                public_keys.append({"userid": member["userid"], "public_key": user["public_key"]})
+                    return public_keys
+    return []

@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 
-from utils.utils import ReplaceRequest, RevokeRequest, ShareRequest, serialize_public_key_rsa
+from utils.utils import ReplaceRequest, RevokeRequest, ShareRequest, GroupAddRequest, serialize_public_key_rsa
 from server.utils_db import load_users, save_users, load_groups, save_groups, load_files, save_files, get_next_file_id, get_next_group_id
 
 FILES_JSON = "./db/files.json"
@@ -232,6 +232,46 @@ def get_group_members(group_id: str) -> list:
         []
     )
 
+def group_delete(group_id: str, user_id: str) -> Optional[str]:
+    """ Deletes a group. """
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+
+    if not group:
+        return "Group not found"
+
+    if group["owner"] != user_id:
+        return "Only group owner can delete the group"
+
+    groups.remove(group)
+    save_groups(groups)
+
+    users = load_users()
+    for user in users:
+        if group_id in user.get("groups", []):
+            user["groups"].remove(group_id)
+
+    save_users(users)
+
+    files = load_files()
+    for file in files:
+        for group_perm in file.get("permissions", {}).get("groups", []):
+            if group_perm["groupid"] == group_id:
+                file["permissions"]["groups"].remove(group_perm)
+                # Check if the file has no groups and no users, if not, it was from the group and can be deleted
+                if not file["permissions"]["groups"] and not file["permissions"].get("users", []):
+                    try:
+                        os.remove(file["location"])
+                    except Exception as e:
+                        return f"Error deleting file: {str(e)}"
+                    files.remove(file)
+                break
+    save_files(files)
+
+    log_request(user_id, "group delete", [group_id], "success")
+
+    return None
+
 def add_group_request(group_name: str, user_id: str) -> str:
     """ Adds a group request. """
     group_id = get_next_group_id()
@@ -343,8 +383,8 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
 def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
     """ Shares a file with a user or group. """
-    if file_info["owner"] != user_id:
-        return "You are not the owner of this file."
+    if file_info["owner"] != user_id or file_info["permissions"].get("users", []):
+        return "You are not the owner of this file or the file belongs to a group."
 
     if client_request.is_group:
         if "groups" not in file_info["permissions"]:
@@ -413,6 +453,63 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
     save_files(files)
 
     return None
+
+def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional[str]:
+    """ Handles group add request. """
+    group_id = client_request.group_id
+    group = next((g for g in load_groups() if g["id"] == group_id), None)
+    if not group:
+        return None
+
+    # Check if the user is a member of the group with write permission
+    user_groups = get_user_groups(user_id)
+    if group_id not in user_groups:
+        return None
+    group_permissions = next(
+        (g for g in group.get("members", []) if g["userid"] == user_id),
+        None
+    )
+    if not group_permissions or "write" not in group_permissions.get("permissions", []):
+        return None
+
+    # Create the file
+    file_id = get_next_file_id()
+    file_path = os.path.join(STORAGE_DIR, file_id)
+    with open(file_path, "wb") as f:
+        f.write(base64.b64decode(client_request.encrypted_file))
+    file_size = os.path.getsize(file_path)
+    file_info = {
+        "id": file_id,
+        "name": client_request.filename,
+        "size": file_size,
+        "owner": user_id,
+        "permissions": {
+            "users": [],
+            "groups": [
+                {
+                    "groupid": group_id,
+                    "keys": [],
+                    "permissions": ["read", "write"]
+                }
+            ]
+        },
+        "created_at": datetime.now().isoformat() + "Z",
+        "location": file_path
+    }
+
+    for user_id_key, encrypted_key in client_request.encrypted_aes_key.items():
+        key_entry = {
+            "userid": f"Owner: {user_id_key}" if user_id_key == user_id else user_id_key,
+            "key": encrypted_key
+        }
+        file_info["permissions"]["groups"][0]["keys"].append(key_entry)
+
+    # Add the file to the database
+    files = load_files()
+    files.append(file_info)
+    save_files(files)
+    log_request(user_id, "group add", [file_id, client_request.filename], "success")
+    return file_id
 
 def get_user_write_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
     """Gets the encryption key for a user or group member with write permission."""
