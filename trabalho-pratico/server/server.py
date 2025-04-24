@@ -170,7 +170,7 @@ class ServerWorker:
                     return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
 
                 response_data = ReplaceRequirementsResponse(encrypted_key)
-                log_request(self.id, "replace", [client_request.file_id], "requirements_success")
+                log_request(self.id, "replace", [client_request.file_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
 
             elif isinstance(client_request, ReplaceRequest):

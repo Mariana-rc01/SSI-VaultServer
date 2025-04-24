@@ -52,7 +52,7 @@ def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
         group_id = group_permission["groupid"]
         if group_id in user_groups and "read" in group_permission.get("permissions", []):
             for key_entry in group_permission.get("keys", []):
-                if key_entry.get("userid") == user_id:
+                if key_entry.get("userid") == user_id or key_entry.get("userid") == f"Owner: {user_id}":
                     return key_entry.get("key")
 
     return None
@@ -534,13 +534,34 @@ def get_user_write_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]
         if (group_perm["groupid"] in user_groups and
             "write" in group_perm.get("permissions", [])):
             for key_entry in group_perm.get("keys", []):
-                if key_entry["userid"] == user_id:
+                if key_entry["userid"] == user_id or key_entry["userid"] == f"Owner: {user_id}":
                     return key_entry["key"]
 
     return None
 
+def has_write_permission_in_group(user_id: str, group_id: str) -> bool:
+    """Checks if a user has write permission in a specific group."""
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+    if not group:
+        return False
+
+    member = next((m for m in group.get("members", []) if m["userid"] == user_id or m["userid"] == f"Owner: {user_id}"), None)
+    if member and "write" in member.get("permissions", []):
+        return True
+
+    return False
+
 def check_write_permission(file_info: Dict[str, Any], user_id: str) -> bool:
     """ Checks if a user has write permission for a file. """
+    if not file_info["permissions"].get("users", []):
+        for group_perm in file_info.get("permissions", {}).get("groups", []):
+            group_id = group_perm["groupid"]
+            if has_write_permission_in_group(user_id, group_id):
+                return True
+            else:
+                return False
+
     return get_user_write_key(file_info, user_id) is not None
 
 def replace_file_requirements(client_request: ReplaceRequest, user_id: str) -> Optional[bytes]:
