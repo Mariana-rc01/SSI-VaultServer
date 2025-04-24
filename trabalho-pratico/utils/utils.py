@@ -175,6 +175,25 @@ class GroupListResponse:
     groups: list
 
 @dataclass
+class GroupAddRequest:
+    group_id: str
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: list
+
+@dataclass
+class GroupAddResponse:
+    response: str
+
+@dataclass
+class GroupPublicKeysRequest:
+    group_id: str
+
+@dataclass
+class GroupPublicKeysResponse:
+    public_keys: list
+
+@dataclass
 class VaultError:
     error: str
 
@@ -189,6 +208,8 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               ReplaceRequirementsRequest, ReplaceRequirementsResponse,
                                               ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
                                               DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
+                                              GroupAddRequest, GroupAddResponse,
+                                              GroupPublicKeysRequest, GroupPublicKeysResponse,
                                               VaultError]:
     """
         "type": "ClientFirstInteraction",
@@ -270,6 +291,14 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return GroupListRequest()
     elif op_type == "GroupListResponse":
         return GroupListResponse(**args)
+    elif op_type == "GroupAddRequest":
+        return GroupAddRequest(**args)
+    elif op_type == "GroupAddResponse":
+        return GroupAddResponse(**args)
+    elif op_type == "GroupPublicKeysRequest":
+        return GroupPublicKeysRequest(**args)
+    elif op_type == "GroupPublicKeysResponse":
+        return GroupPublicKeysResponse(**args)
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
@@ -283,6 +312,8 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   ReplaceRequirementsRequest, ReplaceRequirementsResponse,
                                   ReplaceRequest, ReplaceResponse, DeleteRequest, DeleteResponse,
                                   DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
+                                  GroupAddRequest, GroupAddResponse,
+                                  GroupPublicKeysRequest, GroupPublicKeysResponse,
                                   VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
@@ -382,6 +413,18 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = {}
     elif isinstance(obj, GroupListResponse):
         op_type = "GroupListResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddRequest):
+        op_type = "GroupAddRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupAddResponse):
+        op_type = "GroupAddResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupPublicKeysRequest):
+        op_type = "GroupPublicKeysRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupPublicKeysResponse):
+        op_type = "GroupPublicKeysResponse"
         args = obj.__dict__
     elif isinstance(obj, VaultError):
         op_type = "VaultError"

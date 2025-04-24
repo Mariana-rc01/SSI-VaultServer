@@ -819,5 +819,249 @@
     "timestamp": "2025-04-23T18:46:34.724625Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r75",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:18:43.340626Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r76",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:23:41.884793Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r77",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:25:25.312245Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r78",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:27:45.741550Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r79",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:29:15.289833Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r80",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:30:34.713156Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r81",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "add"
+    ],
+    "timestamp": "2025-04-24T01:31:52.116399Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r82",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:33:14.987106Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r83",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:34:40.507776Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r84",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:37:13.101693Z",
+    "status": "failed",
+    "error": "public key not found or no write permission"
+  },
+  {
+    "id": "r85",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:39:02.679354Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r86",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:39:59.542578Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r87",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:41:36.598619Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r88",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:43:04.192295Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r89",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:44:19.490526Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r90",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:46:59.138682Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r91",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:49:41.209120Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r92",
+    "userid": "u5",
+    "type": "group add",
+    "args": [
+      "f5",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-24T01:49:41.215491Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r93",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-24T01:50:46.638892Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r94",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-24T01:55:28.783237Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r95",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T01:55:42.354971Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r96",
+    "userid": "u1",
+    "type": "group add",
+    "args": [
+      "f5",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-24T01:55:42.361934Z",
+    "status": "success",
+    "error": ""
   }
 ]

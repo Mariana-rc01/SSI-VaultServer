@@ -1,7 +1,7 @@
 import asyncio
 import os
 import base64
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import (
@@ -39,6 +39,10 @@ from utils.utils import (
     GroupCreateRequest,
     RevokeRequest,
     RevokeResponse,
+    GroupAddRequest,
+    GroupAddResponse,
+    GroupPublicKeysRequest,
+    GroupPublicKeysResponse,
     encrypt,
     decrypt,
     is_signature_valid,
@@ -57,10 +61,11 @@ from utils.utils import (
     serialize_response,
     max_msg_size
 )
-from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, check_write_permission, delete_file,
-                          get_group_members, get_public_key, get_user_permissions_by_group, get_user_write_key,
+from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, delete_file,
+                          get_group_members, get_public_key, get_user_permissions_by_group,
                           log_request, get_file_by_id, add_request, add_user, get_user_key,
-                          get_files_for_listing, replace_file, replace_file_requirements, share_file, revoke_file_access)
+                          get_files_for_listing, replace_file, replace_file_requirements, share_file, revoke_file_access, group_add_request)
+from server.utils_db import get_group_public_keys
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -105,7 +110,7 @@ class ServerWorker:
         signature = sign_message_with_rsa(both_public_keys, rsa_private_key)
         serialized_certificate = serialize_certificate(server_certificate)
 
-        response_tosend = ServerFirstInteraction(base64.b64encode(serialized_public_key).decode(), 
+        response_tosend = ServerFirstInteraction(base64.b64encode(serialized_public_key).decode(),
                                                  base64.b64encode(signature).decode(),
                                                  base64.b64encode(serialized_certificate).decode())
 
@@ -329,6 +334,28 @@ class ServerWorker:
 
                 response_data = GroupListResponse(groups)
                 log_request(f"{self.id}", "group list", [], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupPublicKeysRequest):
+                group_id = client_request.group_id
+                public_keys = get_group_public_keys(group_id, self.id)
+
+                if public_keys == []:
+                    log_request(f"{self.id}", "group public keys", [group_id], "failed", "public key not found or no write permission")
+                    response_data = VaultError("Invalid operation.")
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                response_data = GroupPublicKeysResponse(public_keys)
+                log_request(f"{self.id}", "group public keys", [group_id], "success")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupAddRequest):
+                file_id = group_add_request(client_request, self.id)
+
+                if file_id is None:
+                    log_request(f"{self.id}", "group add", [client_request.file_id], "failed", "file not found")
+                    response_data = VaultError("Invalid operation.")
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                response_data = GroupAddResponse(f"File added to group successfully with id {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)

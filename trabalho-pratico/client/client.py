@@ -1,6 +1,5 @@
 import asyncio
 import base64
-import argparse
 from typing import Optional
 
 from authentication.authenticator import terminal_interface
@@ -25,6 +24,7 @@ from utils.utils import (
     ClientSecondInteraction,
     AddResponse,
     ReadResponse,
+    GroupAddResponse,
     generate_derived_key,
     generate_private_key,
     generate_public_key,
@@ -45,7 +45,7 @@ from utils.utils import (
 )
 from client.utils import (addRequest, groupAddUserRequest, groupCreateRequest, groupList,
                           listRequest, listResponse, readRequest, readResponse, replaceRequest,
-                          shareRequest, detailsResponse)
+                          shareRequest, detailsResponse, groupAddRequest)
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -179,6 +179,9 @@ class Client:
                 elif isinstance(server_response, GroupListResponse):
                     groupList(server_response)
 
+                elif isinstance(server_response, GroupAddResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, VaultError):
                     print(f"Error: {server_response.error}")
 
@@ -202,6 +205,7 @@ class Client:
         print("- group create <group-name>")
         print("- group add-user <group-id> <user-id> --permission=[r|w]")
         print("- group list")
+        print("- group add <group-id> <file-path>")
         print("- exit")
         new_msg: str = input(">> ").strip()
         if new_msg.startswith("add "):
@@ -344,6 +348,27 @@ class Client:
             request = GroupListRequest()
             serialized_request = serialize_response(request)
             return encrypt(serialized_request, self.aesgcm)
+        elif new_msg.startswith("group add "):
+            args = new_msg[len("group add "):].split(" ", 1)
+            if len(args) != 2:
+                print("Invalid command.")
+                return b""
+
+            group_id: str = args[0]
+            file_path: str = args[1]
+
+            try:
+                group_add_request = await groupAddRequest(
+                    file_path,
+                    group_id,
+                    self.aesgcm,
+                    writer,
+                    reader,
+                )
+                return encrypt(group_add_request, self.aesgcm)
+            except Exception as e:
+                print(f"Error during group add request: {e}")
+                return b""
         elif new_msg.strip() == "exit":
             return None
         else:

@@ -113,5 +113,43 @@
     },
     "created_at": "2025-04-22T17:42:46.889478Z",
     "location": "./storage/f4"
+  },
+  {
+    "id": "f5",
+    "name": "file.txt",
+    "size": 45,
+    "owner": "u1",
+    "permissions": {
+      "users": [],
+      "groups": [
+        {
+          "groupid": "g2",
+          "keys": [
+            {
+              "userid": "Owner: u1",
+              "key": "jG+/oZA26hwWQbNG04EGlqTLT07wK/4Qx+CBBoHkitkwi5TmAS1RgGh544qFAOuK2tWafjrVbLr2bG8WdA1LCAbRitQZYp+qN3RBa9nNl++aCS/gdhVgs7G3iuP8yqeXjsJDu1tlzYhwEszZHMvuqz2NwkGrBS7MyAIot9nD7eJYKwGNjTcZdb4i6Fu5IfSMbX9gxMQjNPQOtgkREAd9xSRIf4orAI19zdp3Qx0JEs7HnzaepLGNxtS6a8j9tk6/EGtUkQPZCrNhXQ7N0B17M8T4nMAzV4VS0f+cvrM89x8zxoSVMxHusaDXCK6Mfw+B+tlfaNrlHfiLY8iSNUZjpg=="
+            },
+            {
+              "userid": "u3",
+              "key": "SZ1T+CWXwLso1M9lbfNCAM/TTg5dfy5xxCfmp6XaxWkT6wZsPPgfA2VHrTMduZmIikNaKXEGgFVzjcbMkr6seddix80NO6srwLF3jrEcOJNMc16lQsEssR5oSrmB9KB5x6vqFp81GUhOHPqMvIkVTPRTjZWCd16hcOwHOuh9vathlT8t9QmVLpyw+jHBfhjahyO+B5s0XqBFm9dLT/YhO3HLLQYIbutY0VqbiZqkM0Sp5w6dPn2zP2KZHJ4GuYHmQT+2apKczq48cSH582+tczC0zhSmcLTanxKcTSmkUestn9voKYmeqyXxYe+uLxiZqf+ef3NRD2WBeKbt6ppdOA=="
+            },
+            {
+              "userid": "u4",
+              "key": "WUBuFjbl7bbBzPHn3wQ+WJ6GYtsdLl3QIt/KV0N3ZogsoOMcn10Yu0dro/zajCuomlX39LCC+3VkifdRvfOTBJjHk6DwrhyMYFzmPkUXRHSM4FHsbcsQ4FPoFJamSvJZ5Bz9T6jc2eNE1xnDLzNj3E816pP9eHvdOVe49FIjxGItScWdhfx9ZeT2A7Iq+wiSVJmEvN6YTuNSHhA4z8fJAkXgenc6qOx1J5RdupRgr5loAuF8cZ+WOtcUcaX/5MkOcDxtqca/QvFyOcVmFGIFwL0cnbCiOIsPdjqRWpVVcz1gG+qngbBaF+0LZgePaM2gdiGZvwO2vocER5LvmqPkfw=="
+            },
+            {
+              "userid": "u5",
+              "key": "Q+vPH6V/to3+DaZnZySRo0Uj8BGocxRZ/M02e12G7s29z1FMeBa/QrOmRJ1SE1pGC8vkxKvmU84DAlo8ijmEL9jB9PUNRzkUsbwA0YWvS5xh2Q7tkA6y4PpM05CcDj27XJWtfV7xip3FnH3YUimIYGaHj+eCAhMi90zKSZLtnoJigvgkiIccV3gUmUDOdVxLlm5y7upxba2aUBNT0aPT2oehOETZ2adzYM347Tg97jeWILSVxFP+we4zBOhuJBjnG0W1XkffIYKCLb3majBD7qKDbXKzBczlgP7Y5UmOUvrb0I8C9W+wyuqwRFm/NCCaxpY29yBye2XNNEXrWCVGFg=="
+            }
+          ],
+          "permissions": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    "created_at": "2025-04-24T01:55:42.361086Z",
+    "location": "./storage/f5"
   }
 ]
