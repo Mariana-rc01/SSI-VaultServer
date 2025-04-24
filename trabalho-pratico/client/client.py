@@ -4,50 +4,10 @@ from typing import Optional
 
 from authentication.authenticator import terminal_interface
 
-from utils.utils import (
-    DeleteRequest,
-    DeleteResponse,
-    GroupAddUserResponse,
-    GroupCreateResponse,
-    GroupDeleteRequest,
-    GroupDeleteResponse,
-    GroupListRequest,
-    GroupListResponse,
-    ListResponse,
-    ReplaceResponse,
-    DetailsRequest,
-    DetailsResponse,
-    RevokeRequest,
-    RevokeResponse,
-    ShareResponse,
-    VaultError,
-    ClientFirstInteraction,
-    ServerFirstInteraction,
-    ClientSecondInteraction,
-    AddResponse,
-    ReadResponse,
-    GroupAddResponse,
-    generate_derived_key,
-    generate_private_key,
-    generate_public_key,
-    serialize_public_key,
-    deserialize_public_key,
-    generate_shared_key,
-    encrypt,
-    decrypt,
-    build_aesgcm,
-    certificate_create,
-    is_certificate_valid,
-    is_signature_valid,
-    sign_message_with_rsa,
-    serialize_certificate,
-    serialize_response,
-    deserialize_request,
-    max_msg_size,
-)
-from client.utils import (addRequest, groupAddUserRequest, groupCreateRequest, groupList,
-                          listRequest, listResponse, readRequest, readResponse, replaceRequest,
-                          shareRequest, detailsResponse, groupAddRequest)
+from client.notifications import print_notifications
+from utils.utils import *
+from utils.data_structures import *
+from client.utils import *
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -138,254 +98,256 @@ class Client:
 
         print("Handshake completed!")
 
+    async def receive_notifications(self, reader: asyncio.StreamReader) -> None:
+        """Receives notifications from the server."""
+        try:
+            notifications = await reader.read(max_msg_size)
+            if not notifications:
+                print("No notifications received.")
+                return
+            decrypted_notification: bytes = decrypt(notifications, self.aesgcm)
+            notification_obj = deserialize_request(decrypted_notification)
+            print_notifications(notification_obj)
+        except Exception as e:
+            print(f"Error receiving notification: {e}")
+
     async def process(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, msg: bytes = b"") -> Optional[bytes]:
         """Processes a message (`bytestring`) sent by the SERVER.
         Returns the message to be sent as a response (`None` to
         terminate the connection)."""
-        if len(msg) != 0:
-            self.msg_cnt += 1
-            try:
-                decrypted_msg: bytes = decrypt(msg, self.aesgcm)
-                server_response = deserialize_request(decrypted_msg)
+        while True:
+            if len(msg) != 0:
+                self.msg_cnt += 1
+                try:
+                    decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+                    server_response = deserialize_request(decrypted_msg)
 
-                if isinstance(server_response, ReadResponse):
-                    readResponse(server_response, self.rsa_private_key)
+                    if isinstance(server_response, ReadResponse):
+                        readResponse(server_response, self.rsa_private_key)
 
-                elif isinstance(server_response, AddResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, AddResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, ListResponse):
-                    listResponse(server_response)
+                    elif isinstance(server_response, ListResponse):
+                        listResponse(server_response)
 
-                elif isinstance(server_response, ShareResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, ShareResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, DeleteResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, DeleteResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, ReplaceResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, ReplaceResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, DetailsResponse):
-                    detailsResponse(server_response)
+                    elif isinstance(server_response, DetailsResponse):
+                        detailsResponse(server_response)
 
-                elif isinstance(server_response, RevokeResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, RevokeResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, GroupCreateResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, GroupCreateResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, GroupDeleteResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, GroupDeleteResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, GroupAddUserResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, GroupAddUserResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, GroupListResponse):
-                    groupList(server_response)
+                    elif isinstance(server_response, GroupListResponse):
+                        groupList(server_response)
 
-                elif isinstance(server_response, GroupAddResponse):
-                    print(f"Received {server_response.response}")
+                    elif isinstance(server_response, GroupAddResponse):
+                        print(f"Received {server_response.response}")
 
-                elif isinstance(server_response, VaultError):
-                    print(f"Error: {server_response.error}")
+                    elif isinstance(server_response, VaultError):
+                        print(f"Error: {server_response.error}")
 
-                else:
-                    print(f"Unknown response type: {type(server_response)}")
-                    return None
+                    else:
+                        print(f"Unknown response type: {type(server_response)}")
+                        msg = b""
+                        continue
 
-            except Exception as e:
-                print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
+                except Exception as e:
+                    print(f"[ERROR] Failed to process message ({self.msg_cnt}): {e}")
+                    msg = b""
+                    continue
+
+            menu()
+            new_msg: str = input(">> ").strip()
+            if new_msg.startswith("add "):
+                file_path: str = new_msg.split(" ", 1)[1]
+
+                client_public_key = self.rsa_private_key.public_key()
+
+                json_bytes: Optional[bytes] = addRequest(file_path, client_public_key)
+                if not json_bytes:
+                    continue
+
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("read "):
+                file_id: str = new_msg.split(" ", 1)[1]
+
+                json_bytes: bytes = readRequest(file_id)
+                if not json_bytes:
+                    continue
+
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("list"):
+                args = new_msg.split()
+                list_type = None
+                target_id = None
+
+                if len(args) >= 2:
+                    if args[1] == "-u" and len(args) == 3:
+                        list_type = "user"
+                        target_id = args[2]
+                    elif args[1] == "-g" and len(args) == 3:
+                        list_type = "group"
+                        target_id = args[2]
+
+                json_bytes: bytes = listRequest(list_type, target_id)
+                if not json_bytes:
+                    continue
+
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("share "):
+                args = new_msg.split()
+                if len(args) != 4:
+                    print("Invalid command.")
+                    continue
+
+                file_id: str = args[1]
+                target_id: str = args[2]
+                permission: str = args[3].upper()
+
+                if permission not in ["R", "W"]:
+                    print("Invalid permission.")
+                    continue
+
+                try:
+                    share_request = await shareRequest(
+                        file_id,
+                        target_id,
+                        permission,
+                        self.rsa_private_key,
+                        self.aesgcm,
+                        writer,
+                        reader,
+                    )
+                    return encrypt(share_request, self.aesgcm)
+                except Exception as e:
+                    print(f"Error during share request: {e}")
+                    continue
+            elif new_msg.startswith("delete "):
+                file_id: str = new_msg.split(" ", 1)[1]
+
+                request = DeleteRequest(file_id)
+                json_bytes = serialize_response(request)
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("replace "):
+                args = new_msg.split(" ", 2)
+                if len(args) != 3:
+                    print("Invalid command.")
+                    continue
+
+                file_id: str = args[1]
+                file_path: str = args[2]
+
+                try:
+                    replace_request = await replaceRequest(
+                        file_id,
+                        file_path,
+                        self.rsa_private_key,
+                        self.aesgcm,
+                        writer,
+                        reader,
+                    )
+                    return encrypt(replace_request, self.aesgcm)
+                except Exception as e:
+                    print(f"Error during replace request: {e}")
+                    continue
+            elif new_msg.startswith("details "):
+                file_id: str = new_msg.split(" ", 1)[1]
+
+                request = DetailsRequest(file_id)
+                json_bytes = serialize_response(request)
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("group create "):
+                group_name: str = new_msg.split(" ", 2)[2]
+
+                json_bytes: bytes = groupCreateRequest(group_name)
+                if not json_bytes:
+                    continue
+
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("group delete "):
+                group_id: str = new_msg.split(" ", 2)[2]
+
+                request = GroupDeleteRequest(group_id)
+                json_bytes = serialize_response(request)
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("revoke "):
+                args = new_msg.split(" ", 2)
+                if len(args) != 3:
+                    print("Invalid command.")
+                    continue
+
+                file_id: str = args[1]
+                target_id: str = args[2]
+
+                request = RevokeRequest(file_id, target_id)
+                json_bytes = serialize_response(request)
+                return encrypt(json_bytes, self.aesgcm)
+            elif new_msg.startswith("group add-user "):
+                args = new_msg.split()
+                if len(args) != 5:
+                    print("Invalid command.")
+                    continue
+
+                group_id: str = args[2]
+                user_id: str = args[3]
+                permission: str = args[4].upper()
+
+                try:
+                    groupAddUser_request = await groupAddUserRequest(
+                        group_id, user_id, permission, self.rsa_private_key, self.aesgcm, writer, reader
+                    )
+                    return encrypt(groupAddUser_request, self.aesgcm)
+                except Exception as e:
+                    print(f"Error during share request: {e}")
+                    continue
+            elif new_msg.startswith("group list"):
+                request = GroupListRequest()
+                serialized_request = serialize_response(request)
+                return encrypt(serialized_request, self.aesgcm)
+            elif new_msg.startswith("group add "):
+                args = new_msg[len("group add "):].split(" ", 1)
+                if len(args) != 2:
+                    print("Invalid command.")
+                    continue
+
+                group_id: str = args[0]
+                file_path: str = args[1]
+
+                try:
+                    group_add_request = await groupAddRequest(
+                        file_path,
+                        group_id,
+                        self.aesgcm,
+                        writer,
+                        reader,
+                    )
+                    return encrypt(group_add_request, self.aesgcm)
+                except Exception as e:
+                    print(f"Error during group add request: {e}")
+                    continue
+            elif new_msg.strip() == "exit":
                 return None
-
-        print("\nPlease choose an command:")
-        print("- add <file-path>")
-        print("- read <file-id>")
-        print("- list [-u <user-id> | -g <group-id>]")
-        print("- share <file-id> <target-id> --permission=[r|w]")
-        print("- delete <file-id>")
-        print("- replace <file-id> <file-path>")
-        print("- details <file-id>")
-        print("- revoke <file-id> <target-id>")
-        print("- group create <group-name>")
-        print("- group delete <group-id>")
-        print("- group add-user <group-id> <user-id> --permission=[r|w]")
-        print("- group list")
-        print("- group add <group-id> <file-path>")
-        print("- exit")
-        new_msg: str = input(">> ").strip()
-        if new_msg.startswith("add "):
-            file_path: str = new_msg.split(" ", 1)[1]
-
-            client_public_key = self.rsa_private_key.public_key()
-
-            json_bytes: Optional[bytes] = addRequest(file_path, client_public_key)
-            if not json_bytes:
-                return b""
-
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("read "):
-            file_id: str = new_msg.split(" ", 1)[1]
-
-            json_bytes: bytes = readRequest(file_id)
-            if not json_bytes:
-                return b""
-
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("list"):
-            args = new_msg.split()
-            list_type = None
-            target_id = None
-
-            if len(args) >= 2:
-                if args[1] == "-u" and len(args) == 3:
-                    list_type = "user"
-                    target_id = args[2]
-                elif args[1] == "-g" and len(args) == 3:
-                    list_type = "group"
-                    target_id = args[2]
-
-            json_bytes: bytes = listRequest(list_type, target_id)
-            if not json_bytes:
-                return b""
-
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("share "):
-            args = new_msg.split()
-            if len(args) != 4:
+            else:
                 print("Invalid command.")
-                return b""
-
-            file_id: str = args[1]
-            target_id: str = args[2]
-            permission: str = args[3].upper()
-
-            if permission not in ["R", "W"]:
-                print("Invalid permission.")
-                return b""
-
-            try:
-                share_request = await shareRequest(
-                    file_id,
-                    target_id,
-                    permission,
-                    self.rsa_private_key,
-                    self.aesgcm,
-                    writer,
-                    reader,
-                )
-                return encrypt(share_request, self.aesgcm)
-            except Exception as e:
-                print(f"Error during share request: {e}")
-                return b""
-        elif new_msg.startswith("delete "):
-            file_id: str = new_msg.split(" ", 1)[1]
-
-            request = DeleteRequest(file_id)
-            json_bytes = serialize_response(request)
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("replace "):
-            args = new_msg.split(" ", 2)
-            if len(args) != 3:
-                print("Invalid command.")
-                return b""
-
-            file_id: str = args[1]
-            file_path: str = args[2]
-
-            try:
-                replace_request = await replaceRequest(
-                    file_id,
-                    file_path,
-                    self.rsa_private_key,
-                    self.aesgcm,
-                    writer,
-                    reader,
-                )
-                return encrypt(replace_request, self.aesgcm)
-            except Exception as e:
-                print(f"Error during replace request: {e}")
-                return b""
-        elif new_msg.startswith("details "):
-            file_id: str = new_msg.split(" ", 1)[1]
-
-            request = DetailsRequest(file_id)
-            json_bytes = serialize_response(request)
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("group create "):
-            group_name: str = new_msg.split(" ", 2)[2]
-
-            json_bytes: bytes = groupCreateRequest(group_name)
-            if not json_bytes:
-                return b""
-
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("group delete "):
-            group_id: str = new_msg.split(" ", 2)[2]
-
-            request = GroupDeleteRequest(group_id)
-            json_bytes = serialize_response(request)
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("revoke "):
-            args = new_msg.split(" ", 2)
-            if len(args) != 3:
-                print("Invalid command.")
-                return b""
-
-            file_id: str = args[1]
-            target_id: str = args[2]
-
-            request = RevokeRequest(file_id, target_id)
-            json_bytes = serialize_response(request)
-            return encrypt(json_bytes, self.aesgcm)
-        elif new_msg.startswith("group add-user "):
-            args = new_msg.split()
-            if len(args) != 5:
-                print("Invalid command.")
-                return b""
-
-            group_id: str = args[2]
-            user_id: str = args[3]
-            permission: str = args[4].upper()
-
-            try:
-                groupAddUser_request = await groupAddUserRequest(
-                    group_id, user_id, permission, self.rsa_private_key, self.aesgcm, writer, reader
-                )
-                return encrypt(groupAddUser_request, self.aesgcm)
-            except Exception as e:
-                print(f"Error during share request: {e}")
-                return b""
-        elif new_msg.startswith("group list"):
-            request = GroupListRequest()
-            serialized_request = serialize_response(request)
-            return encrypt(serialized_request, self.aesgcm)
-        elif new_msg.startswith("group add "):
-            args = new_msg[len("group add "):].split(" ", 1)
-            if len(args) != 2:
-                print("Invalid command.")
-                return b""
-
-            group_id: str = args[0]
-            file_path: str = args[1]
-
-            try:
-                group_add_request = await groupAddRequest(
-                    file_path,
-                    group_id,
-                    self.aesgcm,
-                    writer,
-                    reader,
-                )
-                return encrypt(group_add_request, self.aesgcm)
-            except Exception as e:
-                print(f"Error during group add request: {e}")
-                return b""
-        elif new_msg.strip() == "exit":
-            return None
-        else:
-            print("Invalid command.")
-            return b""
+                continue
 
 
 # Client/Server functionality
@@ -408,6 +370,8 @@ async def tcp_echo_client() -> None:
     await client.handshake(reader, writer)
     if client.aesgcm is None:
         return
+
+    await client.receive_notifications(reader)
 
     msg: Optional[bytes] = await client.process(reader, writer)
     while msg:

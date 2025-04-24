@@ -1,12 +1,12 @@
 import json
 import os
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict, List
 
 FILES_JSON = "./db/files.json"
 LOGS_JSON = "./db/logs.json"
 USERS_JSON = "./db/users.json"
 GROUPS_JSON = "./db/groups.json"
+NOTIFICATIONS_JSON = "./db/notifications.json"
 STORAGE_DIR = "./storage"
 
 def load_users() -> List[Dict[str, Any]]:
@@ -44,6 +44,18 @@ def save_files(files: List[Dict[str, Any]]) -> None:
     """ Saves the files to the JSON file. """
     with open(FILES_JSON, "w") as f:
         json.dump(files, f, indent=2)
+
+def load_notifications() -> List[Dict[str, Any]]:
+    """ Loads the notifications from the JSON file. """
+    if os.path.exists(NOTIFICATIONS_JSON):
+        with open(NOTIFICATIONS_JSON, "r") as f:
+            return json.load(f)
+    return []
+
+def save_notifications(notifications: List[Dict[str, Any]]) -> None:
+    """ Saves the notifications to the JSON file. """
+    with open(NOTIFICATIONS_JSON, "w") as f:
+        json.dump(notifications, f, indent=2)
 
 def get_next_id(existing_items: list, prefix: str) -> str:
     """ Gets the next ID to avoid duplicates after deletions. """

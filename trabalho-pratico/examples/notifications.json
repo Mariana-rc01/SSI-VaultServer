@@ -1,0 +1,32 @@
+[
+    {
+        "userId": "u1",
+        "notifications": [
+            {
+                "content": "Your file f3 has been replaced by u3.",
+                "timestamp": "2023-10-01T12:00:00Z",
+                "read": false
+            },
+            {
+                "content": "The file f7 was added to your group.",
+                "timestamp": "2023-10-02T14:30:00Z",
+                "read": true
+            }
+        ]
+    },
+    {
+        "userId": "u2",
+        "notifications": [
+            {
+                "content": "Your file f1 has been replaced by u2.",
+                "timestamp": "2023-10-01T12:00:00Z",
+                "read": false
+            },
+            {
+                "content": "The file f4 was added to your group.",
+                "timestamp": "2023-10-02T14:30:00Z",
+                "read": true
+            }
+        ]
+    }
+]
