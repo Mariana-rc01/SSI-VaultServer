@@ -1,7 +1,4 @@
 from datetime import datetime
-
-NOTIFICATIONS_JSON = "./db/notifications.json"
-
 from server.utils_db import load_notifications, save_notifications
 
 def add_notification(userid: str, message: str) -> None:

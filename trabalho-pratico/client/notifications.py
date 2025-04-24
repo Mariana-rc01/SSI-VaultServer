@@ -1,5 +1,5 @@
 from datetime import datetime
-from utils.utils import Notification
+from utils.data_structures import Notification
 
 def print_notifications(response: Notification) -> None:
     """Handles the notifications received from the server."""

@@ -1,18 +1,13 @@
+from utils.utils import *
+from utils.data_structures import *
+from server.utils_db import *
+from server.notifications import add_notification
+
 import base64
 import os
 import json
-from datetime import datetime
 from typing import List, Dict, Optional, Any
-
-from utils.utils import ReplaceRequest, RevokeRequest, ShareRequest, GroupAddRequest, serialize_public_key_rsa
-from server.utils_db import load_users, save_users, load_groups, save_groups, load_files, save_files, get_next_file_id, get_next_group_id
-from server.notifications import add_notification
-
-FILES_JSON = "./db/files.json"
-LOGS_JSON = "./db/logs.json"
-USERS_JSON = "./db/users.json"
-GROUPS_JSON = "./db/groups.json"
-STORAGE_DIR = "./storage"
+from datetime import datetime
 
 def log_request(user_id: str, type: str, args: List[Any], status: str, error: str = "") -> None:
     """ Logs the request made by the user. """

@@ -1222,5 +1222,72 @@
     "timestamp": "2025-04-24T14:44:03.228299Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r111",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-24T15:09:09.400594Z",
+    "status": "failed",
+    "error": "no access key"
+  },
+  {
+    "id": "r112",
+    "userid": "u2",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-24T15:09:18.858744Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r113",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f4"
+    ],
+    "timestamp": "2025-04-24T15:10:09.206463Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r114",
+    "userid": "u1",
+    "type": "list",
+    "args": [
+      "user",
+      "u1"
+    ],
+    "timestamp": "2025-04-24T15:16:40.062776Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r115",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-24T15:16:42.958777Z",
+    "status": "failed",
+    "error": "no access key"
+  },
+  {
+    "id": "r116",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-24T15:18:07.328748Z",
+    "status": "success",
+    "error": ""
   }
 ]

@@ -1,7 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict, List
 
 FILES_JSON = "./db/files.json"
 LOGS_JSON = "./db/logs.json"
