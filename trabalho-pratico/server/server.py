@@ -4,70 +4,9 @@ import base64
 from typing import Optional, Tuple
 from asyncio.streams import StreamReader, StreamWriter
 
-from utils.utils import (
-    AddResponse,
-    DeleteRequest,
-    DeleteResponse,
-    GroupAddUserRequest,
-    GroupAddUserRequirementsRequest,
-    GroupAddUserRequirementsResponse,
-    GroupAddUserResponse,
-    GroupCreateResponse,
-    GroupListRequest,
-    GroupListResponse,
-    GroupMembersRequest,
-    GroupMembersResponse,
-    ListRequest,
-    ListResponse,
-    PublicKeyRequest,
-    PublicKeyResponse,
-    ReadResponse,
-    ReplaceRequest,
-    ReplaceRequirementsRequest,
-    ReplaceRequirementsResponse,
-    ReplaceResponse,
-    DetailsRequest,
-    DetailsResponse,
-    ShareRequest,
-    ShareResponse,
-    VaultError,
-    ClientFirstInteraction,
-    ServerFirstInteraction,
-    ClientSecondInteraction,
-    AddRequest,
-    ReadRequest,
-    GroupCreateRequest,
-    GroupDeleteRequest,
-    GroupDeleteResponse,
-    RevokeRequest,
-    RevokeResponse,
-    GroupAddRequest,
-    GroupAddResponse,
-    GroupPublicKeysRequest,
-    GroupPublicKeysResponse,
-    encrypt,
-    decrypt,
-    is_signature_valid,
-    deserialize_public_key,
-    is_certificate_valid,
-    generate_private_key,
-    generate_public_key,
-    serialize_public_key,
-    sign_message_with_rsa,
-    serialize_certificate,
-    generate_shared_key,
-    generate_derived_key,
-    build_aesgcm,
-    certificate_create,
-    deserialize_request,
-    serialize_response,
-    max_msg_size
-)
-from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, delete_file,
-                          get_group_members, get_public_key, get_user_permissions_by_group,
-                          log_request, get_file_by_id, add_request, add_user, get_user_key,
-                          get_files_for_listing, replace_file, replace_file_requirements, share_file,
-                          revoke_file_access, group_add_request, group_delete)
+from utils.utils import *
+from server.utils import *
+from server.notifications import get_notifications
 from server.utils_db import get_group_public_keys
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -149,6 +88,12 @@ class ServerWorker:
         shared_key = generate_shared_key(dh_private_key, client_public_key)
         derived_key = generate_derived_key(shared_key)
         self.aesgcm = build_aesgcm(derived_key)
+
+    async def send_notifications(self, writer: StreamWriter) -> None:
+        notifications = get_notifications(self.id)
+        response_data = Notification(notifications)
+        writer.write(encrypt(serialize_response(response_data), self.aesgcm))
+        await writer.drain()
 
     def process(self, msg: bytes) -> Optional[bytes]:
         """Processes a message (`bytestring`) sent by the CLIENT.
@@ -388,6 +333,8 @@ async def handle_echo(reader: StreamReader, writer: StreamWriter) -> None:
     if srvwrk.aesgcm is None:
         writer.close()
         return
+
+    await srvwrk.send_notifications(writer)
 
     data = await reader.read(max_msg_size)
     while True:

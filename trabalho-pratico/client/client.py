@@ -4,50 +4,9 @@ from typing import Optional
 
 from authentication.authenticator import terminal_interface
 
-from utils.utils import (
-    DeleteRequest,
-    DeleteResponse,
-    GroupAddUserResponse,
-    GroupCreateResponse,
-    GroupDeleteRequest,
-    GroupDeleteResponse,
-    GroupListRequest,
-    GroupListResponse,
-    ListResponse,
-    ReplaceResponse,
-    DetailsRequest,
-    DetailsResponse,
-    RevokeRequest,
-    RevokeResponse,
-    ShareResponse,
-    VaultError,
-    ClientFirstInteraction,
-    ServerFirstInteraction,
-    ClientSecondInteraction,
-    AddResponse,
-    ReadResponse,
-    GroupAddResponse,
-    generate_derived_key,
-    generate_private_key,
-    generate_public_key,
-    serialize_public_key,
-    deserialize_public_key,
-    generate_shared_key,
-    encrypt,
-    decrypt,
-    build_aesgcm,
-    certificate_create,
-    is_certificate_valid,
-    is_signature_valid,
-    sign_message_with_rsa,
-    serialize_certificate,
-    serialize_response,
-    deserialize_request,
-    max_msg_size,
-)
-from client.utils import (addRequest, groupAddUserRequest, groupCreateRequest, groupList,
-                          listRequest, listResponse, readRequest, readResponse, replaceRequest,
-                          shareRequest, detailsResponse, groupAddRequest)
+from client.notifications import print_notifications
+from utils.utils import *
+from client.utils import *
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
@@ -137,6 +96,20 @@ class Client:
         await writer.drain()
 
         print("Handshake completed!")
+
+    async def receive_notifications(self, reader: asyncio.StreamReader) -> None:
+        """Receives notifications from the server."""
+        try:
+            notifications = await reader.read(max_msg_size)
+            print(f"Received notifications: {notifications}")
+            if not notifications:
+                print("No notifications received.")
+                return
+            decrypted_notification: bytes = decrypt(notifications, self.aesgcm)
+            notification_obj = deserialize_request(decrypted_notification)
+            print_notifications(notification_obj)
+        except Exception as e:
+            print(f"Error receiving notification: {e}")
 
     async def process(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, msg: bytes = b"") -> Optional[bytes]:
         """Processes a message (`bytestring`) sent by the SERVER.
@@ -408,6 +381,8 @@ async def tcp_echo_client() -> None:
     await client.handshake(reader, writer)
     if client.aesgcm is None:
         return
+
+    await client.receive_notifications(reader)
 
     msg: Optional[bytes] = await client.process(reader, writer)
     while msg:

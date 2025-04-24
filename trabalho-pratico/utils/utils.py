@@ -33,6 +33,10 @@ class ClientSecondInteraction:
     subject: str
 
 @dataclass
+class Notification:
+    notifications: list
+
+@dataclass
 class AddRequest:
     filename: str
     encrypted_file: str
@@ -219,7 +223,7 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               GroupAddRequest, GroupAddResponse,
                                               GroupPublicKeysRequest, GroupPublicKeysResponse,
                                               GroupDeleteRequest, GroupDeleteResponse,
-                                              VaultError]:
+                                              Notification, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -238,6 +242,8 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return ServerFirstInteraction(**args)
     elif op_type == "ClientSecondInteraction":
         return ClientSecondInteraction(**args)
+    elif op_type == "Notification":
+        return Notification(**args)
     elif op_type == "AddRequest":
         return AddRequest(**args)
     elif op_type == "AddResponse":
@@ -328,7 +334,7 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   GroupAddRequest, GroupAddResponse,
                                   GroupPublicKeysRequest, GroupPublicKeysResponse,
                                   GroupDeleteRequest, GroupDeleteResponse,
-                                  VaultError]) -> bytes:
+                                  Notification, VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
         args = obj.__dict__
@@ -337,6 +343,9 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, ClientSecondInteraction):
         op_type = "ClientSecondInteraction"
+        args = obj.__dict__
+    elif isinstance(obj, Notification):
+        op_type = "Notification"
         args = obj.__dict__
     elif isinstance(obj, AddRequest):
         op_type = "AddRequest"
