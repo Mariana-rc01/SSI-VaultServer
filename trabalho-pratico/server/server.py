@@ -37,6 +37,8 @@ from utils.utils import (
     AddRequest,
     ReadRequest,
     GroupCreateRequest,
+    GroupDeleteRequest,
+    GroupDeleteResponse,
     RevokeRequest,
     RevokeResponse,
     GroupAddRequest,
@@ -64,7 +66,8 @@ from utils.utils import (
 from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, delete_file,
                           get_group_members, get_public_key, get_user_permissions_by_group,
                           log_request, get_file_by_id, add_request, add_user, get_user_key,
-                          get_files_for_listing, replace_file, replace_file_requirements, share_file, revoke_file_access, group_add_request)
+                          get_files_for_listing, replace_file, replace_file_requirements, share_file,
+                          revoke_file_access, group_add_request, group_delete)
 from server.utils_db import get_group_public_keys
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -290,6 +293,18 @@ class ServerWorker:
                 group_id = add_group_request(group_name, self.id)
 
                 response_data = GroupCreateResponse(f"group {group_id} created.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, GroupDeleteRequest):
+                group_id = client_request.group_id
+                error_message = group_delete(group_id, self.id)
+
+                if error_message:
+                    log_request(f"{self.id}", "group delete", [group_id], "failed", error_message)
+                    response_data = VaultError(error_message)
+                    return encrypt(serialize_response(response_data), self.aesgcm)
+
+                log_request(f"{self.id}", "group delete", [group_id], "success")
+                response_data = GroupDeleteResponse(f"Group {group_id} deleted.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, GroupAddUserRequest):
                 group_id = client_request.group_id

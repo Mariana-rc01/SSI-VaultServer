@@ -1063,5 +1063,131 @@
     "timestamp": "2025-04-24T01:55:42.361934Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r97",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:14:49.246635Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r98",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:14:49.248083Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r99",
+    "userid": "u1",
+    "type": "delete",
+    "args": [
+      "f5"
+    ],
+    "timestamp": "2025-04-24T02:18:09.145768Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r100",
+    "userid": "u1",
+    "type": "group create",
+    "args": [
+      "g2",
+      "test"
+    ],
+    "timestamp": "2025-04-24T02:21:44.442159Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r101",
+    "userid": "u1",
+    "type": "group add user requirements",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-24T02:22:08.490600Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r102",
+    "userid": "u1",
+    "type": "group add user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-24T02:22:08.494932Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r103",
+    "userid": "u1",
+    "type": "group add user requirements",
+    "args": [
+      "g2",
+      "u4"
+    ],
+    "timestamp": "2025-04-24T02:22:35.062733Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r104",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:23:23.328588Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r105",
+    "userid": "u1",
+    "type": "group add",
+    "args": [
+      "f5",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-24T02:23:23.334378Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r106",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:24:10.675786Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r107",
+    "userid": "u1",
+    "type": "group delete",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-24T02:24:10.677727Z",
+    "status": "success",
+    "error": ""
   }
 ]

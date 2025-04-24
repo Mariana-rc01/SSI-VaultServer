@@ -146,6 +146,14 @@ class GroupCreateResponse:
     response: str
 
 @dataclass
+class GroupDeleteRequest:
+    group_id: str
+
+@dataclass
+class GroupDeleteResponse:
+    response: str
+
+@dataclass
 class GroupAddUserRequirementsRequest:
     group_id: str
     user_id: str
@@ -210,6 +218,7 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
                                               GroupAddRequest, GroupAddResponse,
                                               GroupPublicKeysRequest, GroupPublicKeysResponse,
+                                              GroupDeleteRequest, GroupDeleteResponse,
                                               VaultError]:
     """
         "type": "ClientFirstInteraction",
@@ -279,6 +288,10 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
         return GroupCreateRequest(**args)
     elif op_type == "GroupCreateResponse":
         return GroupCreateResponse(**args)
+    elif op_type == "GroupDeleteRequest":
+        return GroupDeleteRequest(**args)
+    elif op_type == "GroupDeleteResponse":
+        return GroupDeleteResponse(**args)
     elif op_type == "GroupAddUserRequest":
         return GroupAddUserRequest(**args)
     elif op_type == "GroupAddUserResponse":
@@ -314,6 +327,7 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   DetailsRequest, DetailsResponse, RevokeRequest, RevokeResponse,
                                   GroupAddRequest, GroupAddResponse,
                                   GroupPublicKeysRequest, GroupPublicKeysResponse,
+                                  GroupDeleteRequest, GroupDeleteResponse,
                                   VaultError]) -> bytes:
     if isinstance(obj, ClientFirstInteraction):
         op_type = "ClientFirstInteraction"
@@ -395,6 +409,12 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
         args = obj.__dict__
     elif isinstance(obj, GroupCreateResponse):
         op_type = "GroupCreateResponse"
+        args = obj.__dict__
+    elif isinstance(obj, GroupDeleteRequest):
+        op_type = "GroupDeleteRequest"
+        args = obj.__dict__
+    elif isinstance(obj, GroupDeleteResponse):
+        op_type = "GroupDeleteResponse"
         args = obj.__dict__
     elif isinstance(obj, GroupAddUserRequest):
         op_type = "GroupAddUserRequest"

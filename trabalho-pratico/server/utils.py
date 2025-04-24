@@ -232,6 +232,46 @@ def get_group_members(group_id: str) -> list:
         []
     )
 
+def group_delete(group_id: str, user_id: str) -> Optional[str]:
+    """ Deletes a group. """
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+
+    if not group:
+        return "Group not found"
+
+    if group["owner"] != user_id:
+        return "Only group owner can delete the group"
+
+    groups.remove(group)
+    save_groups(groups)
+
+    users = load_users()
+    for user in users:
+        if group_id in user.get("groups", []):
+            user["groups"].remove(group_id)
+
+    save_users(users)
+
+    files = load_files()
+    for file in files:
+        for group_perm in file.get("permissions", {}).get("groups", []):
+            if group_perm["groupid"] == group_id:
+                file["permissions"]["groups"].remove(group_perm)
+                # Check if the file has no groups and no users, if not, it was from the group and can be deleted
+                if not file["permissions"]["groups"] and not file["permissions"].get("users", []):
+                    try:
+                        os.remove(file["location"])
+                    except Exception as e:
+                        return f"Error deleting file: {str(e)}"
+                    files.remove(file)
+                break
+    save_files(files)
+
+    log_request(user_id, "group delete", [group_id], "success")
+
+    return None
+
 def add_group_request(group_name: str, user_id: str) -> str:
     """ Adds a group request. """
     group_id = get_next_group_id()

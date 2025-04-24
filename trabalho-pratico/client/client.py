@@ -9,6 +9,8 @@ from utils.utils import (
     DeleteResponse,
     GroupAddUserResponse,
     GroupCreateResponse,
+    GroupDeleteRequest,
+    GroupDeleteResponse,
     GroupListRequest,
     GroupListResponse,
     ListResponse,
@@ -173,6 +175,9 @@ class Client:
                 elif isinstance(server_response, GroupCreateResponse):
                     print(f"Received {server_response.response}")
 
+                elif isinstance(server_response, GroupDeleteResponse):
+                    print(f"Received {server_response.response}")
+
                 elif isinstance(server_response, GroupAddUserResponse):
                     print(f"Received {server_response.response}")
 
@@ -203,6 +208,7 @@ class Client:
         print("- details <file-id>")
         print("- revoke <file-id> <target-id>")
         print("- group create <group-name>")
+        print("- group delete <group-id>")
         print("- group add-user <group-id> <user-id> --permission=[r|w]")
         print("- group list")
         print("- group add <group-id> <file-path>")
@@ -313,6 +319,12 @@ class Client:
             if not json_bytes:
                 return b""
 
+            return encrypt(json_bytes, self.aesgcm)
+        elif new_msg.startswith("group delete "):
+            group_id: str = new_msg.split(" ", 2)[2]
+
+            request = GroupDeleteRequest(group_id)
+            json_bytes = serialize_response(request)
             return encrypt(json_bytes, self.aesgcm)
         elif new_msg.startswith("revoke "):
             args = new_msg.split(" ", 2)
