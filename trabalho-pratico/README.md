@@ -22,6 +22,7 @@
 5. [Modelação de Ameaças (Threat Model)](#modelação-de-ameaças-threat-model)
    1. [Identificação de Ameaças](#identificação-de-ameaças)
    2. [Diagrama de Fluxo de Dados e Barreiras](#diagrama-de-fluxo-de-dados-e-barreiras)
+   3. [Análise de Risco](#análise-de-risco)
 6. [Plano de Implementação](#plano-de-implementação)
    1. [Estabelecimento da comunicação servidor cliente](#estabelecimento-da-comunicação-servidor-cliente)
    2. [Aplicação do protocolo criptográfico Diffie-Hellman](#aplicação-do-protocolo-criptográfico-Diffie-Hellman)
@@ -42,20 +43,24 @@
 ---
 
 ## Introdução
+**Responsável:** P
 
 _Breve contextualização da importância de garantir confidencialidade, integridade e disponibilidade num serviço de cofre seguro._
 
 ## Descrição Geral do Projeto
+**Responsável:** P
 
 _Descrição sucinta do serviço: cofre pessoal, grupos, armazenamento e partilha de ficheiros._
 
 ## Objetivos
+**Responsável:** P
 
 - Garantir confidencialidade do conteúdo armazenado
 - Assegurar integridade e autenticidade das operações
 - Disponibilizar interface CLI simples e intuitiva
 
 ## Levantamento de Requisitos
+**Responsável:** T
 
 _Lista de requisitos funcionais e de segurança, com prioridades e justificações._
 
@@ -68,6 +73,7 @@ _Lista de requisitos funcionais e de segurança, com prioridades e justificaçõ
       Descrever para cada uma das palavras-chave do enunciado: autenticidade, integridade e confidencialidade
 
 ## Modelação de Ameaças (Threat Model)
+**Responsável:** T
 
 ### Identificação de Ameaças
 
@@ -77,43 +83,59 @@ _Enumeração das principais ameaças (STRIDE)._
 
 _Inserir DFD simplificado e definição das barreiras de segurança._
 
+### Análise de risco
+
+_Realizar ponderação de risco de acordo com as métricas abordadas na aula._
+
 ## Plano de Implementação
 
 ### Estabelecimento da comunicação servidor cliente
+**Responsável:** M
 
 ### Aplicação do protocolo criptográfico Diffie-Hellman
+**Responsável:** P
 
 ### Atualização do protocolo criptográfico base para Station-To-Station
+**Responsável:** M
 
 ### Estruturação do processo de serialização/deserialização
+**Responsável:** H
 
 ### Implementação dos comandos propostos
+**Responsável:** T (cada um aponta funcionamento geral e edge cases dos seus comandos)
 
 ### Conceção de extras
+**Responsável:** M
 
 ## Extras
 
 ### Autoridade Certificadora Própria
+**Responsável:** P
 
 _Execução como daemon para emissão e validação de certificados X.509._
 
 ### Sistema de Registo de Logs
+**Responsável:** H
 
 _Arquitetura do serviço de logs: formato e armazenamento._
 
 ### Autenticação Baseada em Ficheiros P12
+**Responsável:** P
 
 _Utilização de keystores PKCS#12 para identificação (cliente/servidor)._
 
 ### Protocolo de Comunicação em JSON
+**Responsável:** H
 
 _Definição de mensagens JSON para operações (add, list, share, ...)._
 
 ### Possibilidade de execução do comando share para grupos
+**Responsável:** M
 
 _Descrição do motivo do aparecimento do comando e provar a praticidade do mesmo._
 
 ## Manual de utilização
+**Responsável:** H
 
 _Explicação de como deve ser o executado e guia de utilização de exemplos já disponíveis._
 
@@ -128,10 +150,12 @@ CA: cd certification-authority && python3 ca_daemon.py
 ```
 
 ## Conclusões
+**Responsável:** M
 
 _Resumo das decisões tomadas e perspetivas de melhorias futuras._
 
 ## Referências
+**Responsável:** T (cada um preenche de acordo com a sua necessidade)
 
 - Enunciado do Projeto (SSI).
 - [Cloudflare Learning](https://www.cloudflare.com/learning/)
