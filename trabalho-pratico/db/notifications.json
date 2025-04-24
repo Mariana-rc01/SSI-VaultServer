@@ -1,0 +1,22 @@
+[
+  {
+    "userId": "u2",
+    "notifications": [
+      {
+        "content": "User u3 read file f4.",
+        "timestamp": "2025-04-24T14:40:48.492308Z",
+        "read": true
+      },
+      {
+        "content": "User u3 read file f4.",
+        "timestamp": "2025-04-24T14:43:10.161767Z",
+        "read": true
+      },
+      {
+        "content": "User u3 read file f4.",
+        "timestamp": "2025-04-24T14:44:03.230259Z",
+        "read": true
+      }
+    ]
+  }
+]

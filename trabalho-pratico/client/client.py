@@ -101,7 +101,6 @@ class Client:
         """Receives notifications from the server."""
         try:
             notifications = await reader.read(max_msg_size)
-            print(f"Received notifications: {notifications}")
             if not notifications:
                 print("No notifications received.")
                 return

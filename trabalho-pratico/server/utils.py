@@ -6,6 +6,7 @@ from typing import List, Dict, Optional, Any
 
 from utils.utils import ReplaceRequest, RevokeRequest, ShareRequest, GroupAddRequest, serialize_public_key_rsa
 from server.utils_db import load_users, save_users, load_groups, save_groups, load_files, save_files, get_next_file_id, get_next_group_id
+from server.notifications import add_notification
 
 FILES_JSON = "./db/files.json"
 LOGS_JSON = "./db/logs.json"
@@ -509,6 +510,10 @@ def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional
     files.append(file_info)
     save_files(files)
     log_request(user_id, "group add", [file_id, client_request.filename], "success")
+    members = get_group_members(group_id)
+    for member in members:
+        if member["userid"] != user_id and member["userid"] != group["owner"]:
+            add_notification(member["userid"], f"File {client_request.filename} added to your group {group_id}.")
     return file_id
 
 def get_user_write_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
@@ -561,7 +566,6 @@ def replace_file_requirements(client_request: ReplaceRequest, user_id: str) -> O
 
     return encrypted_key
 
-
 def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes]:
     """ Replaces a file with new content. """
     file_info = get_file_by_id(client_request.file_id)
@@ -584,6 +588,9 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
         save_files(files)
 
         log_request(user_id, "replace", [client_request.file_id], "success")
+
+        if file_info["owner"] != user_id:
+            add_notification(file_info["owner"], f"User {user_id} replaced the content of the file {client_request.file_id}.")
         return "File replaced successfully"
     except Exception as e:
         log_request(user_id, "replace", [client_request.file_id], "failed", str(e))

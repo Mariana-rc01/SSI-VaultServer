@@ -1,3 +1,4 @@
+from datetime import datetime
 from utils.utils import Notification
 
 def print_notifications(response: Notification) -> None:
@@ -8,6 +9,8 @@ def print_notifications(response: Notification) -> None:
         else:
             print(f"You have {len(response.notifications)} new notifications.")
             for notification in response.notifications:
-                print(f"- {notification['content']} (Received at: {notification['timestamp']})")
+                created_at = datetime.strptime(notification['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ")
+                readable_date = created_at.strftime("%d-%m-%Y %H:%M:%S")
+                print(f"- {notification['content']} (Received at: {readable_date})")
     else:
         print("Failed to receive notifications.")

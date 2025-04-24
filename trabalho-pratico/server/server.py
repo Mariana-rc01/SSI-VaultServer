@@ -6,7 +6,7 @@ from asyncio.streams import StreamReader, StreamWriter
 
 from utils.utils import *
 from server.utils import *
-from server.notifications import get_notifications
+from server.notifications import get_notifications, add_notification
 from server.utils_db import get_group_public_keys
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -140,6 +140,8 @@ class ServerWorker:
                 response_data = ReadResponse(base64.b64encode(filedata).decode(), user_key)
 
                 log_request(f"{self.id}", "read", [file_id], "success")
+                if file_info["owner"] != self.id:
+                    add_notification(file_info["owner"], f"User {self.id} read file {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, ListRequest):
                 files = get_files_for_listing(
@@ -194,6 +196,7 @@ class ServerWorker:
                 )
 
                 log_request(f"{self.id}", "details", [file_id], "success")
+                add_notification(file_info["owner"], f"User {self.id} requested details of file {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, RevokeRequest):
                 response = revoke_file_access(client_request, self.id)
@@ -230,6 +233,13 @@ class ServerWorker:
                     return encrypt(serialize_response(response_data), self.aesgcm)
 
                 log_request(f"{self.id}", "share", [client_request.fileid], "success")
+                if client_request.is_group:
+                    members = get_group_members(client_request.target_id)
+                    for member in members:
+                        if member["userid"] != self.id:
+                            add_notification(member["userid"], f"User {self.id} shared file {client_request.fileid} to your group {client_request.target_id}.")
+                else:
+                    add_notification(client_request.target_id , f"User {self.id} shared file {client_request.fileid}.")
                 response_data = ShareResponse("File shared successfully.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif (isinstance(client_request, GroupCreateRequest)):
@@ -265,6 +275,7 @@ class ServerWorker:
                     return encrypt(serialize_response(response_data), self.aesgcm)
 
                 log_request(f"{self.id}", "group add user", [group_id, user_id], "success")
+                add_notification(user_id, f"User {self.id} added you to group {group_id}.")
                 response_data = GroupAddUserResponse(f"User {user_id} added to group {group_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, GroupAddUserRequirementsRequest):
