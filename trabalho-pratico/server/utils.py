@@ -379,7 +379,7 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
 def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
     """ Shares a file with a user or group. """
-    if file_info["owner"] != user_id or file_info["permissions"].get("users", []):
+    if file_info["owner"] != user_id and file_info["permissions"].get("users", []):
         return "You are not the owner of this file or the file belongs to a group."
 
     if client_request.is_group:
