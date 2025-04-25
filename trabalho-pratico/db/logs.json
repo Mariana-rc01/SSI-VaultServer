@@ -2012,5 +2012,82 @@
     "timestamp": "2025-04-24T16:11:43.136816Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r182",
+    "userid": "u1",
+    "type": "add",
+    "args": [
+      "f7"
+    ],
+    "timestamp": "2025-04-25T15:52:47.619683Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r183",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f7"
+    ],
+    "timestamp": "2025-04-25T15:52:59.209398Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r184",
+    "userid": "u1",
+    "type": "public_key",
+    "args": [
+      "u2"
+    ],
+    "timestamp": "2025-04-25T15:52:59.214609Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r185",
+    "userid": "u1",
+    "type": "share",
+    "args": [
+      "f7"
+    ],
+    "timestamp": "2025-04-25T15:52:59.218121Z",
+    "status": "failed",
+    "error": "You are not the owner of this file or the file belongs to a group."
+  },
+  {
+    "id": "r186",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f7"
+    ],
+    "timestamp": "2025-04-25T15:53:37.528874Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r187",
+    "userid": "u1",
+    "type": "public_key",
+    "args": [
+      "u2"
+    ],
+    "timestamp": "2025-04-25T15:53:37.534264Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r188",
+    "userid": "u1",
+    "type": "share",
+    "args": [
+      "f7"
+    ],
+    "timestamp": "2025-04-25T15:53:37.538385Z",
+    "status": "success",
+    "error": ""
   }
 ]
