@@ -1,7 +1,4 @@
-import asyncio
-import os
-import base64
-import random
+import asyncio, os, base64
 from typing import Optional, Tuple
 from asyncio.streams import StreamReader, StreamWriter
 

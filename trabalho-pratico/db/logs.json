@@ -2112,5 +2112,39 @@
     "timestamp": "2025-04-26T03:20:37.332011Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r191",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-04-26T03:22:50.352409Z",
+    "status": "failed",
+    "error": "no access key"
+  },
+  {
+    "id": "r192",
+    "userid": "u1",
+    "type": "list",
+    "args": [
+      "user",
+      "u1"
+    ],
+    "timestamp": "2025-04-26T03:23:00.313260Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r193",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-04-26T03:23:02.632497Z",
+    "status": "success",
+    "error": ""
   }
 ]

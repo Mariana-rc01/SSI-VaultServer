@@ -1,12 +1,9 @@
-import random
+import random, base64, os, json
 from utils.utils import *
 from utils.data_structures import *
 from server.utils_db import *
 from server.notifications import add_notification
 
-import base64
-import os
-import json
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 

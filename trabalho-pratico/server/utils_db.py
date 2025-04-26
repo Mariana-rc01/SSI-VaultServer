@@ -1,5 +1,4 @@
-import json
-import os
+import json, os
 from typing import Any, Dict, List
 
 FILES_JSON = "./db/files.json"
