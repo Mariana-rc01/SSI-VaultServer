@@ -37,7 +37,7 @@ def generate_derived_key(shared_key, cipher: str) -> bytes:
         key_length = 32
     elif "AES_128_GCM" in cipher or "AES128" in cipher:
         key_length = 16
-    elif "CHACHA20_POLY1305" in cipher:
+    elif "CHACHA20_POLY1305" in cipher or "CHACHA20-POLY1305" in cipher:
         key_length = 32
     else:
         raise ValueError("Unknown cipher")
@@ -80,7 +80,7 @@ def build_method(key: bytes, cipher: str):
         return AESGCM(key[:32])
     elif "AES_128_GCM" in cipher or "AES128" in cipher:
         return AESGCM(key[:16])
-    elif "CHACHA20_POLY1305" in cipher:
+    elif "CHACHA20_POLY1305" in cipher or "CHACHA20-POLY1305" in cipher:
         return ChaCha20Poly1305(key[:32])
     else:
         raise ValueError(f"Cifra não suportada: {cipher}")

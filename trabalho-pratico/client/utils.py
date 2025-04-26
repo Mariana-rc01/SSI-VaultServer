@@ -16,7 +16,8 @@ def prepare_tls_client_context() -> tuple[str, list[str], ssl.SSLContext, bool, 
 
     # TLS 1.2
     ecdh_ciphers = ["ECDHE-RSA-AES256-GCM-SHA384",
-                    "ECDHE-RSA-AES128-GCM-SHA256"]
+                    "ECDHE-RSA-AES128-GCM-SHA256",
+                    "ECDHE-RSA-CHACHA20-POLY1305"]
 
     if random.choice([True, False]):
         selected_group = dh_ciphers
