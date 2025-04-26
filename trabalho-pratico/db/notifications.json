@@ -25,22 +25,7 @@
       {
         "content": "User u1 shared file f7.",
         "timestamp": "2025-04-25T15:53:37.540811Z",
-        "read": true
-      },
-      {
-        "content": "User u1 added you to group g3.",
-        "timestamp": "2025-04-26T02:52:21.579515Z",
-        "read": true
-      },
-      {
-        "content": "File file3.txt added to your group g3.",
-        "timestamp": "2025-04-26T02:52:34.760648Z",
-        "read": true
-      },
-      {
-        "content": "File f11 added to your group g3.",
-        "timestamp": "2025-04-26T02:55:42.629979Z",
-        "read": true
+        "read": false
       }
     ]
   },
@@ -169,53 +154,8 @@
       },
       {
         "content": "User u1 read file f5.",
-        "timestamp": "2025-04-25T16:55:46.743367Z",
-        "read": true
-      },
-      {
-        "content": "User u1 read file f5.",
-        "timestamp": "2025-04-25T23:21:42.351504Z",
-        "read": true
-      },
-      {
-        "content": "User u1 read file f5.",
-        "timestamp": "2025-04-25T23:24:00.719625Z",
-        "read": true
-      },
-      {
-        "content": "User u1 read file f5.",
-        "timestamp": "2025-04-25T23:24:31.581551Z",
-        "read": true
-      }
-    ]
-  },
-  {
-    "userId": "u1",
-    "notifications": [
-      {
-        "content": "User u6 shared file f8.",
-        "timestamp": "2025-04-26T02:47:02.112677Z",
-        "read": true
-      },
-      {
-        "content": "User u2 read file f9.",
-        "timestamp": "2025-04-26T02:53:04.418591Z",
-        "read": true
-      },
-      {
-        "content": "User u2 read file f11.",
-        "timestamp": "2025-04-26T02:55:51.952931Z",
-        "read": true
-      }
-    ]
-  },
-  {
-    "userId": "u6",
-    "notifications": [
-      {
-        "content": "User u1 read file f8.",
-        "timestamp": "2025-04-26T02:51:41.024626Z",
-        "read": true
+        "timestamp": "2025-04-26T03:20:37.340129Z",
+        "read": false
       }
     ]
   }
