@@ -39,5 +39,25 @@
         ]
       }
     ]
+  },
+  {
+    "id": "g3",
+    "name": "group3",
+    "owner": "u1",
+    "members": [
+      {
+        "userid": "u1",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
+        "userid": "u2",
+        "permissions": [
+          "read"
+        ]
+      }
+    ]
   }
 ]

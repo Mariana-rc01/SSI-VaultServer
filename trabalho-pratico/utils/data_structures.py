@@ -3,17 +3,22 @@ import json
 from typing import Union
 
 @dataclass
-class ClientFirstInteraction:
+class ClientHello:
+    tls_version: str
+    client_random: str
+    cipher_suites: list[str]
     public_key: str
 
 @dataclass
-class ServerFirstInteraction:
+class ServerHello:
     public_key: str
     signature: str
     certificate: str
+    server_random: str
+    selected_cipher: str
 
 @dataclass
-class ClientSecondInteraction:
+class ClientAuthentication:
     signature: str
     certificate: str
     subject: str
@@ -195,8 +200,7 @@ class GroupPublicKeysResponse:
 class VaultError:
     error: str
 
-def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirstInteraction,
-                                              ClientSecondInteraction, AddRequest, ReadRequest,
+def deserialize_request(data: bytes) -> Union[AddRequest, ReadRequest,
                                               ListRequest, ListResponse, ShareRequest, ShareResponse,
                                               PublicKeyRequest, PublicKeyResponse,
                                               GroupMembersRequest, GroupMembersResponse,
@@ -209,7 +213,8 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
                                               GroupAddRequest, GroupAddResponse,
                                               GroupPublicKeysRequest, GroupPublicKeysResponse,
                                               GroupDeleteRequest, GroupDeleteResponse,
-                                              Notification, VaultError]:
+                                              Notification, ClientHello, ServerHello,
+                                              ClientAuthentication, VaultError]:
     """
         "type": "ClientFirstInteraction",
         "args": {
@@ -222,12 +227,12 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
     op_type = obj.get("type")
     args = obj.get("args")
 
-    if op_type == "ClientFirstInteraction":
-        return ClientFirstInteraction(**args)
-    elif op_type == "ServerFirstInteraction":
-        return ServerFirstInteraction(**args)
-    elif op_type == "ClientSecondInteraction":
-        return ClientSecondInteraction(**args)
+    if op_type == "ClientHello":
+        return ClientHello(**args)
+    elif op_type == "ServerHello":
+        return ServerHello(**args)
+    elif op_type == "ClientAuthentication":
+        return ClientAuthentication(**args)
     elif op_type == "Notification":
         return Notification(**args)
     elif op_type == "AddRequest":
@@ -307,8 +312,7 @@ def deserialize_request(data: bytes) -> Union[ClientFirstInteraction, ServerFirs
     else:
         raise ValueError(f"Unknow type to deserialize: {op_type}")
 
-def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction, ClientSecondInteraction,
-                                  AddRequest, ReadRequest, ListRequest, ListResponse, ShareRequest,
+def serialize_response(obj: Union[AddRequest, ReadRequest, ListRequest, ListResponse, ShareRequest,
                                   ShareResponse, PublicKeyRequest, PublicKeyResponse,
                                   GroupMembersRequest, GroupMembersResponse,
                                   GroupAddUserRequest, GroupAddUserResponse,
@@ -320,15 +324,16 @@ def serialize_response(obj: Union[ClientFirstInteraction, ServerFirstInteraction
                                   GroupAddRequest, GroupAddResponse,
                                   GroupPublicKeysRequest, GroupPublicKeysResponse,
                                   GroupDeleteRequest, GroupDeleteResponse,
-                                  Notification, VaultError]) -> bytes:
-    if isinstance(obj, ClientFirstInteraction):
-        op_type = "ClientFirstInteraction"
+                                  Notification, ClientHello, ServerHello,
+                                  ClientAuthentication, VaultError]) -> bytes:
+    if isinstance(obj, ClientHello):
+        op_type = "ClientHello"
         args = obj.__dict__
-    elif isinstance(obj, ServerFirstInteraction):
-        op_type = "ServerFirstInteraction"
+    elif isinstance(obj, ServerHello):
+        op_type = "ServerHello"
         args = obj.__dict__
-    elif isinstance(obj, ClientSecondInteraction):
-        op_type = "ClientSecondInteraction"
+    elif isinstance(obj, ClientAuthentication):
+        op_type = "ClientAuthentication"
         args = obj.__dict__
     elif isinstance(obj, Notification):
         op_type = "Notification"
