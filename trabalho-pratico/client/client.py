@@ -1,6 +1,4 @@
-import asyncio
-import base64
-import ssl
+import asyncio, base64
 from typing import Optional
 
 from authentication.authenticator import terminal_interface
@@ -13,7 +11,6 @@ from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.x509.oid import NameOID
-import random
 
 conn_port: int = 7777
 
