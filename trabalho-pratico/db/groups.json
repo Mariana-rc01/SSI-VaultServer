@@ -26,6 +26,13 @@
         ]
       },
       {
+        "userid": "u2",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
         "userid": "u4",
         "permissions": [
           "read",

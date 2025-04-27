@@ -2113,5 +2113,65 @@
     "timestamp": "2025-04-27T10:48:10.493124Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r191",
+    "userid": "u1",
+    "type": "group delete-user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-27T11:34:24.574554Z",
+    "status": "failed",
+    "error": "user not in group"
+  },
+  {
+    "id": "r192",
+    "userid": "u1",
+    "type": "group delete-user",
+    "args": [
+      "g1",
+      "u2"
+    ],
+    "timestamp": "2025-04-27T11:34:53.894704Z",
+    "status": "failed",
+    "error": "only owner can remove users"
+  },
+  {
+    "id": "r193",
+    "userid": "u1",
+    "type": "group delete-user",
+    "args": [
+      "g1",
+      "u2"
+    ],
+    "timestamp": "2025-04-27T11:38:09.962443Z",
+    "status": "failed",
+    "error": "only owner can remove users"
+  },
+  {
+    "id": "r194",
+    "userid": "u1",
+    "type": "group delete-user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-27T11:38:27.101224Z",
+    "status": "failed",
+    "error": "user not in group"
+  },
+  {
+    "id": "r195",
+    "userid": "u1",
+    "type": "group delete-user",
+    "args": [
+      "g2",
+      "u2"
+    ],
+    "timestamp": "2025-04-27T11:51:15.736021Z",
+    "status": "success",
+    "error": ""
   }
 ]

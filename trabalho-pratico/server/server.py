@@ -335,9 +335,13 @@ class ServerWorker:
 
                 if not group_id:
                     return encrypt(VaultError("Error: Group ID is required.").encode(), self.aesgcm)
-                delete_user_group_request(group_id, user_id)
+                result = delete_user_group_request(group_id, user_id, self.id)
 
-                response_data = DeleteUserGroupResponse(f"user {user_id} deleted from group {group_id}.")
+                if result is None:
+                    response_data = DeleteUserGroupResponse(f"user {user_id} deleted from group {group_id}.")
+                else:
+                    response_data = DeleteUserGroupResponse(response=result)
+
                 return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)

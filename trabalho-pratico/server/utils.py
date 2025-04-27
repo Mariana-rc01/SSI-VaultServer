@@ -762,25 +762,29 @@ def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
 
     return encrypted_keys
 
-def delete_user_group_request(group_id: str, user_id: str) -> Optional[str]:
-    """Deletes a user from a group."""
+def delete_user_group_request(group_id: str, user_id: str, requester_id: str) -> Optional[str]:
+    """Deletes a user from a group. Only the owner of the group can perform this action."""
     groups = load_groups()
     users = load_users()
     files = load_files()
 
     group = next((g for g in groups if g["id"] == group_id), None)
     if not group:
-        log_request(user_id, "group delete-user", [group_id, user_id], "failed", "group not found")
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "group not found")
         return "group not found"
 
+    if group["owner"] != requester_id:
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "only owner can remove users")
+        return "only owner can remove users"
+
     if group["owner"] == user_id:
-        log_request(user_id, "group delete-user", [group_id, user_id], "failed", "cannot delete owner")
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "cannot delete owner")
         return "cannot delete owner"
 
     original_members = group.get("members", [])
     new_members = [m for m in original_members if m["userid"] != user_id]
     if len(new_members) == len(original_members):
-        log_request(user_id, "group delete-user", [group_id, user_id], "failed", "user not in group")
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "user not in group")
         return "user not in group"
     group["members"] = new_members
 
@@ -802,5 +806,5 @@ def delete_user_group_request(group_id: str, user_id: str) -> Optional[str]:
         file["permissions"]["groups"] = group_permissions
     save_files(files)
 
-    log_request(user_id, "group delete-user", [group_id, user_id], "success")
+    log_request(requester_id, "group delete-user", [group_id, user_id], "success")
     return None
