@@ -763,7 +763,7 @@ def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
     return encrypted_keys
 
 def delete_user_group_request(group_id: str, user_id: str, requester_id: str) -> Optional[str]:
-    """Deletes a user from a group"""
+    """Deletes a user from a group."""
     groups = load_groups()
     users = load_users()
     files = load_files()
@@ -796,6 +796,7 @@ def delete_user_group_request(group_id: str, user_id: str, requester_id: str) ->
             break
     save_users(users)
 
+    files_to_remove = []
     for file in files:
         group_permissions = file.get("permissions", {}).get("groups", [])
         for group_perm in group_permissions:
@@ -803,7 +804,20 @@ def delete_user_group_request(group_id: str, user_id: str, requester_id: str) ->
                 original_keys = group_perm.get("keys", [])
                 new_keys = [k for k in original_keys if k["userid"] != user_id]
                 group_perm["keys"] = new_keys
+
+                if file["owner"] == user_id:
+                    files_to_remove.append(file)
+
         file["permissions"]["groups"] = group_permissions
+
+    for file in files_to_remove:
+        try:
+            os.remove(file["location"])
+        except Exception as e:
+            log_request(requester_id, "group delete-user", [group_id, user_id], "failed", f"error deleting file {file['id']}: {str(e)}")
+            return f"error deleting file {file['id']}: {str(e)}"
+        files = [f for f in files if f["id"] != file["id"]]
+
     save_files(files)
 
     log_request(requester_id, "group delete-user", [group_id, user_id], "success")
