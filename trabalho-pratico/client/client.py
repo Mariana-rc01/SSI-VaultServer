@@ -308,7 +308,7 @@ class Client:
 
                 group_id: str = args[2]
                 user_id: str = args[3]
-                print("Sending...")
+
                 json_bytes: bytes = deleteGroupUserRequest(group_id, user_id)
                 if not json_bytes:
                     return b""
