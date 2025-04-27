@@ -803,5 +803,4 @@ def delete_user_group_request(group_id: str, user_id: str) -> Optional[str]:
     save_files(files)
 
     log_request(user_id, "group delete-user", [group_id, user_id], "success")
-    add_notification(user_id, f"You have been removed from group {group_id}.")
     return None
