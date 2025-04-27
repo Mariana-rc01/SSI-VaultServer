@@ -42,7 +42,6 @@ def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
     files = load_files()
     for f in files:
         if f["id"] == file_id:
-            print(f)
             return f
     return None
 

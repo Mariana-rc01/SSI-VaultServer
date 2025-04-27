@@ -93,7 +93,7 @@ def load_notifications() -> List[Dict[str, Any]]:
     if os.path.exists(NOTIFICATIONS_JSON):
         with open(NOTIFICATIONS_JSON, "r") as f:
             return json.load(f)
-    
+
     os.seteuid(original_euid)
 
     return []
