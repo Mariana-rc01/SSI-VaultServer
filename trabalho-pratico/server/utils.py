@@ -763,7 +763,7 @@ def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
     return encrypted_keys
 
 def delete_user_group_request(group_id: str, user_id: str, requester_id: str) -> Optional[str]:
-    """Deletes a user from a group. Only the owner of the group can perform this action."""
+    """Deletes a user from a group"""
     groups = load_groups()
     users = load_users()
     files = load_files()
