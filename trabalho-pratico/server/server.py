@@ -329,6 +329,17 @@ class ServerWorker:
 
                 response_data = GroupAddResponse(f"File added to group successfully with id {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
+            elif isinstance(client_request, DeleteUserGroupRequest):
+                group_id = client_request.group_id
+                user_id = client_request.user_id
+
+                if not group_id:
+                    return encrypt(VaultError("Error: Group ID is required.").encode(), self.aesgcm)
+                print("Received!!")
+                delete_user_group_request(group_id, user_id)
+
+                response_data = AddResponse(f"user {user_id} deleted from group {group_id}.")
+                return encrypt(serialize_response(response_data), self.aesgcm)
             else:
                 return encrypt(VaultError("Error: Unknown request type.").encode(), self.aesgcm)
         except Exception as e:

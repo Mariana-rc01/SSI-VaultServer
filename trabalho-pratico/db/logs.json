@@ -2089,5 +2089,29 @@
     "timestamp": "2025-04-25T15:53:37.538385Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r189",
+    "userid": "u3",
+    "type": "group delete-user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-27T10:32:03.341843Z",
+    "status": "failed",
+    "error": "user not in group"
+  },
+  {
+    "id": "r190",
+    "userid": "u3",
+    "type": "group delete-user",
+    "args": [
+      "g2",
+      "u3"
+    ],
+    "timestamp": "2025-04-27T10:48:10.493124Z",
+    "status": "success",
+    "error": ""
   }
 ]

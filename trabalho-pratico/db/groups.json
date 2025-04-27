@@ -26,12 +26,6 @@
         ]
       },
       {
-        "userid": "u3",
-        "permissions": [
-          "read"
-        ]
-      },
-      {
         "userid": "u4",
         "permissions": [
           "read",
