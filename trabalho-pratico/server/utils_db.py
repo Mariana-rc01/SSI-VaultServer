@@ -1,3 +1,5 @@
+from server.isolation import switch_to
+
 import json
 import os
 from typing import Any, Dict, List
@@ -11,51 +13,101 @@ STORAGE_DIR = "./storage"
 
 def load_users() -> List[Dict[str, Any]]:
     """ Loads the users from the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('admin')
+
     if os.path.exists(USERS_JSON):
         with open(USERS_JSON, "r") as f:
             return json.load(f)
+
+    os.seteuid(original_euid)
     return []
 
 def save_users(users: list) -> None:
     """Saves the users to the JSON file."""
+
+    original_euid = os.geteuid()
+    switch_to('admin')
+
     with open(USERS_JSON, 'w') as f:
         json.dump(users, f, indent=2)
 
+    os.seteuid(original_euid)
+
 def load_groups() -> List[Dict[str, Any]]:
     """ Loads the groups from the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('admin')
+
     if os.path.exists(GROUPS_JSON):
         with open(GROUPS_JSON, "r") as f:
             return json.load(f)
+
+    os.seteuid(original_euid)
     return []
 
 def save_groups(groups: List[Dict[str, Any]]) -> None:
     """ Saves the groups to the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('admin')
+
     with open(GROUPS_JSON, "w") as f:
         json.dump(groups, f, indent=2)
 
+    os.seteuid(original_euid)
+
 def load_files() -> List[Dict[str, Any]]:
     """ Loads the files from the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('admin')
+
     if os.path.exists(FILES_JSON):
         with open(FILES_JSON, "r") as f:
             return json.load(f)
+
+    os.seteuid(original_euid)
+
     return []
 
 def save_files(files: List[Dict[str, Any]]) -> None:
     """ Saves the files to the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('admin')
+
     with open(FILES_JSON, "w") as f:
         json.dump(files, f, indent=2)
 
+    os.seteuid(original_euid)
+
 def load_notifications() -> List[Dict[str, Any]]:
     """ Loads the notifications from the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('logger')
+
     if os.path.exists(NOTIFICATIONS_JSON):
         with open(NOTIFICATIONS_JSON, "r") as f:
             return json.load(f)
+    
+    os.seteuid(original_euid)
+
     return []
 
 def save_notifications(notifications: List[Dict[str, Any]]) -> None:
     """ Saves the notifications to the JSON file. """
+
+    original_euid = os.geteuid()
+    switch_to('logger')
+
     with open(NOTIFICATIONS_JSON, "w") as f:
         json.dump(notifications, f, indent=2)
+
+    os.seteuid(original_euid)
 
 def get_next_id(existing_items: list, prefix: str) -> str:
     """ Gets the next ID to avoid duplicates after deletions. """
