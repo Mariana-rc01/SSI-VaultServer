@@ -1,38 +1,26 @@
-import os, base64, json
-from utils.utils import(
-    GroupAddUserRequest,
-    GroupAddUserRequirementsRequest,
-    GroupAddUserRequirementsResponse,
-    GroupCreateRequest,
-    GroupListResponse,
-    GroupMembersResponse,
-    ListRequest,
-    PublicKeyResponse,
-    ReadResponse,
-    ReplaceRequest,
-    ReplaceRequirementsRequest,
-    ReplaceRequirementsResponse,
-    DetailsResponse,
-    GroupAddRequest,
-    GroupPublicKeysRequest,
-    GroupPublicKeysResponse,
-    VaultError,
-    encrypt,
-    decrypt,
-    build_aesgcm,
-    serialize_response,
-    AddRequest,
-    ReadRequest,
-    GroupMembersRequest,
-    PublicKeyRequest,
-    ShareRequest,
-    deserialize_request,
-    deserialize_public_key,
-    max_msg_size
-)
+import os, base64
+from utils.utils import *
+from utils.data_structures import *
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from datetime import datetime
+
+def menu() -> None:
+    print("\nPlease choose a command:")
+    print("- add <file-path>")
+    print("- read <file-id>")
+    print("- list [-u <user-id> | -g <group-id>]")
+    print("- share <file-id> <target-id> --permission=[r|w]")
+    print("- delete <file-id>")
+    print("- replace <file-id> <file-path>")
+    print("- details <file-id>")
+    print("- revoke <file-id> <target-id>")
+    print("- group create <group-name>")
+    print("- group delete <group-id>")
+    print("- group add-user <group-id> <user-id> --permission=[r|w]")
+    print("- group list")
+    print("- group add <group-id> <file-path>")
+    print("- exit")
 
 def addRequest(file_path: str, client_public_key) -> bytes:
     """ Add a file request. """

@@ -4,70 +4,10 @@ import base64
 from typing import Optional, Tuple
 from asyncio.streams import StreamReader, StreamWriter
 
-from utils.utils import (
-    AddResponse,
-    DeleteRequest,
-    DeleteResponse,
-    GroupAddUserRequest,
-    GroupAddUserRequirementsRequest,
-    GroupAddUserRequirementsResponse,
-    GroupAddUserResponse,
-    GroupCreateResponse,
-    GroupListRequest,
-    GroupListResponse,
-    GroupMembersRequest,
-    GroupMembersResponse,
-    ListRequest,
-    ListResponse,
-    PublicKeyRequest,
-    PublicKeyResponse,
-    ReadResponse,
-    ReplaceRequest,
-    ReplaceRequirementsRequest,
-    ReplaceRequirementsResponse,
-    ReplaceResponse,
-    DetailsRequest,
-    DetailsResponse,
-    ShareRequest,
-    ShareResponse,
-    VaultError,
-    ClientFirstInteraction,
-    ServerFirstInteraction,
-    ClientSecondInteraction,
-    AddRequest,
-    ReadRequest,
-    GroupCreateRequest,
-    GroupDeleteRequest,
-    GroupDeleteResponse,
-    RevokeRequest,
-    RevokeResponse,
-    GroupAddRequest,
-    GroupAddResponse,
-    GroupPublicKeysRequest,
-    GroupPublicKeysResponse,
-    encrypt,
-    decrypt,
-    is_signature_valid,
-    deserialize_public_key,
-    is_certificate_valid,
-    generate_private_key,
-    generate_public_key,
-    serialize_public_key,
-    sign_message_with_rsa,
-    serialize_certificate,
-    generate_shared_key,
-    generate_derived_key,
-    build_aesgcm,
-    certificate_create,
-    deserialize_request,
-    serialize_response,
-    max_msg_size
-)
-from server.utils import (add_group_request, add_user_to_group, add_user_to_group_requirements, delete_file,
-                          get_group_members, get_public_key, get_user_permissions_by_group,
-                          log_request, get_file_by_id, add_request, add_user, get_user_key,
-                          get_files_for_listing, replace_file, replace_file_requirements, share_file,
-                          revoke_file_access, group_add_request, group_delete)
+from utils.utils import *
+from server.utils import *
+from utils.data_structures import *
+from server.notifications import get_notifications, add_notification
 from server.utils_db import get_group_public_keys
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
@@ -150,6 +90,12 @@ class ServerWorker:
         derived_key = generate_derived_key(shared_key)
         self.aesgcm = build_aesgcm(derived_key)
 
+    async def send_notifications(self, writer: StreamWriter) -> None:
+        notifications = get_notifications(self.id)
+        response_data = Notification(notifications)
+        writer.write(encrypt(serialize_response(response_data), self.aesgcm))
+        await writer.drain()
+
     def process(self, msg: bytes) -> Optional[bytes]:
         """Processes a message (`bytestring`) sent by the CLIENT.
         Returns the message to be sent as a response (`None` to
@@ -195,6 +141,8 @@ class ServerWorker:
                 response_data = ReadResponse(base64.b64encode(filedata).decode(), user_key)
 
                 log_request(f"{self.id}", "read", [file_id], "success")
+                if file_info["owner"] != self.id:
+                    add_notification(file_info["owner"], f"User {self.id} read file {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, ListRequest):
                 files = get_files_for_listing(
@@ -222,7 +170,7 @@ class ServerWorker:
                     return encrypt(serialize_response(VaultError("Error replacing file")), self.aesgcm)
 
                 response_data = ReplaceRequirementsResponse(encrypted_key)
-                log_request(self.id, "replace", [client_request.file_id], "requirements_success")
+                log_request(self.id, "replace", [client_request.file_id], "success")
                 return encrypt(serialize_response(response_data), self.aesgcm)
 
             elif isinstance(client_request, ReplaceRequest):
@@ -249,6 +197,7 @@ class ServerWorker:
                 )
 
                 log_request(f"{self.id}", "details", [file_id], "success")
+                add_notification(file_info["owner"], f"User {self.id} requested details of file {file_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, RevokeRequest):
                 response = revoke_file_access(client_request, self.id)
@@ -285,6 +234,13 @@ class ServerWorker:
                     return encrypt(serialize_response(response_data), self.aesgcm)
 
                 log_request(f"{self.id}", "share", [client_request.fileid], "success")
+                if client_request.is_group:
+                    members = get_group_members(client_request.target_id)
+                    for member in members:
+                        if member["userid"] != self.id:
+                            add_notification(member["userid"], f"User {self.id} shared file {client_request.fileid} to your group {client_request.target_id}.")
+                else:
+                    add_notification(client_request.target_id , f"User {self.id} shared file {client_request.fileid}.")
                 response_data = ShareResponse("File shared successfully.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif (isinstance(client_request, GroupCreateRequest)):
@@ -320,6 +276,7 @@ class ServerWorker:
                     return encrypt(serialize_response(response_data), self.aesgcm)
 
                 log_request(f"{self.id}", "group add user", [group_id, user_id], "success")
+                add_notification(user_id, f"User {self.id} added you to group {group_id}.")
                 response_data = GroupAddUserResponse(f"User {user_id} added to group {group_id}.")
                 return encrypt(serialize_response(response_data), self.aesgcm)
             elif isinstance(client_request, GroupAddUserRequirementsRequest):
@@ -388,6 +345,8 @@ async def handle_echo(reader: StreamReader, writer: StreamWriter) -> None:
     if srvwrk.aesgcm is None:
         writer.close()
         return
+
+    await srvwrk.send_notifications(writer)
 
     data = await reader.read(max_msg_size)
     while True:

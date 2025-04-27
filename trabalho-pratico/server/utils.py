@@ -1,17 +1,13 @@
+from utils.utils import *
+from utils.data_structures import *
+from server.utils_db import *
+from server.notifications import add_notification
+
 import base64
 import os
 import json
-from datetime import datetime
 from typing import List, Dict, Optional, Any
-
-from utils.utils import ReplaceRequest, RevokeRequest, ShareRequest, GroupAddRequest, serialize_public_key_rsa
-from server.utils_db import load_users, save_users, load_groups, save_groups, load_files, save_files, get_next_file_id, get_next_group_id
-
-FILES_JSON = "./db/files.json"
-LOGS_JSON = "./db/logs.json"
-USERS_JSON = "./db/users.json"
-GROUPS_JSON = "./db/groups.json"
-STORAGE_DIR = "./storage"
+from datetime import datetime
 
 def log_request(user_id: str, type: str, args: List[Any], status: str, error: str = "") -> None:
     """ Logs the request made by the user. """
@@ -56,7 +52,7 @@ def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
         group_id = group_permission["groupid"]
         if group_id in user_groups and "read" in group_permission.get("permissions", []):
             for key_entry in group_permission.get("keys", []):
-                if key_entry.get("userid") == user_id:
+                if key_entry.get("userid") == user_id or key_entry.get("userid") == f"Owner: {user_id}":
                     return key_entry.get("key")
 
     return None
@@ -383,7 +379,7 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
 def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
     """ Shares a file with a user or group. """
-    if file_info["owner"] != user_id or file_info["permissions"].get("users", []):
+    if file_info["owner"] != user_id and file_info["permissions"].get("users", []):
         return "You are not the owner of this file or the file belongs to a group."
 
     if client_request.is_group:
@@ -509,6 +505,10 @@ def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional
     files.append(file_info)
     save_files(files)
     log_request(user_id, "group add", [file_id, client_request.filename], "success")
+    members = get_group_members(group_id)
+    for member in members:
+        if member["userid"] != user_id and member["userid"] != group["owner"]:
+            add_notification(member["userid"], f"File {client_request.filename} added to your group {group_id}.")
     return file_id
 
 def get_user_write_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
@@ -534,13 +534,34 @@ def get_user_write_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]
         if (group_perm["groupid"] in user_groups and
             "write" in group_perm.get("permissions", [])):
             for key_entry in group_perm.get("keys", []):
-                if key_entry["userid"] == user_id:
+                if key_entry["userid"] == user_id or key_entry["userid"] == f"Owner: {user_id}":
                     return key_entry["key"]
 
     return None
 
+def has_write_permission_in_group(user_id: str, group_id: str) -> bool:
+    """Checks if a user has write permission in a specific group."""
+    groups = load_groups()
+    group = next((g for g in groups if g["id"] == group_id), None)
+    if not group:
+        return False
+
+    member = next((m for m in group.get("members", []) if m["userid"] == user_id or m["userid"] == f"Owner: {user_id}"), None)
+    if member and "write" in member.get("permissions", []):
+        return True
+
+    return False
+
 def check_write_permission(file_info: Dict[str, Any], user_id: str) -> bool:
     """ Checks if a user has write permission for a file. """
+    if not file_info["permissions"].get("users", []):
+        for group_perm in file_info.get("permissions", {}).get("groups", []):
+            group_id = group_perm["groupid"]
+            if has_write_permission_in_group(user_id, group_id):
+                return True
+            else:
+                return False
+
     return get_user_write_key(file_info, user_id) is not None
 
 def replace_file_requirements(client_request: ReplaceRequest, user_id: str) -> Optional[bytes]:
@@ -560,7 +581,6 @@ def replace_file_requirements(client_request: ReplaceRequest, user_id: str) -> O
         return None
 
     return encrypted_key
-
 
 def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes]:
     """ Replaces a file with new content. """
@@ -584,6 +604,9 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
         save_files(files)
 
         log_request(user_id, "replace", [client_request.file_id], "success")
+
+        if file_info["owner"] != user_id:
+            add_notification(file_info["owner"], f"User {user_id} replaced the content of the file {client_request.file_id}.")
         return "File replaced successfully"
     except Exception as e:
         log_request(user_id, "replace", [client_request.file_id], "failed", str(e))
