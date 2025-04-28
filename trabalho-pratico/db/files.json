@@ -35,7 +35,8 @@
             "write"
           ]
         }
-      ]
+      ],
+      "groups": []
     },
     "created_at": "2025-04-22T17:33:07.177683Z",
     "location": "./storage/f2"
@@ -55,7 +56,8 @@
             "write"
           ]
         }
-      ]
+      ],
+      "groups": []
     },
     "created_at": "2025-04-22T17:33:13.748001Z",
     "location": "./storage/f3"
@@ -137,7 +139,8 @@
             "write"
           ]
         }
-      ]
+      ],
+      "groups": []
     },
     "created_at": "2025-04-24T15:51:30.629804Z",
     "location": "./storage/f6"
@@ -164,7 +167,8 @@
             "read"
           ]
         }
-      ]
+      ],
+      "groups": []
     },
     "created_at": "2025-04-25T15:52:47.618428Z",
     "location": "./storage/f7"
