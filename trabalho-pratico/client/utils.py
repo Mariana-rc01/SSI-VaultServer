@@ -174,19 +174,21 @@ def listRequest(list_type: str, target_id: str) -> bytes:
     return serialize_response(list_request)
 
 def listResponse(server_response: bytes) -> None:
-    """Displays the list of files, shared files, and group files."""
-    print("\n=== Files ===")
-    for file in server_response.files:
-        print(f"ID: {file['id']}, Name: {file['name']}, Owner: {file['owner']}, Permissions: {file['permissions']}")
+    """ Displays the list of files, shared files, and group files. """
+    if server_response.files:
+        print("\n=== Files ===")
+        for file in server_response.files:
+            print(f"ID: {file['id']}, Name: {file['name']}, Owner: {file['owner']}")
 
-    print("\n=== Shared Files ===")
-    for file in server_response.shared:
-        print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared_by']}, Permissions: {file['permissions']}")
+    if server_response.shared:
+        print("\n=== Shared Files ===")
+        for file in server_response.shared:
+            print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared_by']}")
 
-    print("\n=== Groups Files ===")
-    for file in server_response.group_files:
-        print(f"ID: {file['id']}, Name: {file['name']}, Group: {file['group']}, Permissions: {file['permissions']}")
-
+    if server_response.group_files:
+        print("\n=== Groups Files ===")
+        for file in server_response.group_files:
+            print(f"ID: {file['id']}, Name: {file['name']}, Group: {file['group']}")
 
 def groupCreateRequest(group_name: str) -> bytes:
     """Create a group request."""
