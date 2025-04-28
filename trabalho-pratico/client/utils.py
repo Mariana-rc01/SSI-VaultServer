@@ -150,7 +150,7 @@ def listResponse(server_response: bytes) -> None:
     if server_response.shared:
         print("\n=== Shared Files ===")
         for file in server_response.shared:
-            print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared']}")
+            print(f"ID: {file['id']}, Name: {file['name']}, From: {file['shared_by']}")
 
     if server_response.group_files:
         print("\n=== Groups Files ===")

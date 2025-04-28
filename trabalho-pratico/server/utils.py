@@ -156,7 +156,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
                 result["shared"].append({
                     "id": file["id"],
                     "name": file["name"],
-                    "shared": file["owner"],
+                    "shared_by": file["owner"],
                 })
             elif target_group_perms:
                 result["personal"].append({
@@ -171,7 +171,7 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
                     result["shared"].append({
                         "id": file["id"],
                         "name": file["name"],
-                        "shared": file["owner"],
+                        "shared_by": file["owner"],
                     })
                     break
 
