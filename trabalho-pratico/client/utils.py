@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from datetime import datetime
 
-def prepare_tls_client_context() -> tuple[str, list[str], ssl.SSLContext, bool, bytes, bytes, object]:
+def prepare_tls_client_context(tls_option: str) -> tuple[str, list[str], ssl.SSLContext, bool, bytes, bytes, object]:
     """Prepares parameters for the client's TLS handshake"""
     client_random = os.urandom(32)
 
@@ -19,7 +19,7 @@ def prepare_tls_client_context() -> tuple[str, list[str], ssl.SSLContext, bool, 
                     "ECDHE-RSA-AES128-GCM-SHA256",
                     "ECDHE-RSA-CHACHA20-POLY1305"]
 
-    if random.choice([True, False]):
+    if tls_option == "TLSv1.3":
         selected_group = dh_ciphers
         use_ecdh = False
         client_version = "TLSv1.3"

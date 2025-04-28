@@ -35,7 +35,7 @@ python3 -m server.server
 ## Cliente
 
 ```bash
-python3 -m client.client
+python3 -m client.client [TLSv1.3 | TLSv1.2]
 
 ```
 

@@ -1,3 +1,4 @@
+import argparse
 import asyncio, base64
 from typing import Optional
 
@@ -33,11 +34,11 @@ class Client:
         self.client_certificate = client_certificate
 
     async def handshake(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, tls_option: str
     ) -> None:
         """Performs the handshake with the server."""
         # Send public key to the server
-        client_version, cipher_suites, use_ecdh, client_random = prepare_tls_client_context()
+        client_version, cipher_suites, use_ecdh, client_random = prepare_tls_client_context(tls_option)
 
         client_private_key = generate_private_key(use_ecdh)
         client_public_key = generate_public_key(client_private_key)
@@ -363,7 +364,7 @@ class Client:
 
 
 # Client/Server functionality
-async def tcp_echo_client() -> None:
+async def tcp_echo_client(tls_option: str) -> None:
     """Establishes the connection with the server and handles communication."""
 
     private_key: RSAPrivateKey
@@ -379,7 +380,7 @@ async def tcp_echo_client() -> None:
     addr: tuple[str, int] = writer.get_extra_info("peername")
     client: Client = Client(addr, rsa_private_key=private_key, client_certificate=certificate)
 
-    await client.handshake(reader, writer)
+    await client.handshake(reader, writer, tls_option)
     if client.cipher is None:
         return
 
@@ -400,8 +401,12 @@ async def tcp_echo_client() -> None:
 
 def run_client() -> None:
     """Runs the client event loop."""
+    parser = argparse.ArgumentParser(description="Run the client.")
+    parser.add_argument("option", type=str, help="Option to pass to the handshake")
+    args = parser.parse_args()
+
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-    loop.run_until_complete(tcp_echo_client())
+    loop.run_until_complete(tcp_echo_client(args.option))
 
 
 run_client()
