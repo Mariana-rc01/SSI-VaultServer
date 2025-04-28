@@ -2092,102 +2092,97 @@
   },
   {
     "id": "r189",
-    "userid": "u1",
-    "type": "list",
+    "userid": "u3",
+    "type": "group delete-user",
     "args": [
-      "user",
-      "u1"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-26T03:20:35.144441Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-27T10:32:03.341843Z",
+    "status": "failed",
+    "error": "user not in group"
   },
   {
     "id": "r190",
-    "userid": "u1",
-    "type": "read",
+    "userid": "u3",
+    "type": "group delete-user",
     "args": [
-      "f5"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-26T03:20:37.332011Z",
+    "timestamp": "2025-04-27T10:48:10.493124Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r191",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f1"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-26T03:22:50.352409Z",
+    "timestamp": "2025-04-27T11:34:24.574554Z",
     "status": "failed",
-    "error": "no access key"
+    "error": "user not in group"
   },
   {
     "id": "r192",
     "userid": "u1",
-    "type": "list",
+    "type": "group delete-user",
     "args": [
-      "user",
-      "u1"
+      "g1",
+      "u2"
     ],
-    "timestamp": "2025-04-26T03:23:00.313260Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-27T11:34:53.894704Z",
+    "status": "failed",
+    "error": "only owner can remove users"
   },
   {
     "id": "r193",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f3"
+      "g1",
+      "u2"
     ],
-    "timestamp": "2025-04-26T03:23:02.632497Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-27T11:38:09.962443Z",
+    "status": "failed",
+    "error": "only owner can remove users"
   },
   {
     "id": "r194",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f1"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-28T08:16:46.918355Z",
+    "timestamp": "2025-04-27T11:38:27.101224Z",
     "status": "failed",
-    "error": "no access key"
+    "error": "user not in group"
   },
   {
     "id": "r195",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f2"
+      "g2",
+      "u2"
     ],
-    "timestamp": "2025-04-28T08:16:49.061041Z",
-    "status": "failed",
-    "error": "no access key"
-  },
-  {
-    "id": "r196",
-    "userid": "u1",
-    "type": "read",
-    "args": [
-      "f3"
-    ],
-    "timestamp": "2025-04-28T08:16:51.376929Z",
+    "timestamp": "2025-04-27T11:51:15.736021Z",
     "status": "success",
     "error": ""
   },
   {
-    "id": "r197",
-    "userid": "u2",
-    "type": "read",
+    "id": "r196",
+    "userid": "u1",
+    "type": "group delete-user",
     "args": [
-      "f7"
+      "g2",
+      "u4"
     ],
-    "timestamp": "2025-04-28T08:17:02.223942Z",
+    "timestamp": "2025-04-27T19:23:14.580239Z",
     "status": "success",
     "error": ""
   }

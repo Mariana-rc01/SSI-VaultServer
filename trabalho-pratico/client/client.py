@@ -174,6 +174,9 @@ class Client:
                     elif isinstance(server_response, GroupAddResponse):
                         print(f"Received {server_response.response}")
 
+                    elif isinstance(server_response, DeleteUserGroupResponse):
+                        print(f"Received {server_response.response}")
+
                     elif isinstance(server_response, VaultError):
                         print(f"Error: {server_response.error}")
 
@@ -312,6 +315,16 @@ class Client:
 
                 request = RevokeRequest(file_id, target_id)
                 json_bytes = serialize_response(request)
+                return encrypt(json_bytes, self.cipher)
+            elif new_msg.startswith("group delete-user "):
+                args = new_msg.split()
+
+                group_id: str = args[2]
+                user_id: str = args[3]
+
+                json_bytes: bytes = deleteGroupUserRequest(group_id, user_id)
+                if not json_bytes:
+                    return b""
                 return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("group add-user "):
                 args = new_msg.split()
