@@ -15,7 +15,29 @@
           ]
         }
       ],
-      "groups": []
+      "groups": [
+        {
+          "groupid": "g2",
+          "keys": [
+            {
+              "userid": "u1",
+              "key": "jQK0vGOWejvY5Qai74b+bAEKcwX6Xuq41+MtCp2IRjrGNgHoOppp9hoAZ6P47sTRU5C7Sfx9zorjrSgSFUkPY+NqwJPlxAC5ATtsUGXikk+cHeZKKf20MfOPxufOl+0JVQMA+Vwbgzj8tC1YF/8XBMxglQb1+yyGPsRfMyLES0LkfCrUQQp1XVTT9S4rF3l43fYqI/e2mSpVWOWeee+zcc6o4tzkxkGfneJ0IwfXG3ti08BpdmF6aZWHAgszuYYjMvittpSc+5jxHglwHJ5C7tJrVRZLUlidPd6qEYl4YhQca0Zuxkm+T7zyj3LewwIzJ/raow6C6uEHUKouMPylyg=="
+            },
+            {
+              "userid": "u3",
+              "key": "N3j2EgAF1YbMvKBcxPJfep020M0igmVHbWEk9AietqapH3JacM+ZB6wYzCJQVyP2aF742baVU361pW27cfMpcL6VYko50sxEscD0E3yOYA9Q8Rvx6e775uj4G5XgPYXFO5RPJUoOE07bzgk7DEFq+KgMemQS5wNeNJlnumeTj7XpDJt/jJsz8AWDNTD7I9+NaVG7BLDeO2ryIwIXQuT5MZ9bPZ1U+fJtFzhnjKED/OXyFrw3V1atn1neTqo47cE/e3DLCX2K1Vc+uwxNt0eL0zOV9x9dGGePDiRQ/wp6BYnzb3+nvazP6eGPhohqn7cjMonT0hdf39JQcP9VrCmj0A=="
+            },
+            {
+              "userid": "u4",
+              "key": "BfnxvW/yvx4ts3oB0dij5zqcpkn30dQZN7AcVoRrYVkAHq4SGbOkXjlgPaEzOSSkTx4WvDoqs2QxkWxNA0DACboMOSgffIVY/k4avXI9vO2PefGmhabZjVpIJe8SfjuB0ZX7oPsXUvQRmNfOa26zUsZ3Gnpz+E3t6ODoSkRBhQcqrdB51gRb8q4FMZ88YAWT4d9+v06aNLh/RQf0kIhuPDw9Ox5IUGL2pZfsYprpXerNRyQgkDepWlmCq232WXub6T7f/xxl4o3eaX3HcMKk0dKMDnUcO4h0hxnBCAU4D1X9b1yDNtFPbkbulu4rMTp+EOtcDL5OIO8iI5ffi3l88Q=="
+            }
+          ],
+          "permissions": [
+            "read",
+            "write"
+          ]
+        }
+      ]
     },
     "created_at": "2025-04-22T17:33:00.922033Z",
     "location": "./storage/f1"
@@ -78,6 +100,13 @@
         {
           "userid": "u3",
           "key": "NdJykKymTGJeF0FiHGs2Gy2V7ihCwR5wLhdVqkJypjvVEXnrQory06rsdwRNKpo1KpF4BIYikGV0DE2A81/0o8tn7MsRVDh04BZnpdM0q7t1yHECcAHyBS5voluAurvxqwUqDaAkSldwtTiNJWovuBlvngHBfFKXYR4xl26ymPZcDuMScHQNmg1+iEkEa7vXeGbqq1cvMjY9J5lcTbhChch93l/FKKt9jZuBylXatjau61fwOpfN7zVwkVEimiWMY4fgoBbGYJoLb/N9rcN0HdoTEVa+QPbfBYoO2wfn9X2vWeOtQ7x3NUh61ttL3SMlHVq2/rCyO3J5nptYFSZNyQ==",
+          "permissions": [
+            "read"
+          ]
+        },
+        {
+          "userid": "u1",
+          "key": "WBGikJc/PLGvKlxNUBsTshXFfJKygtlBJRatBplJitLP8YwmRWakrHcM91nCSH9FsDUEzeVBSqeIl6/1escXNIxxTZQBdxf0FiQNH6LWRn8AV+9Pi9/uYqvaN2ZabJyajolllv7/lWzeaAquUkLAX25c9ZJXpKcLHDi2g80MI5V1qKQwnDAorcF6VFTYb3377uv1NqcGAkiKLmFLSv6+Jzpt5ekPuc4KYV80pp2V4sb8eK5KNUxWx3gcgqR2cCyiOyqW8AMdTJewKzWWmePCX/TPTVg0tK1xufH15r8sDwcOwf0KAKm60KMgSShezF1oJjJ8ONopReLVTdwLkGEuZw==",
           "permissions": [
             "read"
           ]

@@ -137,53 +137,51 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
     }
 
     for file in all_files:
-        if file["owner"] == target_id:
-            if list_type == "group":
-                user_permissions = next(
-                    (permission["permissions"] for permission in file.get("permissions", {}).get("groups", [])
-                    if permission["groupid"] == f"Owner: {target_id}"), []
-                )
-            else:
-                user_permissions = next(
-                    (permission["permissions"] for permission in file.get("permissions", {}).get("users", [])
-                    if permission["userid"] == f"Owner: {target_id}"), []
-                )
+        if list_type != "group" and file["owner"] == target_id:
+            user_permissions = next(
+                (perm["permissions"] for perm in file.get("permissions", {}).get("users", [])
+                 if perm["userid"] == f"Owner: {target_id}"), []
+            )
             result["personal"].append({
                 "id": file["id"],
                 "name": file["name"],
                 "owner": file["owner"],
-                "permissions": user_permissions,
             })
 
-        for permission in file.get("permissions", {}).get("users", []):
-            if permission["userid"] == target_id:
+        if list_type == "group":
+            group_perms = file.get("permissions", {}).get("groups", [])
+            target_group_perms = [gp for gp in group_perms if gp["groupid"] == target_id and gp["permissions"]]
+
+            if target_group_perms and file["permissions"].get("users", []) != []:
                 result["shared"].append({
                     "id": file["id"],
                     "name": file["name"],
-                    "shared_by": file["owner"],
-                    "permissions": permission.get("permissions", []),
+                    "shared": file["owner"],
                 })
-                break
+            elif target_group_perms:
+                result["personal"].append({
+                    "id": file["id"],
+                    "name": file["name"],
+                    "owner": file["owner"],
+                })
 
-        if list_type == "group":
-            for group_permission in file.get("permissions", {}).get("groups", []):
-                group_id = group_permission["groupid"]
-                if group_id == target_id and group_permission["permissions"] != []:
+        else:
+            for permission in file.get("permissions", {}).get("users", []):
+                if permission["userid"] == target_id:
                     result["shared"].append({
                         "id": file["id"],
                         "name": file["name"],
-                        "group": group_id,
-                        "permissions": group_permission["permissions"],
+                        "shared": file["owner"],
                     })
-        else:
+                    break
+
             for group_permission in file.get("permissions", {}).get("groups", []):
                 group_id = group_permission["groupid"]
-                if group_id in user_groups and group_permission["permissions"] != []:
+                if group_id in user_groups and group_permission["permissions"]:
                     result["group"].append({
                         "id": file["id"],
                         "name": file["name"],
                         "group": group_id,
-                        "permissions": group_permission["permissions"],
                     })
 
     return result
@@ -379,8 +377,11 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
 def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
     """ Shares a file with a user or group. """
-    if file_info["owner"] != user_id and file_info["permissions"].get("users", []):
-        return "You are not the owner of this file or the file belongs to a group."
+    if file_info["owner"] != user_id :
+        return "You are not the owner of this file."
+
+    if file_info["permissions"].get("users", []) == []:
+        return "The file belongs to a group."
 
     if client_request.is_group:
         if "groups" not in file_info["permissions"]:
