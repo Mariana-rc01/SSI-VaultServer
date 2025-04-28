@@ -104,6 +104,90 @@ _Realizar ponderação de risco de acordo com as métricas abordadas na aula._
 ### Implementação dos comandos propostos
 **Responsável:** T (cada um aponta funcionamento geral e edge cases dos seus comandos)
 
+#### add \<file-path>
+
+#### read \<file-id>
+
+#### list [-u \<user-id> | -g \<group-id>]
+
+O cliente envia para o servidor um pedido de listagem para um utilizador ou grupo.
+O servidor verifica todos os ficheiros e categoriza em 3 grupos:
+1. **Ficheiros Pessoais**:
+  - para um utilizador: ficheiros onde o utilizador é o dono do ficheiro;
+  - para um grupo: ficheiros que pertencem exclusivamente ao grupo, ou seja, o dono do ficheiro pertence ao grupo.
+
+2. **Ficheiros Partilhados**:
+  - para um utilizador: ficheiros partilhados diretamente com o utilizador via _users_ nas permissões;
+  - para um grupo: ficheiros partilhados com o grupo nas permissões.
+
+3. **Ficheiros de Grupo**:
+Ficheiros partilhados com grupos aos quais o utilizador pertence. Os ficheiros de grupo são apenas para listagem do utilizador, pois um grupo não pode pertencer a um grupo, de modo que não terá os ficheiros em questão.
+
+Podemos ver de seguida o fluxo de decisão que decorre para este comando:
+
+<p align="center">
+<img src="report/images/list.png" alt="List" width="250">
+</p>
+
+#### share \<file-id> \<target-id> --permission=[r|w]
+
+Para um cliente partilhar um ficheiro para outro utilizador ou para um grupo, são realizados os seguintes passos:
+
+1. Pedido de Chaves:
+
+O cliente solicita a chave pública do _target_ e a sua chave simétrica encriptada do ficheiro. Caso
+o _target_ seja um grupo, são solicitadas as chaves públicas de todos os utilizadores.
+Isto permite ao cliente preparar a encriptação adequada para proteger a chave do ficheiro durante a
+partilha, caso este seja o dono do ficheiro.
+
+2. Encriptação Segura:
+
+Caso o ficheiro pertença ao cofre pessoal do cliente, poderá então desencriptar a chave do ficheiro
+e re-encriptá-la especificamente para o utilizador ou para todos os utilizadores do grupo.
+
+Isto garante que apenas o destinatário possa desencriptar e usar o ficheiro, mantendo a confidencialidade.
+
+3. Verificações:
+
+O servidor valida novamente que o cliente que partilha é o proprietário do ficheiro e que o ficheiro
+não pertence a um grupo, evitando partilhas indevidas.
+
+4. Atualização de Permissões:
+
+Se o destinatário for um utilizador, adiciona-se, nas permissões, à lista de _users_.
+
+Se for um grupo, adiciona-se à lista de _groups_ com as chaves de cada membro.
+De modo a permitir uma gestão de acessos granular e segura.
+
+Pode-se assumir que, se o utilizador conceder permissão de escrita, automaticamente dará também
+permissão de leitura, uma vez que não faz sentido permitir que escreva num ficheiro sem poder lê-lo.
+
+#### delete \<file-id>
+**Responsável:** M
+
+#### replace \<file-id> \<file-path>
+**Responsável:** M
+
+#### details \<file-id>
+
+#### revoke \<file-id> \<target-id>
+
+#### group create \<group-name>
+
+#### group delete \<group-id>
+
+#### group add-user \<group-id> \<user-id> --permission=[r|w]
+**Responsável:** M
+
+#### group delete-user \<group-id> \<user-id>
+
+#### group list
+**Responsável:** M
+
+#### group add \<group-id> \<file-path>
+
+#### exit
+
 ### Conceção de extras
 **Responsável:** M
 
