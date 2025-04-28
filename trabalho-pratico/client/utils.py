@@ -20,6 +20,7 @@ def menu() -> None:
     print("- group add-user <group-id> <user-id> --permission=[r|w]")
     print("- group list")
     print("- group add <group-id> <file-path>")
+    print("- group delete-user <group-id> <user-id>")
     print("- exit")
 
 def addRequest(file_path: str, client_public_key) -> bytes:
@@ -457,3 +458,10 @@ def groupList(server_response: GroupListResponse) -> None:
     for group in server_response.groups:
         print(f"Group ID: {group['id']}")
         print(f"Permissions: {', '.join(group['permissions'] or 'None')}\n")
+        
+def deleteGroupUserRequest(group_id: str, user_id: str) -> bytes:
+    delete_group_user_request = DeleteUserGroupRequest(
+        group_id=group_id,
+        user_id=user_id,
+    )
+    return serialize_response(delete_group_user_request)
