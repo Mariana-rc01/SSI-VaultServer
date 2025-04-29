@@ -90,7 +90,7 @@ _Descrição sucinta do serviço: cofre pessoal, grupos, armazenamento e partilh
 > O sistema não implementa medidas específicas para prevenir ataques de negação de serviço, como a limitação do número de pedidos simultâneos ou a proteção contra ficheiros excessivamente grandes. Considera-se que a responsabilidade pela mitigação deste tipo de ataques recai sobre a infraestrutura de rede subjacente.
 
 ## Arquitetura da solução
-**Responsável:** 
+**Responsável:**
 
 ## Plano de Implementação
 
@@ -131,7 +131,7 @@ Ficheiros partilhados com grupos aos quais o utilizador pertence. Os ficheiros d
 Podemos ver de seguida o fluxo de decisão que decorre para este comando:
 
 <p align="center">
-<img src="report/images/list.png" alt="List" width="250">
+<img src="report/images/list.jpg" alt="List" width="250">
 </p>
 
 #### share \<file-id> \<target-id> --permission=[r|w]
@@ -173,6 +173,10 @@ Quando um utilizador realiza o comando de apagar um ficheiro, temos 3 casos:
 1. Se o utilizador for **dono** do ficheiro, o servidor elimina o ficheiro e limpa todas as referências relacionadas com o mesmo.
 2. Se o utilizador for **dono de um grupo** e o ficheiro pertencer ao cofre do grupo, o servidor elimina o ficheiro e todas as suas referências.
 3. Se o ficheiro não for do cofre pessoal do utilizador (ficheiro partilhado), o acesso do utilizador é removido, no entanto o ficheiro continua a existir para os outros utilizadores.
+
+<p align="center">
+<img src="report/images/share.jpg" alt="Share" width="400">
+</p>
 
 #### replace \<file-id> \<file-path>
 
