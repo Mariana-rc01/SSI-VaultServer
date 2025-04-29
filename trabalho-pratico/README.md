@@ -194,12 +194,44 @@ O servidor confirma novamente que o cliente tem permissão de escrita sobre o fi
 #### group delete \<group-id>
 
 #### group add-user \<group-id> \<user-id> --permission=[r|w]
-**Responsável:** M
+
+Quando um utilizador pretende adicionar outro utilizador a um grupo, são realizados os seguintes passos:
+
+1. Pedido de Chaves:
+
+O cliente que realiza a operação solicita ao servidor as suas chaves dos ficheiros associados ao grupo e a chave pública do cliente que pretende adicionar ao grupo. Este pedido só é aceite se o cliente for o dono do grupo, garantindo que apenas o proprietário tem autoridade para alterar a composição do grupo.
+
+2. Preparação no Cliente:
+
+O cliente decifra as chaves dos ficheiros do grupo com a sua chave privada e cifra essas chaves com a chave pública do novo utilizador. Esta operação é essencial para que o novo membro possa aceder de forma segura aos ficheiros do grupo, com base na sua própria chave privada.
+
+3. Pedido de Adição:
+
+O cliente envia o pedido de adição, incluindo as chaves encriptadas para o novo utilizador e a indicação da permissão atribuída (read ou write).
+
+4. Validação e Atualização no Servidor:
+
+O servidor confirma que quem está a adicionar é efetivamente o dono do grupo. Caso se confirme:
+
+O novo utilizador é adicionado à lista de membros do grupo com as permissões indicadas.
+
+Atualiza as entradas dos ficheiros partilhados no grupo, adicionando a chave encriptada correspondente ao novo membro.
+
+Se o utilizador já for membro do grupo, as permissões são atualizadas conforme necessário, mas sem duplicar a entrada.
 
 #### group delete-user \<group-id> \<user-id>
 
 #### group list
-**Responsável:** M
+
+Quando um utilizador executa o comando para listar os grupos a que pertence, são realizados os seguintes passos:
+
+1. Pedido de Listagem:
+
+O cliente envia ao servidor um pedido para obter os grupos em que está inserido. Este pedido não requer parâmetros adicionais, pois o servidor consegue identificar o utilizador através da sessão segura já estabelecida.
+
+2. Processamento no Servidor:
+
+O servidor consulta o registo de grupos e identifica todos aqueles onde o utilizador se encontra como membro. Para cada grupo, o servidor indica também as suas permissões associadas (read ou read, write).
 
 #### group add \<group-id> \<file-path>
 
