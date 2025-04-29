@@ -1,5 +1,5 @@
-import asyncio
-import base64
+import argparse
+import asyncio, base64
 from typing import Optional
 
 from authentication.authenticator import terminal_interface
@@ -10,8 +10,6 @@ from utils.data_structures import *
 from client.utils import *
 from cryptography.x509 import Certificate
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
-from cryptography.hazmat.primitives.asymmetric.dh import DHPrivateKey
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.x509.oid import NameOID
 
@@ -31,32 +29,41 @@ class Client:
         """Class constructor."""
         self.sckt = sckt
         self.msg_cnt: int = 0
-        self.aesgcm: Optional[AESGCM] = None
+        self.cipher: Optional[AESGCM] = None
         self.rsa_private_key = rsa_private_key
         self.client_certificate = client_certificate
 
     async def handshake(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, tls_option: str
     ) -> None:
         """Performs the handshake with the server."""
         # Send public key to the server
-        dh_private_key: DHPrivateKey = generate_private_key()
-        dh_public_key: EllipticCurvePublicKey = generate_public_key(dh_private_key)
-        serialized_public_key: bytes = serialize_public_key(dh_public_key)
+        client_version, cipher_suites, use_ecdh, client_random = prepare_tls_client_context(tls_option)
+
+        client_private_key = generate_private_key(use_ecdh)
+        client_public_key = generate_public_key(client_private_key)
+        serialized_public_key: bytes = serialize_public_key(client_public_key)
+
+        client_hello = ClientHello(
+            tls_version   = client_version,
+            client_random = base64.b64encode(client_random).decode(),
+            cipher_suites = cipher_suites,
+            public_key    = base64.b64encode(serialized_public_key).decode()
+        )
 
         # Encode the public key in Base64 before sending
-        serialized_public_key_json: bytes = serialize_response(ClientFirstInteraction(base64.b64encode(serialized_public_key).decode()))
+        serialized_public_key_json: bytes = serialize_response(client_hello)
         writer.write(serialized_public_key_json)
         await writer.drain()
 
         # Receive server's public key, signature, and certificate
         response = await reader.read(max_msg_size)
-        response_data: ServerFirstInteraction = deserialize_request(response)
+        response_data: ServerHello = deserialize_request(response)
         serialized_server_public_key: bytes = base64.b64decode(response_data.public_key)
         server_signature: bytes = base64.b64decode(response_data.signature)
         server_certificate: bytes = base64.b64decode(response_data.certificate)
-
-        server_public_key: EllipticCurvePublicKey = deserialize_public_key(serialized_server_public_key)
+        server_random = base64.b64decode(response_data.server_random)
+        server_public_key = deserialize_public_key(serialized_server_public_key)
         server_certificate_obj: Certificate = certificate_create(server_certificate)
 
         # Validate certificate
@@ -69,28 +76,34 @@ class Client:
         server_certificate_public_key = server_certificate_obj.public_key()
 
         # Validate signature
-        both_public_keys: bytes = serialized_public_key + serialized_server_public_key
+        handshake_data: bytes = (
+            client_random +
+            server_random +
+            base64.b64decode(client_hello.public_key) +
+            serialized_server_public_key +
+            response_data.selected_cipher.encode()
+        )
         signature_valid: bool = is_signature_valid(
-            server_signature, both_public_keys, server_certificate_public_key
+            server_signature, handshake_data, server_certificate_public_key
         )
         if not signature_valid:
             print("Aborting handshake...")
             return
 
         # Derived shared key
-        shared_key: bytes = generate_shared_key(dh_private_key, server_public_key)
-        derived_key: bytes = generate_derived_key(shared_key)
-        self.aesgcm = build_aesgcm(derived_key)
+        shared_key: bytes = generate_shared_key(client_private_key, server_public_key)
+        derived_key: bytes = generate_derived_key(shared_key + client_random + server_random, response_data.selected_cipher)
+        self.cipher = build_method(derived_key, response_data.selected_cipher)
 
         # Send client certificate and signature to the server
-        client_signature: bytes = sign_message_with_rsa(both_public_keys, self.rsa_private_key)
+        client_signature: bytes = sign_message_with_rsa(handshake_data, self.rsa_private_key)
         client_certificate_subject: str = self.client_certificate.subject.get_attributes_for_oid(
             NameOID.COMMON_NAME
         )[0].value
 
-        response_tosend = ClientSecondInteraction(base64.b64encode(client_signature).decode(),
-                                                  base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
-                                                  base64.b64encode(client_certificate_subject.encode()).decode())
+        response_tosend = ClientAuthentication(base64.b64encode(client_signature).decode(),
+                                               base64.b64encode(serialize_certificate(self.client_certificate)).decode(),
+                                               base64.b64encode(client_certificate_subject.encode()).decode())
 
         # Send client's certificate and signature
         writer.write(serialize_response(response_tosend))
@@ -105,7 +118,7 @@ class Client:
             if not notifications:
                 print("No notifications received.")
                 return
-            decrypted_notification: bytes = decrypt(notifications, self.aesgcm)
+            decrypted_notification: bytes = decrypt(notifications, self.cipher)
             notification_obj = deserialize_request(decrypted_notification)
             print_notifications(notification_obj)
         except Exception as e:
@@ -119,7 +132,7 @@ class Client:
             if len(msg) != 0:
                 self.msg_cnt += 1
                 try:
-                    decrypted_msg: bytes = decrypt(msg, self.aesgcm)
+                    decrypted_msg: bytes = decrypt(msg, self.cipher)
                     server_response = deserialize_request(decrypted_msg)
 
                     if isinstance(server_response, ReadResponse):
@@ -188,7 +201,7 @@ class Client:
                 if not json_bytes:
                     continue
 
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("read "):
                 file_id: str = new_msg.split(" ", 1)[1]
 
@@ -196,7 +209,7 @@ class Client:
                 if not json_bytes:
                     continue
 
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("list"):
                 args = new_msg.split()
                 list_type = None
@@ -214,7 +227,7 @@ class Client:
                 if not json_bytes:
                     continue
 
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("share "):
                 args = new_msg.split()
                 if len(args) != 4:
@@ -235,11 +248,11 @@ class Client:
                         target_id,
                         permission,
                         self.rsa_private_key,
-                        self.aesgcm,
+                        self.cipher,
                         writer,
                         reader,
                     )
-                    return encrypt(share_request, self.aesgcm)
+                    return encrypt(share_request, self.cipher)
                 except Exception as e:
                     print(f"Error during share request: {e}")
                     continue
@@ -248,7 +261,7 @@ class Client:
 
                 request = DeleteRequest(file_id)
                 json_bytes = serialize_response(request)
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("replace "):
                 args = new_msg.split(" ", 2)
                 if len(args) != 3:
@@ -263,11 +276,11 @@ class Client:
                         file_id,
                         file_path,
                         self.rsa_private_key,
-                        self.aesgcm,
+                        self.cipher,
                         writer,
                         reader,
                     )
-                    return encrypt(replace_request, self.aesgcm)
+                    return encrypt(replace_request, self.cipher)
                 except Exception as e:
                     print(f"Error during replace request: {e}")
                     continue
@@ -276,7 +289,7 @@ class Client:
 
                 request = DetailsRequest(file_id)
                 json_bytes = serialize_response(request)
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("group create "):
                 group_name: str = new_msg.split(" ", 2)[2]
 
@@ -284,13 +297,13 @@ class Client:
                 if not json_bytes:
                     continue
 
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("group delete "):
                 group_id: str = new_msg.split(" ", 2)[2]
 
                 request = GroupDeleteRequest(group_id)
                 json_bytes = serialize_response(request)
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("revoke "):
                 args = new_msg.split(" ", 2)
                 if len(args) != 3:
@@ -302,7 +315,7 @@ class Client:
 
                 request = RevokeRequest(file_id, target_id)
                 json_bytes = serialize_response(request)
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("group delete-user "):
                 args = new_msg.split()
 
@@ -312,7 +325,7 @@ class Client:
                 json_bytes: bytes = deleteGroupUserRequest(group_id, user_id)
                 if not json_bytes:
                     return b""
-                return encrypt(json_bytes, self.aesgcm)
+                return encrypt(json_bytes, self.cipher)
             elif new_msg.startswith("group add-user "):
                 args = new_msg.split()
                 if len(args) != 5:
@@ -325,16 +338,16 @@ class Client:
 
                 try:
                     groupAddUser_request = await groupAddUserRequest(
-                        group_id, user_id, permission, self.rsa_private_key, self.aesgcm, writer, reader
+                        group_id, user_id, permission, self.rsa_private_key, self.cipher, writer, reader
                     )
-                    return encrypt(groupAddUser_request, self.aesgcm)
+                    return encrypt(groupAddUser_request, self.cipher)
                 except Exception as e:
                     print(f"Error during share request: {e}")
                     continue
             elif new_msg.startswith("group list"):
                 request = GroupListRequest()
                 serialized_request = serialize_response(request)
-                return encrypt(serialized_request, self.aesgcm)
+                return encrypt(serialized_request, self.cipher)
             elif new_msg.startswith("group add "):
                 args = new_msg[len("group add "):].split(" ", 1)
                 if len(args) != 2:
@@ -348,11 +361,11 @@ class Client:
                     group_add_request = await groupAddRequest(
                         file_path,
                         group_id,
-                        self.aesgcm,
+                        self.cipher,
                         writer,
                         reader,
                     )
-                    return encrypt(group_add_request, self.aesgcm)
+                    return encrypt(group_add_request, self.cipher)
                 except Exception as e:
                     print(f"Error during group add request: {e}")
                     continue
@@ -364,7 +377,7 @@ class Client:
 
 
 # Client/Server functionality
-async def tcp_echo_client() -> None:
+async def tcp_echo_client(tls_option: str) -> None:
     """Establishes the connection with the server and handles communication."""
 
     private_key: RSAPrivateKey
@@ -380,8 +393,8 @@ async def tcp_echo_client() -> None:
     addr: tuple[str, int] = writer.get_extra_info("peername")
     client: Client = Client(addr, rsa_private_key=private_key, client_certificate=certificate)
 
-    await client.handshake(reader, writer)
-    if client.aesgcm is None:
+    await client.handshake(reader, writer, tls_option)
+    if client.cipher is None:
         return
 
     await client.receive_notifications(reader)
@@ -401,8 +414,12 @@ async def tcp_echo_client() -> None:
 
 def run_client() -> None:
     """Runs the client event loop."""
+    parser = argparse.ArgumentParser(description="Run the client.")
+    parser.add_argument("option", type=str, help="Option to pass to the handshake")
+    args = parser.parse_args()
+
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-    loop.run_until_complete(tcp_echo_client())
+    loop.run_until_complete(tcp_echo_client(args.option))
 
 
 run_client()

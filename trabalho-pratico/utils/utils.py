@@ -1,8 +1,8 @@
 import os
 
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM, ChaCha20Poly1305
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import dh, padding, rsa
+from cryptography.hazmat.primitives.asymmetric import dh, padding, rsa, ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from cryptography import x509
@@ -13,26 +13,44 @@ max_msg_size: int = 9999
 p = 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3BE39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF6955817183995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF
 g = 2
 
-def generate_private_key():
-    parameters = dh.DHParameterNumbers(p,g).parameters()
-    return parameters.generate_private_key()
+def generate_private_key(use_ecdh = False):
+    if use_ecdh:
+        return ec.generate_private_key(ec.SECP384R1())
+    else:
+        parameters = dh.DHParameterNumbers(p,g).parameters()
+        return parameters.generate_private_key()
 
 def generate_public_key(private_key):
     return private_key.public_key()
 
 def generate_shared_key(private_key, public_key):
-    return private_key.exchange(public_key)
+    if isinstance(private_key, dh.DHPrivateKey) and isinstance(public_key, dh.DHPublicKey):
+        return private_key.exchange(public_key)
+    elif isinstance(private_key, ec.EllipticCurvePrivateKey) and isinstance(public_key, ec.EllipticCurvePublicKey):
+        return private_key.exchange(ec.ECDH(), public_key)
+    else:
+        raise ValueError("Unsupported key type")
 
-def generate_derived_key(shared_key):
+def generate_derived_key(shared_key, cipher: str) -> bytes:
+
+    if "AES_256_GCM" in cipher or "AES256" in cipher:
+        key_length = 32
+    elif "AES_128_GCM" in cipher or "AES128" in cipher:
+        key_length = 16
+    elif "CHACHA20_POLY1305" in cipher or "CHACHA20-POLY1305" in cipher:
+        key_length = 32
+    else:
+        raise ValueError("Unknown cipher")
+
     derived_key = HKDF(
         algorithm=hashes.SHA256(),
-        length=32,
+        length=key_length,
         salt=None,
         info=b'handshake data',
     ).derive(shared_key)
     return derived_key
 
-def serialize_public_key(public_key: dh.DHPublicKey):
+def serialize_public_key(public_key):
     pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
@@ -42,26 +60,37 @@ def serialize_public_key(public_key: dh.DHPublicKey):
 def deserialize_public_key(serialized_public_key):
     return serialization.load_pem_public_key(serialized_public_key, default_backend())
 
-def encrypt(content, aesgcm):
+def encrypt(content, method):
     nonce = os.urandom(12)
-    encrypted = aesgcm.encrypt(nonce, content, None)
-    return nonce+encrypted
+    encrypted = method.encrypt(nonce, content, None)
+    return nonce + encrypted
 
-def decrypt(content, aesgcm):
+def decrypt(content, method):
     nonce = content[:12]
     real_content = content[12:]
-    ct = aesgcm.decrypt(nonce, real_content, None)
+    ct = method.decrypt(nonce, real_content, None)
     return ct
 
-def build_aesgcm(key):
+def build_aesgcm(key: bytes):
     return AESGCM(key)
+
+def build_method(key: bytes, cipher: str):
+    """Creates and returns a cryptographic method based on the provided key and cipher."""
+    if "AES_256_GCM" in cipher or "AES256" in cipher:
+        return AESGCM(key[:32])
+    elif "AES_128_GCM" in cipher or "AES128" in cipher:
+        return AESGCM(key[:16])
+    elif "CHACHA20_POLY1305" in cipher or "CHACHA20-POLY1305" in cipher:
+        return ChaCha20Poly1305(key[:32])
+    else:
+        raise ValueError(f"Cifra não suportada: {cipher}")
 
 # Certificates
 certificates_path = "./certificates"
 ca_certificate_path = os.path.join(certificates_path, "VAULT_CA.crt")
 
 def certificate_load(fname):
-    """reads a certificate from file"""
+    """Reads a certificate from file."""
     with open(os.path.join(certificates_path, fname), 'rb') as f:
         cert = x509.load_pem_x509_certificate(f.read())
 
@@ -71,7 +100,7 @@ def certificate_create(content):
     return x509.load_pem_x509_certificate(content)
 
 def serialize_certificate(certificate):
-    """serializes a certificate to PEM format"""
+    """Serializes a certificate to PEM format."""
     return certificate.public_bytes(
         encoding=serialization.Encoding.PEM
     )
@@ -124,7 +153,7 @@ def certificate_validsubject(cert, attrs=[]):
             )
 
 def certificate_validexts(cert, policy=[]):
-    """validate the certificate extensions.
+    """Validate the certificate extensions.
     'policy' is a list of pairs '(ext,pred)' where 'ext' is the OID of an extension and 'pred'
     is the predicate responsible for checking the content of that extension."""
     for check in policy:
