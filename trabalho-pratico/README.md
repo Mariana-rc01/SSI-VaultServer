@@ -16,29 +16,28 @@
 1. [Introdução](#introdução)
 2. [Descrição Geral do Projeto](#descrição-geral-do-projeto)
 3. [Objetivos](#objetivos)
-4. [Levantamento de Requisitos](#levantamento-de-requisitos)
-   1. [Funcionais](#funcionais)
-   2. [Segurança](#segurança)
+4. [Requisitos de Segurança](#requisitos-de-segurança)
 5. [Modelação de Ameaças (Threat Model)](#modelação-de-ameaças-threat-model)
-   1. [Identificação de Ameaças](#identificação-de-ameaças)
-   2. [Diagrama de Fluxo de Dados e Barreiras](#diagrama-de-fluxo-de-dados-e-barreiras)
-   3. [Análise de Risco](#análise-de-risco)
-6. [Plano de Implementação](#plano-de-implementação)
+6. [Arquitetura da solução](#arquitetura-da-solução)
+7. [Plano de Implementação](#plano-de-implementação)
    1. [Estabelecimento da comunicação servidor cliente](#estabelecimento-da-comunicação-servidor-cliente)
    2. [Aplicação do protocolo criptográfico Diffie-Hellman](#aplicação-do-protocolo-criptográfico-Diffie-Hellman)
    3. [Atualização do protocolo criptográfico base para Station-To-Station](#atualização-do-protocolo-criptográfico-base-para-Station-To-Station)
    4. [Estruturação do processo de serialização/deserialização](#estruturação-do-processo-de-serialização/deserialização)
    5. [Implementação dos comandos propostos](#implementação-dos-comandos-propostos)
    6. [Conceção de extras](#conceção-de-extras)
-7. [Extras](#extras)
+8. [Extras](#extras)
    1. [Autoridade Certificadora Própria](#autoridade-certificadora-própria)
    2. [Sistema de Registo de Logs](#sistema-de-registo-de-logs)
    3. [Autenticação Baseada em Ficheiros P12](#autenticação-baseada-em-ficheiros-p12)
    4. [Protocolo de Comunicação em JSON](#protocolo-de-comunicação-em-json)
    5. [Possibilidade de execução do comando share para grupos](#possibilidade-de-execução-do-comando-share-para-grupos)
-8. [Manual de utilização](#manual-de-utilização)
-9. [Conclusões](#conclusões)
-10. [Referências](#referências)
+   6. [Norma TLS com DH e ECDH](#norma-TLS-com-DH-e-ECDH)
+   7. [Sistema de notificações](#sistema-de-notificações)
+   8. [Isolamento do processo e recursos do servidor](#isolamento-do-processo-e-recursos-do-servidor)
+9. [Manual de utilização](#manual-de-utilização)
+10. [Conclusões](#conclusões)
+11. [Referências](#referências)
 
 ---
 
@@ -59,33 +58,39 @@ _Descrição sucinta do serviço: cofre pessoal, grupos, armazenamento e partilh
 - Assegurar integridade e autenticidade das operações
 - Disponibilizar interface CLI simples e intuitiva
 
-## Levantamento de Requisitos
-**Responsável:** T
+## Requisitos de Segurança
 
-_Lista de requisitos funcionais e de segurança, com prioridades e justificações._
+1. **Autenticidade**:
+- Exigir senhas fortes com no mínimo 16 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.
+- Utilizar certificados digitais para autenticação mútua entre cliente e servidor.
 
-### Funcionais
+2. **Integridade**:
+- Impedir modificações não autorizadas nos ficheiros.
+- Implementar um sistema de logs para registar todas as operações realizadas.
+- Garantir que os ficheiros não possam ser acedidos por utilizadores não autorizados.
 
-      Exemplo: O serviço deve permitir que cada utilizador se registe.
-
-### Segurança
-
-      Descrever para cada uma das palavras-chave do enunciado: autenticidade, integridade e confidencialidade
+3. **Confidencialidade**:
+- Utilizar criptografia simétrica para proteger o conteúdo dos ficheiros.
+- Implementar um sistema de chaves públicas e privadas para garantir a confidencialidade das comunicações.
+- Os ficheiros partilhados são apenas acessíveis aos utilizadores destinatários.
+- Proteger as chaves simétricas com criptografia assimétrica.
+- Implementar um sistema de permissões para controlar o acesso aos ficheiros.
 
 ## Modelação de Ameaças (Threat Model)
-**Responsável:** T
 
-### Identificação de Ameaças
+| Ameaça | Descrição do Ataque | Minimização |
+|--------------|---------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| **Spoofing** | Intercetar pedidos entre cliente e servidor e assumir a identidade de ambos. | Implementar protocolos para a criação de um canal seguro, tais como TLS ou Station to Station. |
+| **Tampering**| Modificação não autorizada de dados do sistema. | Implementação de um sistema de logs e utilização de criptografia nas comunicações e ficheiros. |
+| **Repudiation** | Negação de uma ação realizada sem possibilidade de provar o contrário. | Realizar verificações de integridade através do sistema de logs e autenticação com certificados digitais.|
+| **Information Disclosure** | Acesso não autorizado a informação sensível. | Isolamento do processo servidor e dados adjacentes e controlo de acessos. |
+| **Denial of Service** | Submissão de ficheiros extremamente grandes. | Limitação do tamanho do ficheiro. |
+| **Elevation of Privilege** | Explorar configurações indevidas do sistema. | Garantia de isolamento do sistema operativo. |
 
-_Enumeração das principais ameaças (STRIDE)._
+> O sistema não implementa medidas específicas para prevenir ataques de negação de serviço, como a limitação do número de pedidos simultâneos ou a proteção contra ficheiros excessivamente grandes. Considera-se que a responsabilidade pela mitigação deste tipo de ataques recai sobre a infraestrutura de rede subjacente.
 
-### Diagrama de Fluxo de Dados e Barreiras
-
-_Inserir DFD simplificado e definição das barreiras de segurança._
-
-### Análise de risco
-
-_Realizar ponderação de risco de acordo com as métricas abordadas na aula._
+## Arquitetura da solução
+**Responsável:** 
 
 ## Plano de Implementação
 
@@ -266,6 +271,21 @@ _Definição de mensagens JSON para operações (add, list, share, ...)._
 **Responsável:** M
 
 _Descrição do motivo do aparecimento do comando e provar a praticidade do mesmo._
+
+### Norma TLS com DH e ECDH
+**Responsável:** M
+
+_Implementação de TLS com Diffie-Hellman e ECDH para troca de chaves._
+
+### Sistema de notificações
+**Responsável:** M e P
+
+_Implementação do sistema de notificações_
+
+### Isolamento do processo e recursos do servidor
+**Responsável:** P
+
+_Implementação do isolamento do processo_
 
 ## Manual de utilização
 **Responsável:** H
