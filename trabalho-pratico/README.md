@@ -163,10 +163,27 @@ Pode-se assumir que, se o utilizador conceder permissão de escrita, automaticam
 permissão de leitura, uma vez que não faz sentido permitir que escreva num ficheiro sem poder lê-lo.
 
 #### delete \<file-id>
-**Responsável:** M
+
+Quando um utilizador realiza o comando de apagar um ficheiro, temos 3 casos:
+1. Se o utilizador for **dono** do ficheiro, o servidor elimina o ficheiro e limpa todas as referências relacionadas com o mesmo.
+2. Se o utilizador for **dono de um grupo** e o ficheiro pertencer ao cofre do grupo, o servidor elimina o ficheiro e todas as suas referências.
+3. Se o ficheiro não for do cofre pessoal do utilizador (ficheiro partilhado), o acesso do utilizador é removido, no entanto o ficheiro continua a existir para os outros utilizadores.
 
 #### replace \<file-id> \<file-path>
-**Responsável:** M
+
+Para um cliente pretende realizar um _replace_ de um ficheiro, são realizados os seguintes passos:
+
+1. Pedido de Chaves:
+
+O servidor verifica que o cliente tem autorização de escrita sobre o ficheiro e envia-lhe a sua chave que decifra o ficheiro.
+
+2. Substituição no Cliente:
+
+O cliente decifra a chave simétrica e, com esta, cifra o novo ficheiro e envia o ficheiro cifrado para o servidor.
+
+3. Substituição no Servidor:
+
+O servidor confirma novamente que o cliente tem permissão de escrita sobre o ficheiro. Caso se verifique, o conteúdo do ficheiro e o seu tamanho são atualizados.
 
 #### details \<file-id>
 
