@@ -25,6 +25,11 @@
       {
         "content": "User u1 shared file f7.",
         "timestamp": "2025-04-25T15:53:37.540811Z",
+        "read": true
+      },
+      {
+        "content": "File f8 added to your group g2.",
+        "timestamp": "2025-04-28T09:48:57.696726Z",
         "read": false
       }
     ]
@@ -46,6 +51,11 @@
         "content": "File file.txt added to your group g2.",
         "timestamp": "2025-04-24T15:46:01.119987Z",
         "read": true
+      },
+      {
+        "content": "File f8 added to your group g2.",
+        "timestamp": "2025-04-28T09:48:57.696234Z",
+        "read": false
       }
     ]
   },
@@ -150,6 +160,26 @@
       {
         "content": "User u1 replaced the content of the file f5.",
         "timestamp": "2025-04-24T16:09:56.665469Z",
+        "read": true
+      },
+      {
+        "content": "User u1 read file f5.",
+        "timestamp": "2025-04-26T03:20:37.340129Z",
+        "read": false
+      },
+      {
+        "content": "File f8 added to your group g2.",
+        "timestamp": "2025-04-28T09:48:57.697477Z",
+        "read": false
+      }
+    ]
+  },
+  {
+    "userId": "u1",
+    "notifications": [
+      {
+        "content": "User u2 read file f7.",
+        "timestamp": "2025-04-28T08:17:02.226834Z",
         "read": true
       }
     ]

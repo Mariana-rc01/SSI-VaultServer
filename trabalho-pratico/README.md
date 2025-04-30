@@ -301,7 +301,7 @@ _Explicação de como deve ser o executado e guia de utilização de exemplos j�
 ```
 Server: python3 -m server.server
 
-Client: python3 -m client.client
+Client: python3 -m client.client [TLSv1.3 | TLSv1.2]
 
 CA: cd certification-authority && python3 ca_daemon.py
 ```

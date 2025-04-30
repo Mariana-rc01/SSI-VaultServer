@@ -2185,5 +2185,62 @@
     "timestamp": "2025-04-27T19:23:14.580239Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r197",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f7"
+    ],
+    "timestamp": "2025-04-28T09:48:44.883649Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r198",
+    "userid": "u1",
+    "type": "list",
+    "args": [
+      "user",
+      "u1"
+    ],
+    "timestamp": "2025-04-28T09:48:48.437801Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r199",
+    "userid": "u1",
+    "type": "group public keys",
+    "args": [
+      "g2"
+    ],
+    "timestamp": "2025-04-28T09:48:57.687554Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r200",
+    "userid": "u1",
+    "type": "group add",
+    "args": [
+      "f8",
+      "file.txt"
+    ],
+    "timestamp": "2025-04-28T09:48:57.693443Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r201",
+    "userid": "u1",
+    "type": "read",
+    "args": [
+      "f8"
+    ],
+    "timestamp": "2025-04-28T09:49:09.125293Z",
+    "status": "success",
+    "error": ""
   }
 ]
