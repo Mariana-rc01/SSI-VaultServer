@@ -2092,179 +2092,154 @@
   },
   {
     "id": "r189",
-    "userid": "u1",
-    "type": "read",
+    "userid": "u3",
+    "type": "group delete-user",
     "args": [
-      "f5"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-27T23:51:16.443448Z",
+    "timestamp": "2025-04-27T10:32:03.341843Z",
     "status": "failed",
-    "error": "file not found"
+    "error": "user not in group"
   },
   {
     "id": "r190",
-    "userid": "u1",
-    "type": "list",
+    "userid": "u3",
+    "type": "group delete-user",
     "args": [
-      "user",
-      "u1"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-27T23:51:29.363229Z",
+    "timestamp": "2025-04-27T10:48:10.493124Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r191",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f5"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-27T23:51:36.615923Z",
+    "timestamp": "2025-04-27T11:34:24.574554Z",
     "status": "failed",
-    "error": "file not found"
+    "error": "user not in group"
   },
   {
     "id": "r192",
     "userid": "u1",
-    "type": "add",
+    "type": "group delete-user",
     "args": [
-      "f8"
+      "g1",
+      "u2"
     ],
-    "timestamp": "2025-04-27T23:51:58.490010Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-27T11:34:53.894704Z",
+    "status": "failed",
+    "error": "only owner can remove users"
   },
   {
     "id": "r193",
     "userid": "u1",
-    "type": "list",
+    "type": "group delete-user",
     "args": [
-      "user",
-      "u1"
+      "g1",
+      "u2"
     ],
-    "timestamp": "2025-04-27T23:52:07.517697Z",
-    "status": "success",
-    "error": ""
+    "timestamp": "2025-04-27T11:38:09.962443Z",
+    "status": "failed",
+    "error": "only owner can remove users"
   },
   {
     "id": "r194",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f8"
+      "g2",
+      "u3"
     ],
-    "timestamp": "2025-04-27T23:52:14.897504Z",
+    "timestamp": "2025-04-27T11:38:27.101224Z",
     "status": "failed",
-    "error": "file not found"
+    "error": "user not in group"
   },
   {
     "id": "r195",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f3"
+      "g2",
+      "u2"
     ],
-    "timestamp": "2025-04-27T23:54:01.450211Z",
-    "status": "failed",
-    "error": "file not found"
+    "timestamp": "2025-04-27T11:51:15.736021Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r196",
     "userid": "u1",
-    "type": "read",
+    "type": "group delete-user",
     "args": [
-      "f3"
+      "g2",
+      "u4"
     ],
-    "timestamp": "2025-04-27T23:59:53.059147Z",
-    "status": "failed",
-    "error": "file not found"
+    "timestamp": "2025-04-27T19:23:14.580239Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r197",
     "userid": "u1",
     "type": "read",
     "args": [
-      "f3"
+      "f7"
     ],
-    "timestamp": "2025-04-28T00:03:44.869310Z",
-    "status": "failed",
-    "error": "file not found"
+    "timestamp": "2025-04-28T09:48:44.883649Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r198",
     "userid": "u1",
-    "type": "add",
+    "type": "list",
     "args": [
-      "f9"
+      "user",
+      "u1"
     ],
-    "timestamp": "2025-04-28T00:06:11.211412Z",
+    "timestamp": "2025-04-28T09:48:48.437801Z",
     "status": "success",
     "error": ""
   },
   {
     "id": "r199",
     "userid": "u1",
-    "type": "read",
+    "type": "group public keys",
     "args": [
-      "f3"
+      "g2"
     ],
-    "timestamp": "2025-04-28T00:07:19.299458Z",
-    "status": "failed",
-    "error": "file not found"
+    "timestamp": "2025-04-28T09:48:57.687554Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r200",
     "userid": "u1",
-    "type": "read",
+    "type": "group add",
     "args": [
-      "f3"
+      "f8",
+      "file.txt"
     ],
-    "timestamp": "2025-04-28T00:08:05.283990Z",
-    "status": "failed",
-    "error": "file not found"
+    "timestamp": "2025-04-28T09:48:57.693443Z",
+    "status": "success",
+    "error": ""
   },
   {
     "id": "r201",
     "userid": "u1",
     "type": "read",
     "args": [
-      "f3"
+      "f8"
     ],
-    "timestamp": "2025-04-28T00:08:43.981551Z",
-    "status": "failed",
-    "error": "file not found"
-  },
-  {
-    "id": "r202",
-    "userid": "u1",
-    "type": "read",
-    "args": [
-      "f3"
-    ],
-    "timestamp": "2025-04-28T00:10:19.954959Z",
-    "status": "failed",
-    "error": "file not found"
-  },
-  {
-    "id": "r203",
-    "userid": "u1",
-    "type": "read",
-    "args": [
-      "f3"
-    ],
-    "timestamp": "2025-04-28T00:11:12.162722Z",
-    "status": "failed",
-    "error": "file not found"
-  },
-  {
-    "id": "r204",
-    "userid": "u1",
-    "type": "read",
-    "args": [
-      "f3"
-    ],
-    "timestamp": "2025-04-28T00:15:05.408635Z",
+    "timestamp": "2025-04-28T09:49:09.125293Z",
     "status": "success",
     "error": ""
   }
