@@ -1,16 +1,36 @@
+import random, base64, os, json
 from utils.utils import *
 from utils.data_structures import *
 from server.utils_db import *
 from server.notifications import add_notification
 
-import base64
-import os
-import json
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
+def negotiate_cipher(client_version: str, client_ciphers: list[str]) -> tuple[str, bool]:
+    """Selects a common cipher between the client and the server and indicates if ECDH is used."""
+
+    server_supported = [
+        "TLS_AES_256_GCM_SHA384",
+        "TLS_AES_128_GCM_SHA256",
+        "TLS_CHACHA20_POLY1305_SHA256",
+        "ECDHE-RSA-AES256-GCM-SHA384",
+        "ECDHE-RSA-AES128-GCM-SHA256",
+        "ECDHE-RSA-CHACHA20-POLY1305"
+    ]
+
+    common_ciphers = [c for c in client_ciphers if c in server_supported]
+
+    if not common_ciphers:
+        raise ValueError("No common ciphers available")
+
+    selected_cipher = random.choice(common_ciphers)
+    use_ecdh = client_version == "TLSv1.2"
+
+    return selected_cipher, use_ecdh
+
 def log_request(user_id: str, type: str, args: List[Any], status: str, error: str = "") -> None:
-    """ Logs the request made by the user. """
+    """Logs the request made by the user."""
     logs: List[Dict[str, Any]] = []
 
     if os.path.exists(LOGS_JSON):
@@ -32,7 +52,7 @@ def log_request(user_id: str, type: str, args: List[Any], status: str, error: st
         json.dump(logs, f, indent=2)
 
 def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
-    """ Gets the file by its ID. """
+    """Gets the file by its ID."""
     files = load_files()
     for f in files:
         if f["id"] == file_id:
@@ -40,7 +60,7 @@ def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
-    """ Gets the encryption key for a user or group member with read permission. """
+    """Gets the encryption key for a user or group member with read permission."""
     users = file_info.get("permissions", {}).get("users", [])
     for user in users:
         if user.get("userid") == f"Owner: {user_id}" and "read" in user.get("permissions", []):
@@ -59,7 +79,7 @@ def get_user_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
     return None
 
 def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key: Any) -> str:
-    """ Adds a file request. """
+    """Adds a file request."""
     file_id = get_next_file_id()
     file_path = os.path.join(STORAGE_DIR, file_id)
 
@@ -95,7 +115,7 @@ def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key:
     return file_id
 
 def add_user(client_subject: str, public_key: Any) -> Optional[str]:
-    """ Adds a user to the database. """
+    """Adds a user to the database."""
     users: List[Dict[str, Any]] = []
 
     if os.path.exists(USERS_JSON):
@@ -123,7 +143,7 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
     return user_id
 
 def get_files_for_listing(list_type: str, target_id: str) -> dict:
-    """ Gets the files for listing. """
+    """Gets the files for listing."""
     all_files = load_files()
     user_groups = get_user_groups(target_id)
 
@@ -134,59 +154,57 @@ def get_files_for_listing(list_type: str, target_id: str) -> dict:
     }
 
     for file in all_files:
-        if file["owner"] == target_id:
-            if list_type == "group":
-                user_permissions = next(
-                    (permission["permissions"] for permission in file.get("permissions", {}).get("groups", [])
-                    if permission["groupid"] == f"Owner: {target_id}"), []
-                )
-            else:
-                user_permissions = next(
-                    (permission["permissions"] for permission in file.get("permissions", {}).get("users", [])
-                    if permission["userid"] == f"Owner: {target_id}"), []
-                )
+        if list_type != "group" and file["owner"] == target_id:
+            user_permissions = next(
+                (perm["permissions"] for perm in file.get("permissions", {}).get("users", [])
+                 if perm["userid"] == f"Owner: {target_id}"), []
+            )
             result["personal"].append({
                 "id": file["id"],
                 "name": file["name"],
                 "owner": file["owner"],
-                "permissions": user_permissions,
             })
 
-        for permission in file.get("permissions", {}).get("users", []):
-            if permission["userid"] == target_id:
+        if list_type == "group":
+            group_perms = file.get("permissions", {}).get("groups", [])
+            target_group_perms = [gp for gp in group_perms if gp["groupid"] == target_id and gp["permissions"]]
+
+            if target_group_perms and file["permissions"].get("users", []) != []:
                 result["shared"].append({
                     "id": file["id"],
                     "name": file["name"],
                     "shared_by": file["owner"],
-                    "permissions": permission.get("permissions", []),
                 })
-                break
+            elif target_group_perms:
+                result["personal"].append({
+                    "id": file["id"],
+                    "name": file["name"],
+                    "owner": file["owner"],
+                })
 
-        if list_type == "group":
-            for group_permission in file.get("permissions", {}).get("groups", []):
-                group_id = group_permission["groupid"]
-                if group_id == target_id and group_permission["permissions"] != []:
+        else:
+            for permission in file.get("permissions", {}).get("users", []):
+                if permission["userid"] == target_id:
                     result["shared"].append({
                         "id": file["id"],
                         "name": file["name"],
-                        "group": group_id,
-                        "permissions": group_permission["permissions"],
+                        "shared_by": file["owner"],
                     })
-        else:
+                    break
+
             for group_permission in file.get("permissions", {}).get("groups", []):
                 group_id = group_permission["groupid"]
-                if group_id in user_groups and group_permission["permissions"] != []:
+                if group_id in user_groups and group_permission["permissions"]:
                     result["group"].append({
                         "id": file["id"],
                         "name": file["name"],
                         "group": group_id,
-                        "permissions": group_permission["permissions"],
                     })
 
     return result
 
 def get_user_groups(user_id: str) -> list:
-    """ Gets the groups of a user from the users database. """
+    """Gets the groups of a user from the users database."""
     users = load_users()
     user = next((u for u in users if u["id"] == user_id), None)
     if not user:
@@ -194,7 +212,7 @@ def get_user_groups(user_id: str) -> list:
     return user.get("groups", [])
 
 def get_user_permissions_by_group(user_id: str) -> list:
-    """ Gets the permissions of a user in all groups. """
+    """Gets the permissions of a user in all groups."""
     groups = load_groups()
     user_groups = []
 
@@ -210,7 +228,7 @@ def get_user_permissions_by_group(user_id: str) -> list:
     return user_groups
 
 def get_public_key(user_id: str) -> Optional[str]:
-    """ Gets the public key of a user. """
+    """Gets the public key of a user."""
     users = load_users()
     for user in users:
         if user["id"] == user_id:
@@ -218,7 +236,7 @@ def get_public_key(user_id: str) -> Optional[str]:
     return None
 
 def get_group_members(group_id: str) -> list:
-    """ Gets the members of a group. """
+    """Gets the members of a group."""
     groups = load_groups()
     return next(
         (g["members"] for g in groups if g["id"] == group_id),
@@ -226,7 +244,7 @@ def get_group_members(group_id: str) -> list:
     )
 
 def group_delete(group_id: str, user_id: str) -> Optional[str]:
-    """ Deletes a group. """
+    """Deletes a group."""
     groups = load_groups()
     group = next((g for g in groups if g["id"] == group_id), None)
 
@@ -266,7 +284,7 @@ def group_delete(group_id: str, user_id: str) -> Optional[str]:
     return None
 
 def add_group_request(group_name: str, user_id: str) -> str:
-    """ Adds a group request. """
+    """Adds a group request."""
     group_id = get_next_group_id()
 
     groups = load_groups()
@@ -376,8 +394,11 @@ def add_user_to_group(user_id: str, group_id: str, add_user_id: str, permission:
 
 def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> Optional[str]:
     """ Shares a file with a user or group. """
-    if file_info["owner"] != user_id and file_info["permissions"].get("users", []):
-        return "You are not the owner of this file or the file belongs to a group."
+    if file_info["owner"] != user_id :
+        return "You are not the owner of this file."
+
+    if file_info["permissions"].get("users", []) == []:
+        return "The file belongs to a group."
 
     if client_request.is_group:
         if "groups" not in file_info["permissions"]:
@@ -448,7 +469,7 @@ def share_file(file_info: dict, client_request: ShareRequest, user_id: str) -> O
     return None
 
 def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional[str]:
-    """ Handles group add request. """
+    """Handles group add request."""
     group_id = client_request.group_id
     group = next((g for g in load_groups() if g["id"] == group_id), None)
     if not group:
@@ -507,7 +528,7 @@ def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional
     members = get_group_members(group_id)
     for member in members:
         if member["userid"] != user_id and member["userid"] != group["owner"]:
-            add_notification(member["userid"], f"File {client_request.filename} added to your group {group_id}.")
+            add_notification(member["userid"], f"File {file_id} added to your group {group_id}.")
     return file_id
 
 def get_user_write_key(file_info: Dict[str, Any], user_id: str) -> Optional[str]:
@@ -552,7 +573,7 @@ def has_write_permission_in_group(user_id: str, group_id: str) -> bool:
     return False
 
 def check_write_permission(file_info: Dict[str, Any], user_id: str) -> bool:
-    """ Checks if a user has write permission for a file. """
+    """Checks if a user has write permission for a file."""
     if not file_info["permissions"].get("users", []):
         for group_perm in file_info.get("permissions", {}).get("groups", []):
             group_id = group_perm["groupid"]
@@ -564,7 +585,7 @@ def check_write_permission(file_info: Dict[str, Any], user_id: str) -> bool:
     return get_user_write_key(file_info, user_id) is not None
 
 def replace_file_requirements(client_request: ReplaceRequest, user_id: str) -> Optional[bytes]:
-    """ Get the keys to replace a file """
+    """Get the keys to replace a file"""
     file_info = get_file_by_id(client_request.file_id)
     if not file_info:
         log_request(user_id, "replace", [client_request.file_id], "failed", "File not found")
@@ -582,7 +603,7 @@ def replace_file_requirements(client_request: ReplaceRequest, user_id: str) -> O
     return encrypted_key
 
 def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes]:
-    """ Replaces a file with new content. """
+    """Replaces a file with new content."""
     file_info = get_file_by_id(client_request.file_id)
     if not file_info:
         log_request(user_id, "replace", [client_request.file_id], "failed", "File not found")
@@ -613,7 +634,7 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
         return None
 
 def revoke_file_access(client_request: RevokeRequest, client_id: str) -> Optional[str]:
-    """ Revokes access to a file for a user or group. """
+    """Revokes access to a file for a user or group."""
 
     if client_request.target_id == client_id:
         return
@@ -740,7 +761,7 @@ def delete_file(file_id: str, user_id: str) -> Optional[str]:
     return "User has no access to this file"
 
 def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
-    """ Get the keys to add a user to a group """
+    """Get the keys to add a user to a group"""
     groups = load_groups()
     group = next((g for g in groups if g["id"] == group_id), None)
     if not group:
@@ -761,3 +782,64 @@ def add_user_to_group_requirements(requester_id: str, group_id: str) -> dict:
                         break
 
     return encrypted_keys
+
+def delete_user_group_request(group_id: str, user_id: str, requester_id: str) -> Optional[str]:
+    """Deletes a user from a group."""
+    groups = load_groups()
+    users = load_users()
+    files = load_files()
+
+    group = next((g for g in groups if g["id"] == group_id), None)
+    if not group:
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "group not found")
+        return "group not found"
+
+    if group["owner"] != requester_id:
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "only owner can remove users")
+        return "only owner can remove users"
+
+    if group["owner"] == user_id:
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "cannot delete owner")
+        return "cannot delete owner"
+
+    original_members = group.get("members", [])
+    new_members = [m for m in original_members if m["userid"] != user_id]
+    if len(new_members) == len(original_members):
+        log_request(requester_id, "group delete-user", [group_id, user_id], "failed", "user not in group")
+        return "user not in group"
+    group["members"] = new_members
+
+    save_groups(groups)
+
+    for user in users:
+        if user["id"] == user_id:
+            user["groups"] = [g for g in user.get("groups", []) if g != group_id]
+            break
+    save_users(users)
+
+    files_to_remove = []
+    for file in files:
+        group_permissions = file.get("permissions", {}).get("groups", [])
+        for group_perm in group_permissions:
+            if group_perm["groupid"] == group_id:
+                original_keys = group_perm.get("keys", [])
+                new_keys = [k for k in original_keys if k["userid"] != user_id]
+                group_perm["keys"] = new_keys
+
+                if file["owner"] == user_id:
+                    files_to_remove.append(file)
+
+        file["permissions"]["groups"] = group_permissions
+
+    for file in files_to_remove:
+        try:
+            os.remove(file["location"])
+        except Exception as e:
+            log_request(requester_id, "group delete-user", [group_id, user_id], "failed", f"error deleting file {file['id']}: {str(e)}")
+            return f"error deleting file {file['id']}: {str(e)}"
+        files = [f for f in files if f["id"] != file["id"]]
+
+    save_files(files)
+
+    log_request(requester_id, "group delete-user", [group_id, user_id], "success")
+    return None
