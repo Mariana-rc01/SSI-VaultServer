@@ -5,7 +5,8 @@ ORIGINAL_GID = 1000
 
 def restore_file_ownership():
     """
-    Restores the ownership of all files in db/ and storage/ to the original user who started the server.
+    Restaura a propriedade de todos os ficheiros em db/ e storage/
+    para o utilizador original com UID e GID definidos.
     """
     paths_to_restore = [
         'db/logs.json',
@@ -14,6 +15,7 @@ def restore_file_ownership():
         'db/files.json',
         'db/groups.json',
         'storage',
+        'server'
     ]
 
     for path in paths_to_restore:
@@ -21,14 +23,14 @@ def restore_file_ownership():
             continue
 
         if os.path.isdir(path):
-            # If it's a directory, restore ownership for all files inside
+            # Restaura propriedade para o diretório e todo o conteúdo
             for root, dirs, files in os.walk(path):
                 for name in dirs + files:
                     full_path = os.path.join(root, name)
                     os.chown(full_path, ORIGINAL_UID, ORIGINAL_GID)
             os.chown(path, ORIGINAL_UID, ORIGINAL_GID)
         else:
-            # If it's a file
+            # Restaura propriedade do ficheiro
             os.chown(path, ORIGINAL_UID, ORIGINAL_GID)
 
 if __name__ == "__main__":

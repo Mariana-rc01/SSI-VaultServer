@@ -1,24 +1,22 @@
 #!/bin/bash
-# teardown.sh -- remove users and optionally project files
+# teardown.sh -- remove the vault_server user and optionally project files
 
 set -e  # exit on error
 
-USERS=("vault_logger" "vault_admin" "vault_resources")
+USER="vault_server"
 
-echo "Removing users..."
+echo "Removing user..."
 
-for user in "${USERS[@]}"; do
-    if id "$user" &>/dev/null; then
-        echo "  Removing $user..."
-        sudo userdel -r "$user" || echo "  [Warning] Could not completely remove $user."
-    else
-        echo "  User $user does not exist. Skipping."
-    fi
-done
+if id "$USER" &>/dev/null; then
+    echo "  Removing $USER..."
+    sudo userdel -r "$USER" || echo "  [Warning] Could not completely remove $USER."
+else
+    echo "  User $USER does not exist. Skipping."
+fi
 
-echo "Users removed."
+echo "User removal complete."
 
-# Ask if you also want to clean files belonging to the users
+# Ask if you also want to clean files belonging to the user
 read -p "Do you also want to clean files from db/ and storage/? (y/n): " choice
 
 if [[ "$choice" == "y" || "$choice" == "Y" ]]; then

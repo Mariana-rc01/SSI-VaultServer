@@ -2,7 +2,6 @@ from utils.utils import *
 from utils.data_structures import *
 from server.utils_db import *
 from server.notifications import add_notification
-from server.isolation import switch_to
 
 import base64
 import os
@@ -13,9 +12,6 @@ from datetime import datetime
 def log_request(user_id: str, type: str, args: List[Any], status: str, error: str = "") -> None:
     """ Logs the request made by the user. """
     logs: List[Dict[str, Any]] = []
-
-    original_euid = os.geteuid()
-    switch_to('logger')
 
     if os.path.exists(LOGS_JSON):
         with open(LOGS_JSON, "r") as f:
@@ -34,8 +30,6 @@ def log_request(user_id: str, type: str, args: List[Any], status: str, error: st
 
     with open(LOGS_JSON, "w") as f:
         json.dump(logs, f, indent=2)
-
-    os.seteuid(original_euid)
 
 def get_file_by_id(file_id: str) -> Optional[Dict[str, Any]]:
     """ Gets the file by its ID. """
@@ -69,13 +63,8 @@ def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key:
     file_id = get_next_file_id()
     file_path = os.path.join(STORAGE_DIR, file_id)
 
-    original_euid = os.geteuid()
-    switch_to('resources')
-
     with open(file_path, "wb") as f:
         f.write(filedata)
-
-    os.seteuid(original_euid)
 
     permissions = {
         "users": [
@@ -109,13 +98,8 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
     """ Adds a user to the database. """
     users: List[Dict[str, Any]] = []
 
-    original_euid = os.geteuid()
-    switch_to('admin')
-
     if os.path.exists(USERS_JSON):
         users = load_users()
-
-    os.seteuid(original_euid)
 
     user_id = f"u{len(users)+1}"
     for user in users:
@@ -485,13 +469,8 @@ def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional
     file_id = get_next_file_id()
     file_path = os.path.join(STORAGE_DIR, file_id)
 
-    original_euid = os.geteuid()
-    switch_to('resources')
-
     with open(file_path, "wb") as f:
         f.write(base64.b64decode(client_request.encrypted_file))
-
-    os.seteuid(original_euid)
 
     file_size = os.path.getsize(file_path)
     file_info = {
@@ -615,13 +594,8 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
     try:
         new_content = base64.b64decode(client_request.encrypted_file)
 
-        original_euid = os.geteuid()
-        switch_to('resources')
-
         with open(file_info["location"], "wb") as f:
             f.write(new_content)
-
-        os.seteuid(original_euid)
 
         files = load_files()
         for f in files:

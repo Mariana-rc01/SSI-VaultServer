@@ -9,7 +9,6 @@ from server.utils import *
 from utils.data_structures import *
 from server.notifications import get_notifications, add_notification
 from server.utils_db import get_group_public_keys
-from server.isolation import switch_to, check_capabilities
 from cryptography.hazmat.primitives.serialization.pkcs12 import load_key_and_certificates
 
 conn_cnt = 0
@@ -126,9 +125,6 @@ class ServerWorker:
 
                 file_info = get_file_by_id(file_id)
 
-                original_euid = os.geteuid()
-                switch_to('resources')
-
                 if not file_info or not os.path.exists(file_info["location"]):
                     log_request(f"{self.id}", "read", [file_id], "failed", "file not found")
                     return encrypt(f"Error: file {file_id} not found.".encode(), self.aesgcm)
@@ -139,13 +135,8 @@ class ServerWorker:
                     log_request(f"{self.id}", "read", [file_id], "failed", "no access key")
                     return encrypt(f"Error: no access key for user {self.id}.".encode(), self.aesgcm)
 
-                original_euid = os.geteuid()
-                switch_to('resources')
-
                 with open(file_info["location"], "rb") as f:
                     filedata = f.read()
-
-                os.seteuid(original_euid)
 
                 response_data = ReadResponse(base64.b64encode(filedata).decode(), user_key)
 
@@ -378,8 +369,6 @@ async def handle_echo(reader: StreamReader, writer: StreamWriter) -> None:
 
 
 def run_server() -> None:
-    check_capabilities()
-
     loop = asyncio.get_event_loop()
     coro = asyncio.start_server(handle_echo, "127.0.0.1", conn_port)
     server = loop.run_until_complete(coro)
