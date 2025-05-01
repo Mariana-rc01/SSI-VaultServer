@@ -40,6 +40,11 @@ def create_csr(private_key: rsa.RSAPrivateKey, common_name: str) -> x509.Certifi
     """
     subject = x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Grupo 2 SSI"),
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u"PT"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Braga"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, u"Braga"),
+        x509.NameAttribute(NameOID.PSEUDONYM, common_name),
     ])
     csr = x509.CertificateSigningRequestBuilder().subject_name(subject).sign(private_key, hashes.SHA256())
     return csr
