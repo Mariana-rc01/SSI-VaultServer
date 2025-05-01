@@ -13,10 +13,12 @@ def load_users() -> List[Dict[str, Any]]:
     if os.path.exists(USERS_JSON):
         with open(USERS_JSON, "r") as f:
             return json.load(f)
+
     return []
 
 def save_users(users: list) -> None:
     """Saves the users to the JSON file."""
+
     with open(USERS_JSON, 'w') as f:
         json.dump(users, f, indent=2)
 
@@ -25,6 +27,7 @@ def load_groups() -> List[Dict[str, Any]]:
     if os.path.exists(GROUPS_JSON):
         with open(GROUPS_JSON, "r") as f:
             return json.load(f)
+
     return []
 
 def save_groups(groups: List[Dict[str, Any]]) -> None:
@@ -37,6 +40,7 @@ def load_files() -> List[Dict[str, Any]]:
     if os.path.exists(FILES_JSON):
         with open(FILES_JSON, "r") as f:
             return json.load(f)
+
     return []
 
 def save_files(files: List[Dict[str, Any]]) -> None:
@@ -49,6 +53,7 @@ def load_notifications() -> List[Dict[str, Any]]:
     if os.path.exists(NOTIFICATIONS_JSON):
         with open(NOTIFICATIONS_JSON, "r") as f:
             return json.load(f)
+
     return []
 
 def save_notifications(notifications: List[Dict[str, Any]]) -> None:
