@@ -2242,5 +2242,28 @@
     "timestamp": "2025-04-28T09:49:09.125293Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r202",
+    "userid": "u1",
+    "type": "list",
+    "args": [
+      "user",
+      "u1"
+    ],
+    "timestamp": "2025-05-02T21:22:50.229087Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r203",
+    "userid": "u1",
+    "type": "details",
+    "args": [
+      "f3"
+    ],
+    "timestamp": "2025-05-02T21:22:56.902720Z",
+    "status": "success",
+    "error": ""
   }
 ]

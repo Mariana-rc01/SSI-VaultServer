@@ -106,11 +106,12 @@ _Descrição sucinta do serviço: cofre pessoal, grupos, armazenamento e partilh
 ### Estruturação do processo de serialização/deserialização
 **Responsável:** H
 
-A comunicação entre cliente e servidor é feita através de mensagens estruturadas em JSON, utilizando para cada tipo de pedido uma estrutura de pedido e uma de resposta.
+A comunicação entre cliente e servidor é feita através de mensagens estruturadas em JSON, utilizando para cada tipo de pedido uma estrutura de pedido e uma de resposta. Para facilitar a definição e manipulação dessas estruturas, são utilizadas dataclasses, que permitem representar os dados de forma clara e concisa.
 
 Exemplo de uma estrutura de pedido e resposta:
+
  ```
- @dataclass
+@dataclass
 class AddRequest:
     filename: str
     encrypted_file: str
@@ -119,10 +120,9 @@ class AddRequest:
 @dataclass
 class AddResponse:
     response: str
-
  ```
 
- TODO
+O método serialize_request e deserialize_request, permite de forma totalmente genérica processar a mensagens a ser enviadas, deste modo facilitando a comunicação.
 
 ### Implementação dos comandos propostos
 **Responsável:** T (cada um aponta funcionamento geral e edge cases dos seus comandos)
