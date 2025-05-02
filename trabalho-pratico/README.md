@@ -44,31 +44,19 @@
 ## Introdução
 **Responsável:** P
 
-O presente projeto consiste na implementação de um serviço de cofre seguro, que permite o armazenamento e partilha de ficheiros de forma segura. O serviço é projetado para garantir a confidencialidade, integridade e autenticidade dos dados armazenados. Neste relatório, serão abordados os objetivos do projeto, os requisitos de segurança implementados, a modelação de ameaças, a arquitetura da solução e o plano de implementação.
+_Breve contextualização da importância de garantir confidencialidade, integridade e disponibilidade num serviço de cofre seguro._
 
 ## Descrição Geral do Projeto
 **Responsável:** P
 
-O serviço de cofre seguro é uma aplicação que permite aos utilizadores armazenar e partilhar ficheiros de forma segura. Cada utilizador tem um cofre pessoal, onde pode guardar os seus ficheiros, pode criar grupos e partilhar ficheiros com outros utilizadores. O serviço utiliza criptografia simétrica e assimétrica para proteger os dados e garantir a confidencialidade das comunicações. Além disso, implementa um sistema de permissões para controlar o acesso aos ficheiros, permitindo que os utilizadores partilhem ficheiros com outros utilizadores ou grupos de forma segura.
+_Descrição sucinta do serviço: cofre pessoal, grupos, armazenamento e partilha de ficheiros._
 
 ## Objetivos
 **Responsável:** P
 
-- Proporcionar um serviço de armazenamento e partilha de ficheiros com garantias de confidencialidade, integridade e autenticidade.
-
-- Garantir que o conteúdo dos ficheiros permanece inacessível a utilizadores não autorizados, incluindo o próprio servidor.
-
-- Assegurar que todas as operações realizadas são verificáveis e que não possam ser negadas (não-repúdio).
-
-- Disponibilizar uma interface em linha de comandos (CLI) clara, intuitiva e funcional para os utilizadores.
-
-- Suportar a criação e gestão de grupos de utilizadores, com controlo granular de permissões de acesso.
-
-- Permitir a partilha seletiva de ficheiros com utilizadores ou grupos, mantendo o controlo de acessos através de mecanismos criptográficos robustos.
-
-- Garantir a interoperabilidade entre cliente e servidor através de uma comunicação segura e normalizada (por exemplo: norma semelhante a TLS, JSON).
-
-- Promover a extensibilidade da aplicação, permitindo futuras melhorias ou funcionalidades adicionais sem comprometer a segurança.
+- Garantir confidencialidade do conteúdo armazenado
+- Assegurar integridade e autenticidade das operações
+- Disponibilizar interface CLI simples e intuitiva
 
 ## Requisitos de Segurança
 
@@ -122,12 +110,54 @@ O protocolo `Diffie-Hellman` permitiu-nos estabelecer uma chave *key_master* com
 ### Estruturação do processo de serialização/deserialização
 **Responsável:** H
 
+A comunicação entre cliente e servidor é feita através de mensagens estruturadas em JSON, utilizando para cada tipo de pedido uma estrutura de pedido e uma de resposta. Para facilitar a definição e manipulação dessas estruturas, são utilizadas dataclasses, que permitem representar os dados de forma clara e concisa.
+
+Exemplo de uma estrutura de pedido e resposta:
+
+ ```
+@dataclass
+class AddRequest:
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class AddResponse:
+    response: str
+ ```
+
+O método serialize_request e deserialize_request, permite de forma totalmente genérica processar a mensagens a ser enviadas, deste modo facilitando a comunicação.
+
 ### Implementação dos comandos propostos
 **Responsável:** T (cada um aponta funcionamento geral e edge cases dos seus comandos)
 
 #### add \<file-path>
 
+O cliente envia ao servidor um pedido para adicionar um ficheiro que se encontra numa determinada rota.
+
+Para enviar o ficheiro ao servidor, o cliente:
+
+1. Cria uma chave simétrica e utiliza-a para encriptar o ficheiro a enviar.
+
+2. Utiliza a sua chave pública para encriptar a chave simétrica.
+
+3. Envia ao servidor a chave simétrica encriptada com a chave pública do utilizador, juntamente com o ficheiro encriptado com a chave simétrica.
+
+Após a recepção, o servidor:
+
+1. Adiciona à base de dados a informação necessária sobre o ficheiro, incluindo: um ID gerado pelo servidor, o nome do ficheiro, o tamanho, o ID do proprietário, as permissões (apenas para o proprietário, com permissões totais), a data de adição e o local onde o ficheiro se encontra armazenado.
+
+2. Guarda o ficheiro recebido no local designado.
+
+3. Envia uma mensagem ao cliente com o id associado ao ficheiro.
+
 #### read \<file-id>
+
+O cliente envia ao servidor um pedido para ler um ficheiro com um determinado id.
+
+O servidor verifica se o ficheiro solicitado existe e se o utilizador que fez o pedido tem permissão de leitura. Caso ambas as condições se verifiquem, envia ao utilizador o conteúdo do ficheiro, bem como a chave simétrica que encriptou o conteúdo associada ao utilizador em questão, ou seja, a chave encriptada com a chave pública do utilizador que efetuou o pedido.
+
+Após receber a resposta do servidor, o cliente utiliza a sua chave privada para desencriptar a chave simétrica e, posteriormente, usa essa chave para desencriptar o conteúdo do ficheiro.
 
 #### list [-u \<user-id> | -g \<group-id>]
 
@@ -212,53 +242,18 @@ O servidor confirma novamente que o cliente tem permissão de escrita sobre o fi
 
 #### details \<file-id>
 
-O comando de `details` não tem uma lógica complexa, uma vez que, após o cliente enviar o pedido, o servidor apenas verifica se o ficheiro existe e se o cliente tem pelo menos permissão de leitura sobre o mesmo. Se sim, o servidor consulta os detalhes do ficheiro, entre eles, o `identificador`, o `nome`, o `tamanho`, o `dono`, as `permissões de cada utilizador associado` e a `data de criação` e envia-os para o cliente.
-
 #### revoke \<file-id> \<target-id>
-
-O comando `revoke` permite ao proprietário de um ficheiro revogar o acesso de um utilizador ou grupo a esse ficheiro. A lógica implementada segue os seguintes passos:
-
-1. **Validação Inicial**:
-  - O servidor verifica se o `target-id` (utilizador ou grupo) não é o próprio cliente que está a realizar o pedido, uma vez que um utilizador não pode revogar o seu próprio acesso.
-  - O servidor valida se o ficheiro existe e se o cliente que realizou o pedido é o proprietário do ficheiro. Caso contrário, o pedido é rejeitado.
-
-2. **Remoção de Permissões**:
-  - Se o `target-id` for um grupo (identificado pelo prefixo `g`), o servidor procura nas permissões do ficheiro a entrada correspondente ao grupo e remove-a.
-  - Se o `target-id` for um utilizador, o servidor procura nas permissões do ficheiro a entrada correspondente ao utilizador e remove-a.
-  - Esta operação remove todas as permissões, independetemente das mesmas serem de leitura ou escrita.
-
-3. **Atualização do Ficheiro**:
-  - As permissões atualizadas são guardadas no ficheiro correspondente.
-  - O servidor atualiza o registo de ficheiros persistente para refletir as alterações.
-
-<p align="center">
-<img src="report/images/revoke.jpg" alt="Revoke" width="400">
-</p>
 
 #### group create \<group-name>
 
+O cliente, para criar um grupo, envia ao servidor o nome do grupo que pretende criar.
+
+O servidor recebe esse pedido e adiciona à sua base de dados um novo grupo, contendo um ID gerado pelo próprio servidor, o nome do grupo enviado pelo cliente, o dono do grupo (o cliente que fez o pedido), e um primeiro membro, sendo o próprio cliente, com permissões totais.
+Adicionalmente, é atualizada a informação do utilizador, associando-lhe o grupo que acabou de criar e no qual entra automaticamente.
+
+O servidor envia ao cliente uma mensagem com o ID do grupo recém-criado.
+
 #### group delete \<group-id>
-
-Quando um utilizador pretende eliminar um grupo, o sistema segue 3 passos fundamentais:
-
-1. **Validação Inicial**:
-  - O servidor verifica se o grupo existe. Caso contrário, o pedido é rejeitado.
-  - O servidor valida se o utilizador que realizou o pedido é o proprietário do grupo. Apenas o dono do grupo tem permissão para eliminá-lo. Caso contrário, o pedido é rejeitado.
-
-2. **Remoção do Grupo**:
-  - O grupo é removido da lista de grupos persistente no servidor.
-  - Para cada utilizador que pertence ao grupo, o grupo é removido da lista de grupos associados ao utilizador.
-
-3. **Atualização de Ficheiros**:
-  - O servidor verifica todos os ficheiros associados ao grupo. Para cada ficheiro:
-    - Remove as permissões associadas ao grupo.
-    - Caso o ficheiro não tenha mais permissões associadas (nem de utilizadores nem de outros grupos), significa que pertencia exclusivamente ao grupo removido e é eliminado do sistema de armazenamento e da lista de ficheiros persistente.
-
-Este processo garante que a eliminação do grupo é segura e que todos os recursos associados ao grupo são devidamente atualizados ou removidos.
-
-<p align="center">
-<img src="report/images/group_delete.jpg" alt="Group Delete" width="400">
-</p>
 
 #### group add-user \<group-id> \<user-id> --permission=[r|w]
 
@@ -288,6 +283,20 @@ Se o utilizador já for membro do grupo, as permissões são atualizadas conform
 
 #### group delete-user \<group-id> \<user-id>
 
+Para eliminar um utilizador de um grupo do qual é dono, o cliente deve enviar ao servidor o ID do utilizador que pretende remover e o ID do grupo em que deseja efetuar essa operação.
+
+O servidor verifica se o grupo existe, se o cliente que está a realizar a operação é o dono do grupo e se o utilizador a remover não é o próprio dono. Caso todas estas condições se verifiquem, o servidor procede da seguinte forma:
+
+1. Atualiza o grupo, removendo o utilizador em causa.
+
+2. Atualiza a informação do utilizador removido, eliminando a associação ao grupo.
+
+3. Retira as permissões de acesso aos ficheiros pertencentes ao grupo, removendo a chave encriptada associada ao utilizador eliminado.
+
+4. Se o utilizador removido for o proprietário de algum ficheiro do grupo, esses ficheiros são eliminados por completo.
+
+Por fim, é enviada ao cliente uma mensagem de sucesso confirmando a remoção.
+
 #### group list
 
 Quando um utilizador executa o comando para listar os grupos a que pertence, são realizados os seguintes passos:
@@ -301,26 +310,6 @@ O cliente envia ao servidor um pedido para obter os grupos em que está inserido
 O servidor consulta o registo de grupos e identifica todos aqueles onde o utilizador se encontra como membro. Para cada grupo, o servidor indica também as suas permissões associadas (read ou read, write).
 
 #### group add \<group-id> \<file-path>
-
-Quando um utilizador pretende adicionar um ficheiro a um grupo, o sistema segue os seguintes passos:
-
-1. **Pedido de Adição**:
-   - O cliente inicia o processo indicando que deseja adicionar um ficheiro a um grupo específico.
-   - O servidor verifica as permissões do utilizador relativamente ao grupo. Caso o utilizador tenha permissões de escrita sobre o mesmo, o servidor envia as chaves públicas de todos os membros do grupo, incluindo a do próprio utilizador.
-
-2. **Preparação no Cliente**:
-   - O cliente gera uma chave simétrica utilizando o algoritmo `AES-GCM` para cifrar o ficheiro.
-   - Em seguida, o cliente itera por todas as chaves públicas recebidas (incluindo a sua própria) e utiliza-as para cifrar a chave simétrica gerada.
-   - O cliente junta o ficheiro cifrado, as chaves cifradas e o nome do ficheiro e envia tudo ao servidor.
-
-3. **Processamento no Servidor**:
-   - O servidor realiza as seguintes operações:
-     - Verifica se o grupo existe e se o utilizador tem permissões de escrita no grupo.
-     - Gera um identificador único para o ficheiro e armazena-o no sistema de ficheiros.
-     - Regista as permissões do ficheiro, associando-o ao grupo e às chaves cifradas de cada membro.
-     - Atualiza a base de dados de ficheiros com as informações do novo ficheiro.
-
-Este processo garante que o ficheiro é adicionado de forma segura ao grupo, respeitando as permissões e mantendo a confidencialidade dos dados.
 
 #### exit
 
@@ -406,7 +395,16 @@ _Definição de mensagens JSON para operações (add, list, share, ...)._
 _Descrição do motivo do aparecimento do comando e provar a praticidade do mesmo._
 
 ### Norma TLS com DH e ECDH
-**Responsável:** M
+**Responsável:** @dataclass
+class AddRequest:
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class AddResponse:
+    response: str
+M
 
 _Implementação de TLS com Diffie-Hellman e ECDH para troca de chaves._
 
