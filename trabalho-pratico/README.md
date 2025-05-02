@@ -1,6 +1,6 @@
 # Relatório de Projeto: Serviço de Cofre Seguro
 
-**Data:** 02/05/2025 | **Disciplina:** Segurança em Sistemas Informáticos | **Curso:** Licenciatura em Engenharia Informática
+**Data:** 04/05/2025 | **Disciplina:** Segurança em Sistemas Informáticos | **Curso:** Licenciatura em Engenharia Informática
 
 ### Autores
 
@@ -73,20 +73,20 @@ O serviço de cofre seguro é uma aplicação que permite aos utilizadores armaz
 ## Requisitos de Segurança
 
 1. **Autenticidade**:
-- Exigir senhas fortes com no mínimo 16 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.
-- Utilizar certificados digitais para autenticação mútua entre cliente e servidor.
+    - Exigir senhas fortes com no mínimo 16 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos.
+    - Utilizar certificados digitais para autenticação mútua entre cliente e servidor.
 
 2. **Integridade**:
-- Impedir modificações não autorizadas nos ficheiros.
-- Implementar um sistema de logs para registar todas as operações realizadas.
-- Garantir que os ficheiros não possam ser acedidos por utilizadores não autorizados.
+    - Impedir modificações não autorizadas nos ficheiros.
+    - Implementar um sistema de logs para registar todas as operações realizadas.
+    - Garantir que os ficheiros não possam ser acedidos por utilizadores não autorizados.
 
 3. **Confidencialidade**:
-- Utilizar criptografia simétrica para proteger o conteúdo dos ficheiros.
-- Implementar um sistema de chaves públicas e privadas para garantir a confidencialidade das comunicações.
-- Os ficheiros partilhados são apenas acessíveis aos utilizadores destinatários.
-- Proteger as chaves simétricas com criptografia assimétrica.
-- Implementar um sistema de permissões para controlar o acesso aos ficheiros.
+    - Utilizar criptografia simétrica para proteger o conteúdo dos ficheiros.
+    - Implementar um sistema de chaves públicas e privadas para garantir a confidencialidade das comunicações.
+    - Os ficheiros partilhados são apenas acessíveis aos utilizadores destinatários.
+    - Proteger as chaves simétricas com criptografia assimétrica.
+    - Implementar um sistema de permissões para controlar o acesso aos ficheiros.
 
 ## Modelação de Ameaças (Threat Model)
 
@@ -110,11 +110,11 @@ O serviço de cofre seguro é uma aplicação que permite aos utilizadores armaz
 **Responsável:** M
 
 ### Aplicação do protocolo criptográfico Diffie-Hellman
-**Responsável:**
+**Responsável:** P
 
 Após uma implementação da comunicação entre o cliente e o servidor não segura, foi necessário implementar o protocolo Diffie-Hellman para garantir a confidencialidade e integridade dos dados trocados entre ambos durante uma sessão.
 
-O protocolo Diffie-Hellman permitiu-nos estabelecer uma chave *key_master* comum entre o cliente e o servidor, que é utilizada para cifrar e decifrar as mensagens trocadas. Para isso, o cliente e o servidor geram um par de chaves (pública e privada) e trocam as chaves públicas. Com base nas chaves públicas e privadas, ambos conseguem calcular a chave *key_master* devido à propriedade algoritmica que permite comutar uma combinação das chaves públicas e privadas. Para isso, utilizamos o algoritmo de cifra simétrica AES (Advanced Encryption Standard) com um tamanho de chave de 256 bits.
+O protocolo `Diffie-Hellman` permitiu-nos estabelecer uma chave *key_master* comum entre o cliente e o servidor, que é utilizada para cifrar e decifrar as mensagens trocadas. Para isso, o cliente e o servidor geram um par de chaves (pública e privada) e trocam as chaves públicas. Com base nas chaves públicas e privadas, ambos conseguem calcular a chave *key_master* devido à propriedade algoritmica que permite comutar uma combinação das chaves públicas e privadas. Para isso, utilizamos o algoritmo de cifra simétrica `AES` (Advanced Encryption Standard) com um tamanho de chave de 256 bits.
 
 ### Atualização do protocolo criptográfico base para Station-To-Station
 **Responsável:** M
@@ -332,7 +332,31 @@ Este processo garante que o ficheiro é adicionado de forma segura ao grupo, res
 ### Autoridade Certificadora Própria
 **Responsável:** P
 
-_Execução como daemon para emissão e validação de certificados X.509._
+Para consolidar o conhecimento do grupo de trabalho sobre conceção e utilização dos certificados digitais, foi implementada uma `Autoridade Certificadora (CA)` própria. Esta `CA` é responsável pela emissão e validação de certificados `X.509`, que são utilizados para autenticação mútua entre o cliente e o servidor.
+
+A `CA` é executada como um "*daemon*" (é apenas um terminal em execução, uma vez que nos foi desaconselhada a implementação pela equipa docente não tendo abordado o tema), permitindo a emissão de certificados de forma contínua. Para este processo ocorrer, segue-se o seguinte fluxo:
+
+1. **Geração de Chaves**:
+  - O cliente gera um par de chaves (pública e privada) e cria um *Certificate Signing Request* (CSR) que contém a chave pública e informações sobre o utilizador, como:
+    - Nome comum (*Common Name*): `x509.NameAttribute(NameOID.COMMON_NAME, common_name)`
+    - Nome da organização: `x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Grupo 2 SSI")`
+    - País: `x509.NameAttribute(NameOID.COUNTRY_NAME, u"PT")`
+    - Estado/Província: `x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Braga")`
+    - Localidade: `x509.NameAttribute(NameOID.LOCALITY_NAME, u"Braga")`
+    - Pseudônimo: `x509.NameAttribute(NameOID.PSEUDONYM, common_name)`
+
+    - O `CSR` é assinado pela `CA`, que verifica a identidade do cliente (para efeitos académicos assina todos os `CSR's`), e emite um certificado digital.
+
+2. **Emissão de Certificado**:
+   - O certificado digital é enviado ao cliente, que o armazena localmente.
+   - O cliente utiliza o certificado para autenticar-se junto do servidor, garantindo a autenticidade da comunicação.
+
+3. **Validação de Certificado**:
+   - O servidor valida o certificado do cliente, verificando a assinatura da `CA` e garantindo que o certificado não está revogado.
+   - Caso a validação seja bem-sucedida, o servidor estabelece uma comunicação segura com o cliente.
+   - Este processo é devidamente apresentado no processo de implementação numa primeira fase do `Station-to-Station` e, posteriormente, na implementação da norma semelhante ao `TLS`.
+
+Além disso, foi implementado o conceito de *one-way certification*, onde a `CA` se autentica perante os clientes. Este processo garante que os clientes podem verificar a autenticidade da CA antes de confiar nos certificados emitidos, reforçando a segurança e a confiança no sistema.
 
 ### Sistema de Registo de Logs
 **Responsável:** H
@@ -342,7 +366,34 @@ _Arquitetura do serviço de logs: formato e armazenamento._
 ### Autenticação Baseada em Ficheiros P12
 **Responsável:** P
 
-_Utilização de keystores PKCS#12 para identificação (cliente/servidor)._
+Com a criação de uma `Autoridade Certificadora (CA)` própria, o grupo ficou interessado em explorar a modularização do sistema de autenticação. Ao seguir o exemplo apresendado pela equipa docente, recorreu ao sistema de autenticação baseado em `PKCS#12`.
+
+O formato `PKCS#12` é amplamente utilizado para armazenar e transportar chaves privadas e certificados digitais de forma segura numa `key value store`. Este formato é suportado por diversas bibliotecas e ferramentas, como o `OpenSSL`, o que facilita a integração com diferentes sistemas e linguagens de programação, pelo que o grupo decidiu implementá-lo.
+
+O processo de autenticação baseado em `PKCS#12` surgiu como complemento à `CA`, pelo que está profundamente interligado e envolve os seguintes passos:
+
+1. **Disponibilização de um interface CLI**:
+    - O sistema apresenta a opção de fazer a autenticação ou criar uma nova conta.
+    - Caso o cliente já tenha uma conta, é solicitado que forneça o seu nome de utilizador e palavra-passe, segue para o passo 5.
+    - Caso se pretenda criar uma nova conta, o sistema solicita ao cliente que forneça um nome de utilizador e uma palavra-passe forte (com pelos menos 16 carateres, pelo que é obrigatório conter letras maiscúlas e minúsculas, símbolos e números), segue para o passo 2.
+
+2. **Geração de Chaves**:
+    - O cliente gera um par de chaves (pública e privada) e cria um *Certificate Signing Request* (CSR) que contém a chave pública e informações sobre o utilizador, este que é o mesmo processo que ocorria numa versão anterior diretamente com a `CA`.
+
+3. **Emissão de Certificado**:
+    - O cliente envia o CSR para a `CA`, que verifica a identidade do cliente e emite um certificado digital.
+    - O certificado digital é assinado pela `CA` e enviado ao cliente.
+
+4. **Criação do PKCS#12**:
+    - O cliente cria um arquivo `PKCS#12` que contém a chave privada e o certificado digital.
+    - O arquivo `PKCS#12` é protegido pela palavra-passe que introduziu na CLI, garantindo a segurança da chave e certificado armazenado.
+
+5. **Autenticação**:
+    - O cliente utiliza o arquivo `PKCS#12` para autenticar-se junto do servidor.
+    - O servidor valida o certificado do cliente, verificando a assinatura da `CA` e garantindo que o certificado não está revogado.
+    - Caso a validação seja bem-sucedida, o servidor procede com o estabelecimento de uma comunicação segura com o cliente.
+
+O servidor usufrui também de um arquivo `PKCS#12` que contém a sua chave privada e o seu certificado digital, permitindo a posterior autenticação mútua entre os clientes e o servidor.
 
 ### Protocolo de Comunicação em JSON
 **Responsável:** H
@@ -367,7 +418,41 @@ _Implementação do sistema de notificações_
 ### Isolamento do processo e recursos do servidor
 **Responsável:** P
 
-_Implementação do isolamento do processo_
+Para garantir o isolamento dos recursos do sistema operativo utilizados pelo programa, foi adotada uma abordagem que exige a configuração inicial por parte de um administrador do sistema. Esta configuração é realizada através de dois scripts principais: um para o setup inicial e outro para a inicialização do ambiente de armazenamento e base de dados. A lógica subjacente a esses scripts é descrita a seguir.
+
+- **Configuração Inicial**:
+
+    O primeiro passo envolve a criação de um utilizador dedicado, denominado `vault_server`, que será responsável por executar o programa. Este utilizador é configurado com as seguintes características:
+
+  1. **Criação do Utilizador**:
+      - O script verifica se o utilizador `vault_server` já existe. Caso contrário, cria-o e define uma palavra-passe fornecida pelo administrador.
+
+  2. **Associação a Grupos**:
+      - O utilizador `vault_server` é adicionado ao grupo principal do utilizador com UID 1000 (geralmente o primeiro utilizador criado no sistema), permitindo-lhe partilhar permissões de grupo.
+
+  3. **Instalação de Dependências**:
+      - O script instala a biblioteca `cryptography` no ambiente do utilizador `vault_server`, garantindo que todas as dependências necessárias para a execução do programa estão disponíveis e mantidas na versão mais recente.
+
+- **Inicialização do Ambiente**:
+
+    Após a configuração inicial, é necessário preparar o ambiente de armazenamento e base de dados. Este processo é realizado por um script que executa as seguintes ações:
+
+    1. **Criação de Estruturas de Dados**:
+        - São criados os ficheiros JSON necessários para armazenar logs, notificações, utilizadores, ficheiros e grupos. Caso já existam, os ficheiros são mantidos.
+
+    2. **Configuração de Permissões**:
+        - Todos os ficheiros e pastas são configurados para serem propriedade do utilizador `vault_server`.
+        - As permissões são ajustadas para garantir a segurança:
+          - Ficheiros JSON: apenas leitura e escrita pelo proprietário (modo 600).
+          - Ficheiros Python na pasta `server/`: executáveis (modo 755).
+          - Pastas: acesso exclusivo ao proprietário (modo 700).
+
+    3. **Isolamento de Recursos**:
+        - O utilizador `vault_server` é o único com permissões para aceder e modificar os ficheiros e pastas criados, garantindo o isolamento dos recursos do sistema operativo.
+
+Para facilitar o desenvolvimento e a partilha de ficheiros no repositório, foram criados scripts adicionais que permitem restaurar as permissões originais dos ficheiros e remover o utilizador `vault_server` e os seus recursos associados. Estes scripts são úteis para o cenário de desenvolvimento colaborativo deste trabalho prático, mas não devem ser utilizados em ambientes de produção.
+
+Fica ainda a nota de que, numa primeira iteração, o grupo de trabalho procurou implementar um isolamento mais granular dos processos e acessos a ficheiros, através da utilização de daemons que responderiam por um FIFO quando a informação fosse pedida, metodologia esta que foi abandonada devido à complexidade e não foi abordada unidade curricular. Como tal, procurou uma alternativa em que existiam 3 utilizadores de sistema operativo, o `vault_logger`, o `vault_ admin` e o `vault_resources`, que tinham acesso a diferentes partes do sistema, no entanto, o grupo de trabalho decidiu que a implementação de um único utilizador com permissões específicas era mais prática e eficaz para o resultado final que se pretendia.
 
 ## Manual de utilização
 **Responsável:** H
