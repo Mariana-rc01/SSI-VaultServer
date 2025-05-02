@@ -110,11 +110,15 @@ def is_certificate_valid(certificate: x509.Certificate, common_name: str):
         ca_certificate = certificate_load("VAULT_CA.crt")
         validate_certificate_issuer(certificate, ca_certificate)
         certificate_validsubject(
-            certificate, [(x509.NameOID.COMMON_NAME, common_name)]
+            certificate, [(x509.NameOID.COMMON_NAME, common_name),
+                          (x509.NameOID.ORGANIZATION_NAME, "Grupo 2 SSI"),
+                          (x509.NameOID.COUNTRY_NAME, "PT"),
+                          (x509.NameOID.STATE_OR_PROVINCE_NAME, "Braga"),
+                          (x509.NameOID.LOCALITY_NAME, "Braga"),
+                          (x509.NameOID.PSEUDONYM, common_name)]
         )
 
         certificate_validtime(certificate)
-        # validate_certificate_extensions(certificate, {x509.ExtensionOID.KEY_USAGE: lambda ext: x509.oid.ExtendedKeyUsageOID.CLIENT_AUTH in ext})
     except Exception as e:
         print(f"Certificate validation failed: {e}")
         return False

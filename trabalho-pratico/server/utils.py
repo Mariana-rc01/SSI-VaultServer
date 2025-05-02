@@ -32,6 +32,7 @@ def negotiate_cipher(client_version: str, client_ciphers: list[str]) -> tuple[st
 def log_request(user_id: str, type: str, args: List[Any], status: str, error: str = "") -> None:
     """Logs the request made by the user."""
     logs: List[Dict[str, Any]] = []
+
     if os.path.exists(LOGS_JSON):
         with open(LOGS_JSON, "r") as f:
             logs = json.load(f)
@@ -116,12 +117,9 @@ def add_request(filename: str, filedata: bytes, owner_id: str, owner_public_key:
 def add_user(client_subject: str, public_key: Any) -> Optional[str]:
     """Adds a user to the database."""
     users: List[Dict[str, Any]] = []
+
     if os.path.exists(USERS_JSON):
-        with open(USERS_JSON, "r") as f:
-            try:
-                users = json.load(f)
-            except json.JSONDecodeError as e:
-                users = []
+        users = load_users()
 
     user_id = f"u{len(users)+1}"
     for user in users:
@@ -139,8 +137,7 @@ def add_user(client_subject: str, public_key: Any) -> Optional[str]:
         return None
 
     try:
-        with open(USERS_JSON, "w") as f:
-            json.dump(users, f, indent=2)
+        save_users(users)
     except Exception as e:
         return None
     return user_id
@@ -492,8 +489,10 @@ def group_add_request(client_request: GroupAddRequest, user_id: str) -> Optional
     # Create the file
     file_id = get_next_file_id()
     file_path = os.path.join(STORAGE_DIR, file_id)
+
     with open(file_path, "wb") as f:
         f.write(base64.b64decode(client_request.encrypted_file))
+
     file_size = os.path.getsize(file_path)
     file_info = {
         "id": file_id,
@@ -615,6 +614,7 @@ def replace_file(client_request: ReplaceRequest, user_id: str) -> Optional[bytes
 
     try:
         new_content = base64.b64decode(client_request.encrypted_file)
+
         with open(file_info["location"], "wb") as f:
             f.write(new_content)
 

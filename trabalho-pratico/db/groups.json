@@ -10,25 +10,32 @@
           "read",
           "write"
         ]
-      }
-    ]
-  },
-  {
-    "id": "g2",
-    "name": "group2",
-    "owner": "u1",
-    "members": [
+      },
       {
-        "userid": "u1",
+        "userid": "u5",
         "permissions": [
           "read",
           "write"
         ]
       },
       {
-        "userid": "u3",
+        "userid": "u4",
         "permissions": [
           "read"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "g3",
+    "name": "group3",
+    "owner": "u5",
+    "members": [
+      {
+        "userid": "u5",
+        "permissions": [
+          "read",
+          "write"
         ]
       },
       {
@@ -39,7 +46,7 @@
         ]
       },
       {
-        "userid": "u4",
+        "userid": "u1",
         "permissions": [
           "read"
         ]
