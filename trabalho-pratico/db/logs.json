@@ -20,5 +20,27 @@
     "timestamp": "2025-05-02T09:03:24.109295Z",
     "status": "success",
     "error": ""
+  },
+  {
+    "id": "r3",
+    "userid": "u3",
+    "type": "add",
+    "args": [
+      "f2"
+    ],
+    "timestamp": "2025-05-02T09:48:10.891037Z",
+    "status": "success",
+    "error": ""
+  },
+  {
+    "id": "r4",
+    "userid": "u3",
+    "type": "read",
+    "args": [
+      "f1"
+    ],
+    "timestamp": "2025-05-02T09:54:06.559969Z",
+    "status": "failed",
+    "error": "no access key"
   }
 ]

@@ -18,5 +18,25 @@
     },
     "created_at": "2025-05-02T09:01:25.593853Z",
     "location": "./storage/f1"
+  },
+  {
+    "id": "f2",
+    "name": "file2.txt",
+    "size": 42,
+    "owner": "u3",
+    "permissions": {
+      "users": [
+        {
+          "userid": "Owner: u3",
+          "key": "g5BayrLALuFwEgulueU3z4Nht1NxtOmOdGQRaFc3Ux0fCz/QEy+I6oLNmqDJ2+wHi3+c73Iy6tLnN2GncB6naMv7XdZIAww5b8FCh2TiQ+5G7j3BzyBky7jA27DRCrCuYsNpDnHV5FLMiWZ39zypOk3kUnJUfIBZXFPhoXfq0T3sL+roQK9enQCL/v3/ff2BwxARGrNn95Ed1wEJ2B9aC2lMwDGJ5NPcIx7q9wsyWjCQh+onvw13eLVW3A5jinoVRVbTZDe+LUAXu3kEc1ukKxfksf74XTgwCYRYvZUEoPMWnIuBEnvHFzXMVF4J2Z8aB1Y5qt62uS8q5A8FkZ87LQ==",
+          "permissions": [
+            "read",
+            "write"
+          ]
+        }
+      ]
+    },
+    "created_at": "2025-05-02T09:48:10.890240Z",
+    "location": "./storage/f2"
   }
 ]
