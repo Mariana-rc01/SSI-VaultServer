@@ -20,6 +20,23 @@ CA_DAEMON_PORT: int = 8000              # The CA daemon port
 CERT_VALIDITY_DAYS: int = 180           # Validity (days) for the user certificate
 HANDSHAKE_GREETING: bytes = b"HELLO"
 
+def validate_password(password: str) -> bool:
+        """
+        Validates a password based on the following criteria:
+        - At least 16 characters long.
+        - Contains at least one lowercase letter.
+        - Contains at least one uppercase letter.
+        - Contains at least one number.
+        - Contains at least one symbol.
+        """
+        if len(password) < 16:
+            return False
+        has_lower = any(c.islower() for c in password)
+        has_upper = any(c.isupper() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+        has_symbol = any(not c.isalnum() for c in password)
+        return has_lower and has_upper and has_digit and has_symbol
+
 def ensure_db_directory() -> None:
     """
     Ensure that the directory for storing .p12 files exists.
@@ -40,6 +57,11 @@ def create_csr(private_key: rsa.RSAPrivateKey, common_name: str) -> x509.Certifi
     """
     subject = x509.Name([
         x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Grupo 2 SSI"),
+        x509.NameAttribute(NameOID.COUNTRY_NAME, u"PT"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"Braga"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, u"Braga"),
+        x509.NameAttribute(NameOID.PSEUDONYM, common_name),
     ])
     csr = x509.CertificateSigningRequestBuilder().subject_name(subject).sign(private_key, hashes.SHA256())
     return csr
@@ -61,7 +83,7 @@ def send_csr_to_ca(csr: x509.CertificateSigningRequest,
         sock.sendall(pem_csr)
         sock.shutdown(socket.SHUT_WR)
         response = sock.recv(4096)
-    
+
     try:
         certificate = x509.load_pem_x509_certificate(response)
     except Exception as e:
@@ -71,12 +93,12 @@ def send_csr_to_ca(csr: x509.CertificateSigningRequest,
 def perform_ca_handshake(ca_host: str, ca_port: int) -> None:
     """
     Performs a one-way validation handshake with the CA daemon.
-    
+
     The client sends a handshake greeting ("HELLO") and expects a response containing:
       - The same greeting.
       - A signature of the greeting (in hex).
       - The CA certificate in PEM format.
-    
+
     The function verifies the signature using the CA certificate's public key.
     """
     with socket.create_connection((ca_host, ca_port)) as sock:
@@ -84,12 +106,12 @@ def perform_ca_handshake(ca_host: str, ca_port: int) -> None:
         sock.sendall(HANDSHAKE_GREETING)
         sock.shutdown(socket.SHUT_WR)
         response = sock.recv(4096)
-    
+
     # Expecting a response of three parts separated by newlines
     parts = response.split(b"\n", 2)
     if len(parts) < 3:
         raise Exception("Incomplete handshake response from CA.")
-    
+
     recv_greeting, signature_hex, ca_cert_pem = parts[0], parts[1], parts[2]
     if recv_greeting.strip() != HANDSHAKE_GREETING:
         raise Exception("Handshake greeting mismatch.")
@@ -99,13 +121,13 @@ def perform_ca_handshake(ca_host: str, ca_port: int) -> None:
         ca_cert = x509.load_pem_x509_certificate(ca_cert_pem)
     except Exception as e:
         raise Exception("Failed to load CA certificate from handshake response: " + str(e))
-    
+
     # Convert the signature from hex to bytes
     try:
         signature = bytes.fromhex(signature_hex.decode())
     except Exception as e:
         raise Exception("Invalid signature format in handshake response: " + str(e))
-    
+
     # Verify the signature of the greeting using the CA's public key
     try:
         ca_cert.public_key().verify(
@@ -116,7 +138,7 @@ def perform_ca_handshake(ca_host: str, ca_port: int) -> None:
         )
     except Exception as e:
         raise Exception("CA handshake signature verification failed: " + str(e))
-    
+
     print("CA handshake validation succeeded.")
 
 def save_p12_file(file_path: str,
@@ -208,6 +230,15 @@ def terminal_interface() -> Tuple[Optional[rsa.RSAPrivateKey], Optional[x509.Cer
 
     username: str = input("Enter your username: ").strip()
     password_input: str = getpass.getpass("Enter your password: ")
+    if not validate_password(password_input):
+        print("Invalid password. Password must be at least 16 characters long and contain a mix of letters, numbers, and symbols.")
+        return None, None
+    if len(username) < 1:
+        print("Invalid login. Username field can't be empty.")
+        return None, None
+    if len(username) > 32:
+        print("Invalid login. Username field can't be longer than 32 characters.")
+        return None, None
     p12_password: bytes = password_input.encode()
     if len(p12_password) < 1:
         print("Invalid login. Password field can't be empty.")

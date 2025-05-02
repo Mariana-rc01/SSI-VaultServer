@@ -491,7 +491,7 @@ def groupList(server_response: GroupListResponse) -> None:
     for group in server_response.groups:
         print(f"Group ID: {group['id']}")
         print(f"Permissions: {', '.join(group['permissions'] or 'None')}\n")
-        
+
 def deleteGroupUserRequest(group_id: str, user_id: str) -> bytes:
     delete_group_user_request = DeleteUserGroupRequest(
         group_id=group_id,
