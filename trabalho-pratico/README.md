@@ -106,12 +106,54 @@ _Descrição sucinta do serviço: cofre pessoal, grupos, armazenamento e partilh
 ### Estruturação do processo de serialização/deserialização
 **Responsável:** H
 
+A comunicação entre cliente e servidor é feita através de mensagens estruturadas em JSON, utilizando para cada tipo de pedido uma estrutura de pedido e uma de resposta.
+
+Exemplo de uma estrutura de pedido e resposta:
+ ```
+ @dataclass
+class AddRequest:
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class AddResponse:
+    response: str
+
+ ```
+
+ TODO
+
 ### Implementação dos comandos propostos
 **Responsável:** T (cada um aponta funcionamento geral e edge cases dos seus comandos)
 
 #### add \<file-path>
 
+O cliente envia ao servidor um pedido para adicionar um ficheiro que se encontra numa determinada rota.
+
+Para enviar o ficheiro ao servidor, o cliente:
+
+1. Cria uma chave simétrica e utiliza-a para encriptar o ficheiro a enviar.
+
+2. Utiliza a sua chave pública para encriptar a chave simétrica.
+
+3. Envia ao servidor a chave simétrica encriptada com a chave pública do utilizador, juntamente com o ficheiro encriptado com a chave simétrica.
+
+Após a recepção, o servidor:
+
+1. Adiciona à base de dados a informação necessária sobre o ficheiro, incluindo: um ID gerado pelo servidor, o nome do ficheiro, o tamanho, o ID do proprietário, as permissões (apenas para o proprietário, com permissões totais), a data de adição e o local onde o ficheiro se encontra armazenado.
+
+2. Guarda o ficheiro recebido no local designado.
+
+3. Envia uma mensagem ao cliente com o id associado ao ficheiro.
+
 #### read \<file-id>
+
+O cliente envia ao servidor um pedido para ler um ficheiro com um determinado id.
+
+O servidor verifica se o ficheiro solicitado existe e se o utilizador que fez o pedido tem permissão de leitura. Caso ambas as condições se verifiquem, envia ao utilizador o conteúdo do ficheiro, bem como a chave simétrica que encriptou o conteúdo associada ao utilizador em questão, ou seja, a chave encriptada com a chave pública do utilizador que efetuou o pedido.
+
+Após receber a resposta do servidor, o cliente utiliza a sua chave privada para desencriptar a chave simétrica e, posteriormente, usa essa chave para desencriptar o conteúdo do ficheiro.
 
 #### list [-u \<user-id> | -g \<group-id>]
 
@@ -200,6 +242,13 @@ O servidor confirma novamente que o cliente tem permissão de escrita sobre o fi
 
 #### group create \<group-name>
 
+O cliente, para criar um grupo, envia ao servidor o nome do grupo que pretende criar.
+
+O servidor recebe esse pedido e adiciona à sua base de dados um novo grupo, contendo um ID gerado pelo próprio servidor, o nome do grupo enviado pelo cliente, o dono do grupo (o cliente que fez o pedido), e um primeiro membro, sendo o próprio cliente, com permissões totais.
+Adicionalmente, é atualizada a informação do utilizador, associando-lhe o grupo que acabou de criar e no qual entra automaticamente.
+
+O servidor envia ao cliente uma mensagem com o ID do grupo recém-criado.
+
 #### group delete \<group-id>
 
 #### group add-user \<group-id> \<user-id> --permission=[r|w]
@@ -229,6 +278,20 @@ Atualiza as entradas dos ficheiros partilhados no grupo, adicionando a chave enc
 Se o utilizador já for membro do grupo, as permissões são atualizadas conforme necessário, mas sem duplicar a entrada.
 
 #### group delete-user \<group-id> \<user-id>
+
+Para eliminar um utilizador de um grupo do qual é dono, o cliente deve enviar ao servidor o ID do utilizador que pretende remover e o ID do grupo em que deseja efetuar essa operação.
+
+O servidor verifica se o grupo existe, se o cliente que está a realizar a operação é o dono do grupo e se o utilizador a remover não é o próprio dono. Caso todas estas condições se verifiquem, o servidor procede da seguinte forma:
+
+1. Atualiza o grupo, removendo o utilizador em causa.
+
+2. Atualiza a informação do utilizador removido, eliminando a associação ao grupo.
+
+3. Retira as permissões de acesso aos ficheiros pertencentes ao grupo, removendo a chave encriptada associada ao utilizador eliminado.
+
+4. Se o utilizador removido for o proprietário de algum ficheiro do grupo, esses ficheiros são eliminados por completo.
+
+Por fim, é enviada ao cliente uma mensagem de sucesso confirmando a remoção.
 
 #### group list
 
@@ -277,7 +340,16 @@ _Definição de mensagens JSON para operações (add, list, share, ...)._
 _Descrição do motivo do aparecimento do comando e provar a praticidade do mesmo._
 
 ### Norma TLS com DH e ECDH
-**Responsável:** M
+**Responsável:** @dataclass
+class AddRequest:
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class AddResponse:
+    response: str
+M
 
 _Implementação de TLS com Diffie-Hellman e ECDH para troca de chaves._
 
