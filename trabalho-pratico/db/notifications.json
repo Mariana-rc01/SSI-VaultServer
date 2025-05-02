@@ -1,0 +1,137 @@
+[
+  {
+    "userId": "u5",
+    "notifications": [
+      {
+        "content": "User u2 added you to group g1.",
+        "timestamp": "2025-05-02T10:20:51.089813Z",
+        "read": false
+      },
+      {
+        "content": "User u4 read file f3.",
+        "timestamp": "2025-05-02T10:21:42.350830Z",
+        "read": false
+      },
+      {
+        "content": "User u5 requested details of file f3.",
+        "timestamp": "2025-05-02T10:29:02.346634Z",
+        "read": false
+      },
+      {
+        "content": "User u4 shared file f7 to your group g1.",
+        "timestamp": "2025-05-02T10:31:02.625921Z",
+        "read": false
+      }
+    ]
+  },
+  {
+    "userId": "u4",
+    "notifications": [
+      {
+        "content": "User u2 added you to group g1.",
+        "timestamp": "2025-05-02T10:21:37.748175Z",
+        "read": false
+      },
+      {
+        "content": "User u1 replaced the content of the file f4.",
+        "timestamp": "2025-05-02T10:23:00.319658Z",
+        "read": false
+      },
+      {
+        "content": "User u3 added you to group g2.",
+        "timestamp": "2025-05-02T10:24:38.608374Z",
+        "read": false
+      },
+      {
+        "content": "File f5 added to your group g2.",
+        "timestamp": "2025-05-02T10:25:15.026374Z",
+        "read": false
+      },
+      {
+        "content": "User u2 read file f4.",
+        "timestamp": "2025-05-02T10:30:26.798844Z",
+        "read": false
+      },
+      {
+        "content": "User u2 replaced the content of the file f7.",
+        "timestamp": "2025-05-02T10:31:35.004193Z",
+        "read": false
+      }
+    ]
+  },
+  {
+    "userId": "u1",
+    "notifications": [
+      {
+        "content": "User u4 shared file f4.",
+        "timestamp": "2025-05-02T10:22:49.490342Z",
+        "read": false
+      },
+      {
+        "content": "User u5 added you to group g3.",
+        "timestamp": "2025-05-02T10:27:30.832012Z",
+        "read": false
+      },
+      {
+        "content": "User u5 requested details of file f1.",
+        "timestamp": "2025-05-02T10:29:20.527082Z",
+        "read": false
+      }
+    ]
+  },
+  {
+    "userId": "u3",
+    "notifications": [
+      {
+        "content": "User u3 added you to group g2.",
+        "timestamp": "2025-05-02T10:24:22.139894Z",
+        "read": false
+      },
+      {
+        "content": "User u4 read file f5.",
+        "timestamp": "2025-05-02T10:25:32.274296Z",
+        "read": false
+      }
+    ]
+  },
+  {
+    "userId": "u2",
+    "notifications": [
+      {
+        "content": "User u5 added you to group g3.",
+        "timestamp": "2025-05-02T10:26:23.682767Z",
+        "read": false
+      },
+      {
+        "content": "User u5 added you to group g3.",
+        "timestamp": "2025-05-02T10:26:41.558956Z",
+        "read": false
+      },
+      {
+        "content": "User u1 read file f6.",
+        "timestamp": "2025-05-02T10:28:28.429071Z",
+        "read": false
+      },
+      {
+        "content": "User u5 read file f6.",
+        "timestamp": "2025-05-02T10:28:45.950511Z",
+        "read": false
+      },
+      {
+        "content": "User u4 shared file f4.",
+        "timestamp": "2025-05-02T10:30:20.765503Z",
+        "read": false
+      },
+      {
+        "content": "User u4 shared file f7 to your group g1.",
+        "timestamp": "2025-05-02T10:31:02.625078Z",
+        "read": false
+      },
+      {
+        "content": "User u4 shared file f7.",
+        "timestamp": "2025-05-02T10:31:27.301351Z",
+        "read": false
+      }
+    ]
+  }
+]

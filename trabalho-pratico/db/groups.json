@@ -1,0 +1,56 @@
+[
+  {
+    "id": "g1",
+    "name": "group1",
+    "owner": "u2",
+    "members": [
+      {
+        "userid": "u2",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
+        "userid": "u5",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
+        "userid": "u4",
+        "permissions": [
+          "read"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "g3",
+    "name": "group3",
+    "owner": "u5",
+    "members": [
+      {
+        "userid": "u5",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
+        "userid": "u2",
+        "permissions": [
+          "read",
+          "write"
+        ]
+      },
+      {
+        "userid": "u1",
+        "permissions": [
+          "read"
+        ]
+      }
+    ]
+  }
+]

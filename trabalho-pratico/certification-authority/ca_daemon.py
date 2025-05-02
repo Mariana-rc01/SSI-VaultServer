@@ -122,7 +122,7 @@ def sign_csr(ca_key: rsa.RSAPrivateKey, ca_cert: x509.Certificate,
 class CADaemonHandler(socketserver.StreamRequestHandler):
     """
     Request handler for the CA daemon.
-    
+
     If the client sends a handshake greeting ("HELLO"), the daemon signs the greeting and returns:
       - The greeting
       - The signature (hex-encoded)

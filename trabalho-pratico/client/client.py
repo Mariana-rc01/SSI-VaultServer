@@ -158,45 +158,59 @@ class Client:
 
                     if isinstance(server_response, ReadResponse):
                         readResponse(server_response, self.rsa_private_key)
+                        msg = b""
 
                     elif isinstance(server_response, AddResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, ListResponse):
                         listResponse(server_response)
+                        msg = b""
 
                     elif isinstance(server_response, ShareResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, DeleteResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, ReplaceResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, DetailsResponse):
                         detailsResponse(server_response)
+                        msg = b""
 
                     elif isinstance(server_response, RevokeResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, GroupCreateResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, GroupDeleteResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, GroupAddUserResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, GroupListResponse):
                         groupList(server_response)
+                        msg = b""
 
                     elif isinstance(server_response, GroupAddResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, DeleteUserGroupResponse):
                         print(f"Received {server_response.response}")
+                        msg = b""
 
                     elif isinstance(server_response, VaultError):
                         print(f"Error: {server_response.error}")
