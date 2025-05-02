@@ -1,6 +1,7 @@
 import argparse
 import asyncio, base64
 from typing import Optional
+import readline
 
 from authentication.authenticator import terminal_interface
 
@@ -16,6 +17,26 @@ from cryptography.x509.oid import NameOID
 conn_port: int = 7777
 
 SERVER_COMMOM_NAME: str = "S"
+
+COMMANDS = [
+    'add', 'delete', 'revoke', 'read', 'list', 'details',
+    'replace', 'share',
+    'group list', 'group delete', 'group create', 'group add',
+    'group add-user', 'group delete-user',
+    'exit'
+]
+
+def completer(text, state):
+    # Complete only at beginning of line
+    results =  [x for x in COMMANDS if x.startswith(text)] + [None]
+    return results[state]
+
+readline.set_completer(completer)
+# Bind Tab and Right Arrow for completion; fallback to Ctrl-I on macOS libedit
+try:
+    readline.parse_and_bind('tab: complete')
+except Exception:
+    readline.parse_and_bind(r'"\C-i": complete')
 
 class Client:
     """Class that implements the functionality of a CLIENT."""
@@ -191,7 +212,9 @@ class Client:
                     continue
 
             menu()
-            new_msg: str = input(">> ").strip()
+            new_msg: str = input(">> ")
+            readline.add_history(new_msg)
+            new_msg = new_msg.strip()
             if new_msg.startswith("add "):
                 file_path: str = new_msg.split(" ", 1)[1]
 

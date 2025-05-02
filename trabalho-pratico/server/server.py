@@ -17,7 +17,7 @@ os.makedirs(STORAGE_DIR, exist_ok=True)
 DB_DIR = "./db"
 os.makedirs(DB_DIR, exist_ok=True)
 CERTIFICATE_PATH: str = "authentication/db/VAULT_CLIS.p12"
-PASSWORD: str = "S"
+PASSWORD: str = "bQ=pwwGyLD,HVH4DwMWC"
 
 
 class ServerWorker:

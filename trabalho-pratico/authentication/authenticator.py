@@ -20,6 +20,23 @@ CA_DAEMON_PORT: int = 8000              # The CA daemon port
 CERT_VALIDITY_DAYS: int = 180           # Validity (days) for the user certificate
 HANDSHAKE_GREETING: bytes = b"HELLO"
 
+def validate_password(password: str) -> bool:
+        """
+        Validates a password based on the following criteria:
+        - At least 16 characters long.
+        - Contains at least one lowercase letter.
+        - Contains at least one uppercase letter.
+        - Contains at least one number.
+        - Contains at least one symbol.
+        """
+        if len(password) < 16:
+            return False
+        has_lower = any(c.islower() for c in password)
+        has_upper = any(c.isupper() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+        has_symbol = any(not c.isalnum() for c in password)
+        return has_lower and has_upper and has_digit and has_symbol
+
 def ensure_db_directory() -> None:
     """
     Ensure that the directory for storing .p12 files exists.
@@ -213,6 +230,15 @@ def terminal_interface() -> Tuple[Optional[rsa.RSAPrivateKey], Optional[x509.Cer
 
     username: str = input("Enter your username: ").strip()
     password_input: str = getpass.getpass("Enter your password: ")
+    if not validate_password(password_input):
+        print("Invalid password. Password must be at least 16 characters long and contain a mix of letters, numbers, and symbols.")
+        return None, None
+    if len(username) < 1:
+        print("Invalid login. Username field can't be empty.")
+        return None, None
+    if len(username) > 32:
+        print("Invalid login. Username field can't be longer than 32 characters.")
+        return None, None
     p12_password: bytes = password_input.encode()
     if len(p12_password) < 1:
         print("Invalid login. Password field can't be empty.")
