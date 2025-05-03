@@ -416,7 +416,23 @@ Além disso, foi implementado o conceito de *one-way certification*, onde a `CA`
 ### Sistema de Registo de Logs
 **Responsável:** H
 
-_Arquitetura do serviço de logs: formato e armazenamento._
+O sistema de logs foi planeado de forma a registar de forma estruturada e detalhada todas as operações críticas realizadas no sistema. Deste modo garante a consistência e facilidade de análise dos dados. Cada registo de log contém os seguintes campos principais:
+
+- id: Identificador único do registo de log.
+
+- userid: Identificador do utilizador responsável pela ação.
+
+- type: Tipo de ação realizada (exemplo: criação de grupo).
+
+- args: Argumentos associados à ação (exemplo: identificadores de grupo e nome).
+
+- timestamp: Momento exato em que a ação foi executada, no formato UTC.
+
+- status: Estado da operação (exemplo: "success" para sucesso, "error" para erro).
+
+- error: Detalhes específicos de erro, se aplicável.
+
+Este formato permite uma análise eficiente do funcionamento do sistema, facilitando a deteção de falhas, a auditoria de operações críticas e a monitoração do desempenho geral da aplicação.
 
 ### Autenticação Baseada em Ficheiros P12
 **Responsável:** P
