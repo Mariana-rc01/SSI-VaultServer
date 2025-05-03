@@ -528,17 +528,39 @@ Fica ainda a nota de que, numa primeira iteração, o grupo de trabalho procurou
 ## Manual de utilização
 **Responsável:** H
 
-_Explicação de como deve ser o executado e guia de utilização de exemplos já disponíveis._
-
-> Para já disponibilizo a parte relevante do nosso README.md antigo.
+Para iniciar o servidor da aplicação, executar o seguinte comando:
 
 ```
-Server: python3 -m server.server
-
-Client: python3 -m client.client [TLSv1.3 | TLSv1.2]
-
-CA: cd certification-authority && python3 ca_daemon.py
+python3 -m server.server
 ```
+
+Este comando iniciará o servidor, permitindo que os clientes se conectem.
+
+
+Para iniciar o cliente da aplicação, utilizar o seguinte comando:
+
+```
+python3 -m client.client [TLSv1.3 | TLSv1.2]
+```
+
+Substituir [TLSv1.3 | TLSv1.2] pela versão do protocolo TLS a utilizar.
+
+Para iniciar a Autoridade Certificadora (CA), utilizar o seguinte comando:
+
+Navegar até à diretoria da Autoridade Certificadora:
+
+```
+cd certification-authority
+```
+
+Executar o seguinte comando para iniciar a CA:
+
+```
+python3 ca_daemon.py
+```
+
+Este comando inicializará o daemon da Autoridade Certificadora, permitindo a emissão e gerenciamento de certificados.
+
 
 ## Conclusões
 **Responsável:** M
