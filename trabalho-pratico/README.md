@@ -273,10 +273,6 @@ O comando `revoke` permite ao proprietário de um ficheiro revogar o acesso de u
   - As permissões atualizadas são guardadas no ficheiro correspondente.
   - O servidor atualiza o registo de ficheiros persistente para refletir as alterações.
 
-<p align="center">
-<img src="report/images/revoke.jpg" alt="Revoke" width="400">
-</p>
-
 #### group create \<group-name>
 
 O cliente, para criar um grupo, envia ao servidor o nome do grupo que pretende criar.
@@ -304,10 +300,6 @@ Quando um utilizador pretende eliminar um grupo, o sistema segue 3 passos fundam
     - Caso o ficheiro não tenha mais permissões associadas (nem de utilizadores nem de outros grupos), significa que pertencia exclusivamente ao grupo removido e é eliminado do sistema de armazenamento e da lista de ficheiros persistente.
 
 Este processo garante que a eliminação do grupo é segura e que todos os recursos associados ao grupo são devidamente atualizados ou removidos.
-
-<p align="center">
-<img src="report/images/group_delete.jpg" alt="Group Delete" width="400">
-</p>
 
 #### group add-user \<group-id> \<user-id> --permission=[r|w]
 
