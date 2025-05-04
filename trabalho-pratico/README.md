@@ -538,7 +538,29 @@ O servidor usufrui também de um arquivo `PKCS#12` que contém a sua chave priva
 ### Protocolo de Comunicação em JSON
 **Responsável:** H
 
-_Definição de mensagens JSON para operações (add, list, share, ...)._
+A comunicação entre cliente e servidor é baseada em mensagens JSON padronizadas, organizadas em pares de request e response para cada operação, como add, list, share, entre outras. Cada tipo de operação define a sua própria estrutura de dados, encapsulada através de `dataclasses`, o que garante clareza e fácil serialização.
+
+Exemplo de uma estrutura de pedido e resposta:
+
+ ```
+@dataclass
+class AddRequest:
+    filename: str
+    encrypted_file: str
+    encrypted_aes_key: str
+
+@dataclass
+class AddResponse:
+    response: str
+ ```
+
+Para tornar o sistema não dependente da lógica de cada operação, são utilizados dois métodos genéricos:
+
+- `serialize_request(obj) -> str`: converte qualquer objeto de pedido e resposta (instância de uma dataclass) num JSON pronto a enviar.
+
+- `deserialize_request(json_str) -> Tuple[str, Any]`: interpreta o JSON recebido, identifica automaticamente o tipo de operação e devolve uma instância da dataclass correspondente.
+
+Esse mecanismo torna a comunicação robusta e genérica, permitindo ao servidor e ao cliente tratar mensagens de qualquer tipo sem depender diretamente de lógica específica de cada operação.
 
 ### Possibilidade de execução do comando share para grupos
 
