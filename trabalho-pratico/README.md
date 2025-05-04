@@ -679,41 +679,82 @@ Para facilitar o desenvolvimento e a partilha de ficheiros no repositório, fora
 Fica ainda a nota de que, numa primeira iteração, o grupo de trabalho procurou implementar um isolamento mais granular dos processos e acessos a ficheiros, através da utilização de daemons que responderiam por um FIFO quando a informação fosse pedida, metodologia esta que foi abandonada devido à complexidade e não foi abordada unidade curricular. Como tal, procurou uma alternativa em que existiam 3 utilizadores de sistema operativo, o `vault_logger`, o `vault_ admin` e o `vault_resources`, que tinham acesso a diferentes partes do sistema, no entanto, o grupo de trabalho decidiu que a implementação de um único utilizador com permissões específicas era mais prática e eficaz para o resultado final que se pretendia.
 
 ## Manual de utilização
-**Responsável:** H
 
-Para iniciar o servidor da aplicação, executar o seguinte comando:
+## 1. Preparação do Ambiente com Isolamento
 
+Antes de utilizar o sistema, recomenda-se a configuração do ambiente com isolamento, de modo a ser possível simular diferentes utilizadores no sistema:
+
+### 1.1 Criar utilizadores de isolamento:
+
+```bash
+chmod +x scripts/setup.sh
+sudo ./scripts/setup.sh
 ```
+
+### 1.2 Inicializar permissões e estruturas de dados:
+
+```bash
+sudo python3 scripts/init_db_and_storage.py
+```
+
+### 1.3 Atribuir capacidade de setuid ao interpretador Python3:
+
+```bash
+sudo setcap cap_setuid+ep $(which python3)
+```
+
+## 2. Iniciar os Componentes da Aplicação
+
+### 2.1 Iniciar o servidor:
+
+```bash
 python3 -m server.server
 ```
+Este comando inicia o servidor que ficará à escuta de conexões de clientes.
 
-Este comando iniciará o servidor, permitindo que os clientes se conectem.
+### 2.2 Iniciar um cliente:
 
-
-Para iniciar o cliente da aplicação, utilizar o seguinte comando:
-
-```
+```bash
 python3 -m client.client [TLSv1.3 | TLSv1.2]
 ```
 
-Substituir [TLSv1.3 | TLSv1.2] pela versão do protocolo TLS a utilizar.
+Substituir `[TLSv1.3 | TLSv1.2]` pela versão do protocolo TLS desejada.
 
-Para iniciar a Autoridade Certificadora (CA), utilizar o seguinte comando:
+### 2.3 Iniciar a Autoridade Certificadora (CA):
 
-Navegar até à diretoria da Autoridade Certificadora:
+Navegar até à diretoria da CA:
 
-```
+```bash
 cd certification-authority
 ```
 
 Executar o seguinte comando para iniciar a CA:
 
-```
+```bash
 python3 ca_daemon.py
 ```
 
 Este comando inicializará o daemon da Autoridade Certificadora, permitindo a emissão e gerenciamento de certificados.
 
+## 3. Restaurar as Permissões
+
+Antes de manipular os ficheiros como um utilizador normal, é obrigatório restaurar as permissões dos ficheiros:
+
+```bash
+sudo python3 scripts/restore_file_ownership.py
+```
+
+## 4. Limpar o Ambiente de Isolamento (opcional)
+
+Caso deseje remover os utilizadores e as estruturas criadas para o isolamento:
+
+```bash
+chmod +x scripts/teardown.sh
+sudo ./scripts/teardown.sh
+```
+
+> Durante este processo será possível apagar os ficheiros associados. Esta opção deve ser usada com cautela.
+```
 
 ## Conclusões
 
