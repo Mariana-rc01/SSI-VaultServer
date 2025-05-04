@@ -178,6 +178,35 @@ class AddResponse:
 
 O método serialize_request e deserialize_request, permite de forma totalmente genérica processar a mensagens a ser enviadas, deste modo facilitando a comunicação.
 
+### Envelope Digital
+
+O **envelope digital** foi adotado no projeto como o mecanismo principal para a partilha de ficheiros,
+é utilizada uma combinação de criptografia simétrica (AES-256-GCM) e assimétrica (RSA). Esse método
+híbrido foi projetado para garantir tanto a segurança quanto a eficiência, cumprindo os requisitos
+de confidencialidade e integridade exigidos pelo sistema.
+
+No funcionamento do sistema, quando um ficheiro é adicionado, o cliente gera uma chave simétrica
+AES-256 para cifrar o conteúdo. Essa chave simétrica é então cifrada com a chave pública do dono e
+armazenada no servidor. Ao partilhar o ficheiro, o servidor recupera a chave AES cifrada e o cliente
+a decifrar com a sua chave privada. Para cada destinatário, a chave AES é recifrada com a chave pública
+do destinatário, onde é criado um "envelope" seguro para cada entidade envolvida.
+
+Quando o destinatário acede o ficheiro, este utiliza a sua chave privada para decifrar a chave AES
+e, em seguida, usa essa chave para aceder ao conteúdo do ficheiro. Este processo assegura que a
+chave simétrica nunca seja transmitida de forma não segura, mantendo a confidencialidade e a
+integridade das informações.
+
+As vantagens desta implementação são evidentes no contexto do projeto. A confidencialidade é garantida,
+pois a chave AES nunca é transmitida em texto simples, e somente o destinatário correto pode acede-la.
+Além disso, o uso de criptografia simétrica para o ficheiro e assimétrica apenas para a chave
+reduz o custo computacional, sendo eficiente mesmo para grandes volumes de dados. A integridade dos
+dados é automaticamente verificada com algoritmos como AES-GCM ou ChaCha20-Poly1305, e as assinaturas
+digitais adicionam uma camada de não-repúdio, onde associam as ações a identidades de forma segura.
+
+<p align="center">
+<img src="report/images/envelope.png" alt="Envelope Digital" width="300">
+</p>
+
 ### Implementação dos comandos propostos
 
 #### add \<file-path>
