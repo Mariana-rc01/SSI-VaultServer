@@ -133,5 +133,20 @@
         "read": false
       }
     ]
+  },
+  {
+    "userId": "u1",
+    "notifications": [
+      {
+        "content": "User u2 read file f7.",
+        "timestamp": "2025-04-28T08:17:02.226834Z",
+        "read": true
+      },
+      {
+        "content": "User u1 requested details of file f3.",
+        "timestamp": "2025-05-02T21:22:56.904819Z",
+        "read": false
+      }
+    ]
   }
 ]
