@@ -99,18 +99,21 @@ O serviço de cofre seguro é uma aplicação que permite aos utilizadores armaz
 > O sistema não implementa medidas específicas para prevenir ataques de negação de serviço, como a limitação do número de pedidos simultâneos ou a proteção contra ficheiros excessivamente grandes. Considera-se que a responsabilidade pela mitigação deste tipo de ataques recai sobre a infraestrutura de rede subjacente.
 
 ## Arquitetura da solução
-**Responsável:** H
+
+A arquitetura da aplicação divide-se em três componentes principais, clientes, servidor e os seus de dados, e autoridade certificadora (CA), conforme ilustrado na figura abaixo.
+
+<p align="center"> <img src="report/images/arquitetura.jpg" alt="Arquitetura" width="500"> </p>
+
+Os clientes representam os utilizadores da aplicação que interagem com o sistema. Cada cliente é instanciado de forma autónoma, deve manter estado mínimo, não tem memória persistente e depende exclusivamente do servidor para a gestão e controlo de acesso aos dados. Este modelo "stateless" facilita o isolamento e reduz a superfície de ataque no lado do cliente.
+
+O servidor constitui o núcleo da aplicação e é responsável por manter o estado global do sistema. Funciona num ambiente isolado, em conformidade com as normas de segurança definidas no âmbito do projeto. É neste componente que residem todos os dados e metadados necessários à execução das funcionalidades do cofre seguro.
+
+A autoridade certificadora é um dos componentes fundamentais da infraestrutura de segurança da aplicação. Trata-se de uma entidade confiável (trusted third party) responsável por emitir e validar os certificados digitais dos restantes componentes (clientes e servidor). Todos os certificados utilizados no sistema são assinados digitalmente pela CA, garantindo a autenticidade das entidades.
+
+O diagrama de sequência apresentado ilustra um exemplo do processo de estabelecimento de uma sessão segura entre um cliente e o servidor da aplicação, recorrendo a um protocolo semelhante à norma TLS com autenticação mútua. Este mecanismo é fundamental para garantir confidencialidade, integridade e autenticidade nas comunicações entre as partes.
 
 <p align="center">
-<img src="report/images/arquitetura.jpg" alt="Arquitetura" width="300">
-</p>
-
-<p align="center">
-<img src="report/images/CA.png" alt="CA" width="300">
-</p>
-
-<p align="center">
-<img src="report/images/ClientServer.jpg" alt="ClientServer" width="300">
+<img src="report/images/ClientServer.jpg" alt="ClientServer" width="700">
 </p>
 
 ## Plano de Implementação
@@ -484,6 +487,10 @@ A `CA` é executada como um "*daemon*" (é apenas um terminal em execução, uma
 
 Além disso, foi implementado o conceito de *one-way certification*, onde a `CA` se autentica perante os clientes. Este processo garante que os clientes podem verificar a autenticidade da CA antes de confiar nos certificados emitidos, reforçando a segurança e a confiança no sistema.
 
+<p align="center">
+<img src="report/images/CA.png" alt="CA" width="300">
+</p>
+
 ### Sistema de Registo de Logs
 
 O sistema de logs foi planeado de forma a registar de forma estruturada e detalhada todas as operações críticas realizadas no sistema. Deste modo garante a consistência e facilidade de análise dos dados. Cada registo de log contém os seguintes campos principais:
@@ -536,7 +543,6 @@ O processo de autenticação baseado em `PKCS#12` surgiu como complemento à `CA
 O servidor usufrui também de um arquivo `PKCS#12` que contém a sua chave privada e o seu certificado digital, permitindo a posterior autenticação mútua entre os clientes e o servidor.
 
 ### Protocolo de Comunicação em JSON
-**Responsável:** H
 
 A comunicação entre cliente e servidor é baseada em mensagens JSON padronizadas, organizadas em pares de request e response para cada operação, como add, list, share, entre outras. Cada tipo de operação define a sua própria estrutura de dados, encapsulada através de `dataclasses`, o que garante clareza e fácil serialização.
 
@@ -704,9 +710,7 @@ Fica ainda a nota de que, numa primeira iteração, o grupo de trabalho procurou
 
 ### 1. Preparação do Ambiente com Isolamento
 
-Antes de utilizar o sistema, recomenda-se a configuração do ambiente com isolamento, de modo a ser possível simular diferentes utilizadores no sistema:
-
-#### 1.1 Criar utilizadores de isolamento:
+#### 1.1 Criar utilizador de isolamento:
 
 ```bash
 chmod +x scripts/setup.sh
@@ -719,30 +723,15 @@ sudo ./scripts/setup.sh
 sudo python3 scripts/init_db_and_storage.py
 ```
 
-#### 1.3 Atribuir capacidade de setuid ao interpretador Python3:
+#### 1.3 Alterar para o utilizador criado:
 
 ```bash
-sudo setcap cap_setuid+ep $(which python3)
+su vault_server
 ```
 
 ### 2. Iniciar os Componentes da Aplicação
 
-#### 2.1 Iniciar o servidor:
-
-```bash
-python3 -m server.server
-```
-Este comando inicia o servidor que ficará à escuta de conexões de clientes.
-
-#### 2.2 Iniciar um cliente:
-
-```bash
-python3 -m client.client [TLSv1.3 | TLSv1.2]
-```
-
-Substituir `[TLSv1.3 | TLSv1.2]` pela versão do protocolo TLS desejada.
-
-#### 2.3 Iniciar a Autoridade Certificadora (CA):
+#### 2.1 Iniciar a Autoridade Certificadora (CA):
 
 Navegar até à diretoria da CA:
 
@@ -756,11 +745,24 @@ Executar o seguinte comando para iniciar a CA:
 python3 ca_daemon.py
 ```
 
-Este comando inicializará o daemon da Autoridade Certificadora, permitindo a emissão e gerenciamento de certificados.
+#### 2.2 Iniciar o servidor:
+
+```bash
+python3 -m server.server
+```
+Este comando inicia o servidor que ficará à escuta de conexões de clientes.
+
+#### 2.3 Iniciar um cliente:
+
+```bash
+python3 -m client.client [TLSv1.3 | TLSv1.2]
+```
+
+Substituir `[TLSv1.3 | TLSv1.2]` pela versão do protocolo TLS desejada.
 
 ### 3. Restaurar as Permissões
 
-Antes de manipular os ficheiros como um utilizador normal, é obrigatório restaurar as permissões dos ficheiros:
+Antes de manipular os ficheiros como um utilizador normal, é necessário restaurar as permissões dos ficheiros:
 
 ```bash
 sudo python3 scripts/restore_file_ownership.py
@@ -780,7 +782,7 @@ sudo ./scripts/teardown.sh
 
 Para efeitos de testes e simulação, foram criados 5 utilizadores:
 
-| Utilizador | Username | Palavra-passe           |
+| Utilizador | user-id  | Palavra-passe           |
 |------------|----------|-------------------------|
 | CLI1       | 1        | mEu~0]}5Usft=2jp_q=i    |
 | CLI2       | 2        | jcE-hpp*BF0QE-AH80n5    |

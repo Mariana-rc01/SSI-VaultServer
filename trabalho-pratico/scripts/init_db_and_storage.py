@@ -5,16 +5,16 @@ VAULT_USER = 'vault_server'
 
 def init_db_and_storage():
     """
-    Cria os ficheiros JSON e a pasta storage (se ainda não existirem), com:
-      - Propriedade atribuída ao utilizador vault_server
-      - Ficheiros: modo 600 (ou 644 se necessário)
-      - Ficheiros .py em 'server/': modo 755 (executável)
-      - Pastas: modo 700
+    Creates JSON files and the storage folder (if they do not already exist), with:
+      - Ownership assigned to the vault_server user
+      - Files: mode 600 (or 644 if necessary)
+      - .py files in 'server/': mode 755 (executable)
+      - Folders: mode 700
     """
     try:
         pw = pwd.getpwnam(VAULT_USER)
     except KeyError:
-        raise RuntimeError(f"Utilizador do sistema '{VAULT_USER}' não existe")
+        raise RuntimeError(f"System user '{VAULT_USER}' does not exist")
 
     uid, gid = pw.pw_uid, pw.pw_gid
 
@@ -30,17 +30,17 @@ def init_db_and_storage():
         'server'
     ]
 
-    # Garantir que a pasta db existe
+    # Ensure the 'db' folder exists
     os.makedirs('db', exist_ok=True)
 
-    # Criar ficheiros e aplicar permissões
+    # Create files and apply permissions
     for path in files:
         if not os.path.exists(path):
             open(path, 'w').close()
         os.chown(path, uid, gid)
         os.chmod(path, 0o600)
 
-    # Criar pastas e aplicar permissões recursivamente
+    # Create folders and apply permissions recursively
     for folder in folders:
         os.makedirs(folder, exist_ok=True)
         for root, dirs, files in os.walk(folder):
@@ -53,11 +53,11 @@ def init_db_and_storage():
                 os.chown(full_path, uid, gid)
 
                 if folder == 'server' and f.endswith('.py'):
-                    os.chmod(full_path, 0o755)  # Executável
+                    os.chmod(full_path, 0o755)  # Executable
                 elif folder == 'storage':
-                    os.chmod(full_path, 0o600)  # Ficheiros internos
+                    os.chmod(full_path, 0o600)  # Internal files
                 else:
-                    os.chmod(full_path, 0o644)  # Código de leitura
+                    os.chmod(full_path, 0o644)  # Readable code
 
         os.chown(folder, uid, gid)
         os.chmod(folder, 0o700)
