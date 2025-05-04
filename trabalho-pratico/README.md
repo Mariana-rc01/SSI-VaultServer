@@ -680,39 +680,39 @@ Fica ainda a nota de que, numa primeira iteração, o grupo de trabalho procurou
 
 ## Manual de utilização
 
-## 1. Preparação do Ambiente com Isolamento
+### 1. Preparação do Ambiente com Isolamento
 
 Antes de utilizar o sistema, recomenda-se a configuração do ambiente com isolamento, de modo a ser possível simular diferentes utilizadores no sistema:
 
-### 1.1 Criar utilizadores de isolamento:
+#### 1.1 Criar utilizadores de isolamento:
 
 ```bash
 chmod +x scripts/setup.sh
 sudo ./scripts/setup.sh
 ```
 
-### 1.2 Inicializar permissões e estruturas de dados:
+#### 1.2 Inicializar permissões e estruturas de dados:
 
 ```bash
 sudo python3 scripts/init_db_and_storage.py
 ```
 
-### 1.3 Atribuir capacidade de setuid ao interpretador Python3:
+#### 1.3 Atribuir capacidade de setuid ao interpretador Python3:
 
 ```bash
 sudo setcap cap_setuid+ep $(which python3)
 ```
 
-## 2. Iniciar os Componentes da Aplicação
+### 2. Iniciar os Componentes da Aplicação
 
-### 2.1 Iniciar o servidor:
+#### 2.1 Iniciar o servidor:
 
 ```bash
 python3 -m server.server
 ```
 Este comando inicia o servidor que ficará à escuta de conexões de clientes.
 
-### 2.2 Iniciar um cliente:
+#### 2.2 Iniciar um cliente:
 
 ```bash
 python3 -m client.client [TLSv1.3 | TLSv1.2]
@@ -720,7 +720,7 @@ python3 -m client.client [TLSv1.3 | TLSv1.2]
 
 Substituir `[TLSv1.3 | TLSv1.2]` pela versão do protocolo TLS desejada.
 
-### 2.3 Iniciar a Autoridade Certificadora (CA):
+#### 2.3 Iniciar a Autoridade Certificadora (CA):
 
 Navegar até à diretoria da CA:
 
@@ -736,7 +736,7 @@ python3 ca_daemon.py
 
 Este comando inicializará o daemon da Autoridade Certificadora, permitindo a emissão e gerenciamento de certificados.
 
-## 3. Restaurar as Permissões
+### 3. Restaurar as Permissões
 
 Antes de manipular os ficheiros como um utilizador normal, é obrigatório restaurar as permissões dos ficheiros:
 
@@ -744,7 +744,7 @@ Antes de manipular os ficheiros como um utilizador normal, é obrigatório resta
 sudo python3 scripts/restore_file_ownership.py
 ```
 
-## 4. Limpar o Ambiente de Isolamento (opcional)
+### 4. Limpar o Ambiente de Isolamento (opcional)
 
 Caso deseje remover os utilizadores e as estruturas criadas para o isolamento:
 
@@ -752,9 +752,19 @@ Caso deseje remover os utilizadores e as estruturas criadas para o isolamento:
 chmod +x scripts/teardown.sh
 sudo ./scripts/teardown.sh
 ```
-
 > Durante este processo será possível apagar os ficheiros associados. Esta opção deve ser usada com cautela.
-```
+
+### 5. Utilizadores criados
+
+Para efeitos de testes e simulação, foram criados 5 utilizadores:
+
+| Utilizador | Username | Palavra-passe           |
+|------------|----------|-------------------------|
+| CLI1       | 1        | mEu~0]}5Usft=2jp_q=i    |
+| CLI2       | 2        | jcE-hpp*BF0QE-AH80n5    |
+| CLI3       | 3        | AoSb;Z%]3pZqp+o!t{%Q    |
+| CLI4       | 4        | kZ}35nx%yO_3xLe]%3X!    |
+| CLI5       | 5        | ,]=(Tg]80y@L)pDZ%4      |
 
 ## Conclusões
 
