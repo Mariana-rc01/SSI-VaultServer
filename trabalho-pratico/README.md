@@ -782,7 +782,7 @@ sudo ./scripts/teardown.sh
 
 Para efeitos de testes e simulação, foram criados 5 utilizadores:
 
-| Utilizador | user-id  | Palavra-passe           |
+| Utilizador | Username | Palavra-passe           |
 |------------|----------|-------------------------|
 | CLI1       | 1        | mEu~0]}5Usft=2jp_q=i    |
 | CLI2       | 2        | jcE-hpp*BF0QE-AH80n5    |
