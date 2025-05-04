@@ -42,17 +42,14 @@
 ---
 
 ## Introdução
-**Responsável:** P
 
 O presente projeto consiste na implementação de um serviço de cofre seguro, que permite o armazenamento e partilha de ficheiros de forma segura. O serviço é projetado para garantir a confidencialidade, integridade e autenticidade dos dados armazenados. Neste relatório, serão abordados os objetivos do projeto, os requisitos de segurança implementados, a modelação de ameaças, a arquitetura da solução e o plano de implementação.
 
 ## Descrição Geral do Projeto
-**Responsável:** P
 
 O serviço de cofre seguro é uma aplicação que permite aos utilizadores armazenar e partilhar ficheiros de forma segura. Cada utilizador tem um cofre pessoal, onde pode guardar os seus ficheiros, pode criar grupos e partilhar ficheiros com outros utilizadores. O serviço utiliza criptografia simétrica e assimétrica para proteger os dados e garantir a confidencialidade das comunicações. Além disso, implementa um sistema de permissões para controlar o acesso aos ficheiros, permitindo que os utilizadores partilhem ficheiros com outros utilizadores ou grupos de forma segura.
 
 ## Objetivos
-**Responsável:** P
 
 - Proporcionar um serviço de armazenamento e partilha de ficheiros com garantias de confidencialidade, integridade e autenticidade.
 
@@ -102,25 +99,66 @@ O serviço de cofre seguro é uma aplicação que permite aos utilizadores armaz
 > O sistema não implementa medidas específicas para prevenir ataques de negação de serviço, como a limitação do número de pedidos simultâneos ou a proteção contra ficheiros excessivamente grandes. Considera-se que a responsabilidade pela mitigação deste tipo de ataques recai sobre a infraestrutura de rede subjacente.
 
 ## Arquitetura da solução
-**Responsável:**
+**Responsável:** H
+
+<p align="center">
+<img src="report/images/arquitetura.jpg" alt="Arquitetura" width="300">
+</p>
+
+<p align="center">
+<img src="report/images/CA.png" alt="CA" width="300">
+</p>
+
+<p align="center">
+<img src="report/images/ClientServer.jpg" alt="ClientServer" width="300">
+</p>
 
 ## Plano de Implementação
 
 ### Estabelecimento da comunicação servidor cliente
-**Responsável:** M
+
+O processo de estabelecer uma comunicação segura entre o cliente e o servidor inicia com um
+protocolo de _handshake_ personalizado, pensado para assegurar a autenticação mútua e a criação
+confiável de chaves de sessão. Esse processo é fundamentado em três componentes principais: a troca
+de chaves momentâneas, a validação de certificados digitais e a derivação de chaves simétricas.
+
+Na fase inicial, o cliente envia uma mensagem (ClientHello) que contêm uma chave pública efémera
+(gerada usando ECDH ou DH), um valor aleatório (client random) e uma lista de algoritmos que este
+suporta. Por sua vez, o servidor responde com a sua própria chave pública, um certificado
+digital assinado pela CA, um valor aleatório (server random) e a escolha do algoritmo de cifra.
+Ambas as partes validam mutuamente os certificados, garantindo que as identidades coincidem com as
+chaves públicas apresentadas.
+
+A segurança do canal é assegurada pela troca de segredos efémeros: o cliente e o servidor combinam as suas
+chaves públicas para gerar um segredo compartilhado, que é expandido com os valores aleatórios
+com o uso de uma função de derivação de chaves (como o HKDF). O resultado desta operação é uma chave
+simétrica exclusiva para a sessão em que se encontram, utilizada para criptografar as mensagens subsequentes.
 
 ### Aplicação do protocolo criptográfico Diffie-Hellman
-**Responsável:** P
 
 Após uma implementação da comunicação entre o cliente e o servidor não segura, foi necessário implementar o protocolo Diffie-Hellman para garantir a confidencialidade e integridade dos dados trocados entre ambos durante uma sessão.
 
 O protocolo `Diffie-Hellman` permitiu-nos estabelecer uma chave *key_master* comum entre o cliente e o servidor, que é utilizada para cifrar e decifrar as mensagens trocadas. Para isso, o cliente e o servidor geram um par de chaves (pública e privada) e trocam as chaves públicas. Com base nas chaves públicas e privadas, ambos conseguem calcular a chave *key_master* devido à propriedade algoritmica que permite comutar uma combinação das chaves públicas e privadas. Para isso, utilizamos o algoritmo de cifra simétrica `AES` (Advanced Encryption Standard) com um tamanho de chave de 256 bits.
 
 ### Atualização do protocolo criptográfico base para Station-To-Station
-**Responsável:** M
+
+A introdução do protocolo Station-to-Station (STS) trouxe uma camada adicional de autenticação
+mútua explícita, isto resolve uma limitação do Diffie-Hellman clássico, que não autentica as
+partes envolvidas. O STS exige que o cliente e o servidor assinem digitalmente os dados
+trocados durante o _handshake_, vinculando as chaves efémeras às suas identidades.
+
+Após a troca inicial de chaves, o servidor assina os dados do _handshake_ (as chaves públicas e
+valores aleatórios) com a sua chave privada (RSA ou ECDSA) e envia a assinatura com o seu certificado.
+O cliente, então, verifica a assinatura recorrendo à chave pública do servidor, que pode ser extraída
+do certificado, e repete o processo, envia a sua assinatura e certificado. Este processo de validação
+dupla impede que um atacante se passe por uma das partes, mesmo que consiga interceptar a comunicação.
+
+A principal vantagem do STS é o **não-repúdio**: as assinaturas funcionam como provas criptográficas
+de que ambas as partes participaram ativamente do _handshake_. Além disso, o protocolo impede ataques
+Man-in-the-Middle, uma vez que um atacante teria que falsificar assinaturas sem ter acesso às
+chaves privadas legítimas, o que é praticamente inviável computacionalmente.
 
 ### Estruturação do processo de serialização/deserialização
-**Responsável:** H
 
 A comunicação entre cliente e servidor é feita através de mensagens estruturadas em JSON, utilizando para cada tipo de pedido uma estrutura de pedido e uma de resposta. Para facilitar a definição e manipulação dessas estruturas, são utilizadas dataclasses, que permitem representar os dados de forma clara e concisa.
 
@@ -141,7 +179,6 @@ class AddResponse:
 O método serialize_request e deserialize_request, permite de forma totalmente genérica processar a mensagens a ser enviadas, deste modo facilitando a comunicação.
 
 ### Implementação dos comandos propostos
-**Responsável:** T (cada um aponta funcionamento geral e edge cases dos seus comandos)
 
 #### add \<file-path>
 
@@ -378,14 +415,19 @@ Quando um utilizador pretende adicionar um ficheiro a um grupo, o sistema segue 
 Este processo garante que o ficheiro é adicionado de forma segura ao grupo, respeitando as permissões e mantendo a confidencialidade dos dados.
 
 #### exit
+O comando exit permite ao cliente encerrar a sessão de forma segura, terminando a conexão com o servidor.
 
 ### Conceção de extras
-**Responsável:** M
+
+Ao longo do desenvolvimento do projeto, além da implementação dos requisitos fundamentais,
+foram concebidos extras que visam reforçar a segurança, a usabilidade e a robustez do sistema.
+Estes elementos complementares surgiram de forma iterativa, tanto para resolver desafios técnicos
+específicos como para expandir as capacidades da aplicação, sem comprometer os princípios de
+confidencialidade, integridade e autenticidade que norteiam o serviço.
 
 ## Extras
 
 ### Autoridade Certificadora Própria
-**Responsável:** P
 
 Para consolidar o conhecimento do grupo de trabalho sobre conceção e utilização dos certificados digitais, foi implementada uma `Autoridade Certificadora (CA)` própria. Esta `CA` é responsável pela emissão e validação de certificados `X.509`, que são utilizados para autenticação mútua entre o cliente e o servidor.
 
@@ -414,7 +456,6 @@ A `CA` é executada como um "*daemon*" (é apenas um terminal em execução, uma
 Além disso, foi implementado o conceito de *one-way certification*, onde a `CA` se autentica perante os clientes. Este processo garante que os clientes podem verificar a autenticidade da CA antes de confiar nos certificados emitidos, reforçando a segurança e a confiança no sistema.
 
 ### Sistema de Registo de Logs
-**Responsável:** H
 
 O sistema de logs foi planeado de forma a registar de forma estruturada e detalhada todas as operações críticas realizadas no sistema. Deste modo garante a consistência e facilidade de análise dos dados. Cada registo de log contém os seguintes campos principais:
 
@@ -435,7 +476,6 @@ O sistema de logs foi planeado de forma a registar de forma estruturada e detalh
 Este formato permite uma análise eficiente do funcionamento do sistema, facilitando a deteção de falhas, a auditoria de operações críticas e a monitoração do desempenho geral da aplicação.
 
 ### Autenticação Baseada em Ficheiros P12
-**Responsável:** P
 
 Com a criação de uma `Autoridade Certificadora (CA)` própria, o grupo ficou interessado em explorar a modularização do sistema de autenticação. Ao seguir o exemplo apresendado pela equipa docente, recorreu ao sistema de autenticação baseado em `PKCS#12`.
 
@@ -472,22 +512,106 @@ O servidor usufrui também de um arquivo `PKCS#12` que contém a sua chave priva
 _Definição de mensagens JSON para operações (add, list, share, ...)._
 
 ### Possibilidade de execução do comando share para grupos
-**Responsável:** M
 
-_Descrição do motivo do aparecimento do comando e provar a praticidade do mesmo._
+A funcionalidade de partilha de ficheiros com grupos permite que o dono conceda acesso a múltiplos
+utilizadores, isto garante que apenas membros autorizados possam decifrar o conteúdo. O processo
+envolve três etapas principais: solicitação de chaves públicas dos membros do grupo, cifração da
+chave simétrica do ficheiro e validações de segurança no servidor.
+
+Isto permite ter um controlo detalhado sobre as permissões de cada grupo. Facilita a administração
+de permissões em ambientes com muitos utilizadores. Apenas membros ativos de um grupo podem aceder aos
+ficheiros.
 
 ### Norma TLS com DH e ECDH
-**Responsável:** M
 
-_Implementação de TLS com Diffie-Hellman e ECDH para troca de chaves._
+A norma **TLS (Transport Layer Security)** é um padrão global para comunicação segura, esta garante
+**confidencialidade**, **integridade** e **autenticação** entre as partes. Neste projeto,
+foi implementado um protocolo inspirado no TLS, adaptado às necessidades do sistema de cofre seguro,
+com ênfase na **troca de chaves efémeras** (via DH ou ECDH) e **autenticação baseada em certificados**.
+De seguida, é explicado como é que os conceitos do TLS foram aplicados:
+
+1. Handshake TLS-like: Autenticação e Derivação de Chaves
+O processo de handshake segue uma estrutura semelhante ao TLS 1.3, mas simplificada para o sistema.
+Os principais passos são:
+
+- **ClientHello**:
+O cliente envia a versão do protocolo, a lista de *cipher suites* e sua chave pública (ECDH/DH)
+junto com um número aleatório (`client_random`).
+
+- **ServerHello**:
+O servidor responde com a sua chave pública, certificado digital assinado pela sua Autoridade
+Certificadora (AC), assinatura digital dos dados do handshake e o seu valor aleatório (`server_random`).
+
+- **Autenticação Mútua**: Ambas as partes validam os certificados e assinaturas.
+
+2. **Perfect Forward Secrecy (PFS) com ECDHE/DHE**
+Quer com **ECDHE** (Elliptic Curve Diffie-Hellman Ephemeral) ou com **DHE** (Diffie-Hellman Ephemeral),
+a quebra de chaves de longo prazo não afete sessões anteriores é garantida, pois:
+
+- **Geração de Chaves Temporárias**: O cliente e o servidor geram chaves temporárias para cada sessão.
+
+- **Derivação do Segredo Compartilhado**: O segredo compartilhado é gerado via ECDH/DH, combinado com o `client_random` e
+o `server_random` usando **HKDF**.
+
+3. **Cipher Suites e Algoritmos**
+O servidor implementa as seguintes cifras (combinações de algoritmos) para garantir comunicações seguras:
+
+- AES-256-GCM com SHA-384;
+- AES-128-GCM com SHA-256;
+- ChaCha20-Poly1305 com SHA-256;
+- ECDHE-RSA com AES-256-GCM e SHA-384;
+- ECDHE-RSA com AES-128-GCM e SHA-256;
+- ECDHE-RSA com ChaCha20-Poly1305.
+
+A escolha de AES-GCM e ChaCha20-Poly1305 garante flexibilidade e robustez em diferentes cenários de
+segurança. O AES-GCM é eficiente e oferece forte integridade de dados, sendo ideal para ambientes
+modernos. Já o ChaCha20-Poly1305, resistente a ataques de canal lateral e mais seguro no contexto
+pós-quântico, é uma boa opção para dispositivos com recursos limitados. Esta combinação assegura
+uma boa segurança, adaptando-se a diferentes requisitos de performance e resiliência.
+
+- **Negociação Dinâmica**: O servidor escolhe uma *cipher suite* com base na disponibilidade do cliente.
+
+4. **Certificados e AC Própria**
+A autenticação é realizada com **certificados X.509** emitidos por uma **Autoridade Certificadora (AC) própria**.
+
+Apesar de ser uma implementação personalizada, o sistema segue os princípios principais do TLS:
+
+1. **Confidencialidade**: Garantida pelo AES-256-GCM ou ChaCha20.
+2. **Integridade**: Assegurada pelo HMAC (em AES-GCM) ou Poly1305 (em ChaCha20).
+3. **Autenticação**: Feita por certificados digitais e assinaturas.
+4. **Forward Secrecy**: Chaves temporárias que são descartadas após cada sessão.
+
+Esta abordagem proporciona uma solução robusta, onde é combinada uma segurança reforçada com
+flexibilidade para o contexto do cofre seguro.
 
 ### Sistema de notificações
-**Responsável:** M e P
 
-_Implementação do sistema de notificações_
+O sistema de notificações alerta os utilizadores sobre ações relevantes nos seus ficheiros ou grupos.
+As notificações são geradas automaticamente nos seguintes comandos:
+
+- read: O proprietário é notificado quando outro utilizador lê o seu ficheiro.
+
+- share: O destinatário (utilizador ou todos os membros de um grupo, exceto o remetente) recebe uma
+notificação de partilha.
+
+- group add-user: O utilizador adicionado a um grupo é informado.
+
+- group add: Membros do grupo são alertados sobre novos ficheiros adicionados.
+
+- replace: O proprietário é notificado se outro utilizador substituir o conteúdo do ficheiro.
+
+As notificações são armazenadas cifradas e apenas marcadas como "lidas" após serem consultadas pelo
+cliente, garantindo rastreabilidade e evitando perda de contexto. Implementado com JSON para
+estruturação e integrado ao protocolo seguro, o sistema reforça a transparência das operações
+sem comprometer a privacidade.
+
+Com isto, os utilizadores têm visibilidade imediata de quem acedeu ou modificou os seus ficheiros.
+Facilita a deteção de atividades suspeitas.
+A adição/remoção de utilizadores em grupos (group add-user/delete-user) gera confirmações, evitando
+acessos "fantasmas".
+Mantém os utilizadores informados sem sobrecarregá-los (notificações são prioritárias e não intrusivas).
 
 ### Isolamento do processo e recursos do servidor
-**Responsável:** P
 
 Para garantir o isolamento dos recursos do sistema operativo utilizados pelo programa, foi adotada uma abordagem que exige a configuração inicial por parte de um administrador do sistema. Esta configuração é realizada através de dois scripts principais: um para o setup inicial e outro para a inicialização do ambiente de armazenamento e base de dados. A lógica subjacente a esses scripts é descrita a seguir.
 
@@ -563,13 +687,23 @@ Este comando inicializará o daemon da Autoridade Certificadora, permitindo a em
 
 
 ## Conclusões
-**Responsável:** M
 
-_Resumo das decisões tomadas e perspetivas de melhorias futuras._
+O desenvolvimento do serviço de cofre seguro cumpriu os objetivos fundamentais de garantir
+confidencialidade, integridade e autenticidade no armazenamento e partilha de ficheiros, onde são seguidas
+práticas de segurança informática. A implementação de protocolos como Station-to-Station (STS) e a
+implementação de princípios da norma TLS asseguraram um canal de comunicação resiliente a
+ataques Man-in-the-Middle, enquanto a utilização de chaves temporárias (ECDHE/DHE) garantem Perfect Forward Secrecy.
+
+A integração de extras como a Autoridade Certificadora própria, o sistema de notificações e o
+isolamento de recursos do servidor reforçou a robustez do sistema, permitindo auditoria detalhada e
+gestão granular de acessos. A escolha de cifras modernas (AES-GCM e ChaCha20-Poly1305) ofereceu
+flexibilidade para diferentes ambientes, equilibrando desempenho e resistência a ameaças emergentes.
+
+Nos próximos passos, seria realizada a implementação de mecanismos de recuperação de desastres,
+suporte a mais algoritmos e otimização da gestão de grupos em larga escala.
 
 ## Referências
-**Responsável:** T (cada um preenche de acordo com a sua necessidade)
 
 - Enunciado do Projeto (SSI).
 - [Cloudflare Learning](https://www.cloudflare.com/learning/)
-- ...
+- [Norma TLS](https://www.cloudflare.com/learning/ssl/what-happens-in-a-tls-handshake/)
