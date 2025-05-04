@@ -488,7 +488,7 @@ A `CA` é executada como um "*daemon*" (é apenas um terminal em execução, uma
 Além disso, foi implementado o conceito de *one-way certification*, onde a `CA` se autentica perante os clientes. Este processo garante que os clientes podem verificar a autenticidade da CA antes de confiar nos certificados emitidos, reforçando a segurança e a confiança no sistema.
 
 <p align="center">
-<img src="report/images/CA.png" alt="CA" width="300">
+<img src="report/images/CA.png" alt="CA" width="600">
 </p>
 
 ### Sistema de Registo de Logs
@@ -597,7 +597,7 @@ junto com um número aleatório (`client_random`).
 
 - **ServerHello**:
 O servidor responde com a sua chave pública, certificado digital assinado pela sua Autoridade
-Certificadora (AC), assinatura digital dos dados do handshake e o seu valor aleatório (`server_random`).
+Certificadora (CA), assinatura digital dos dados do handshake e o seu valor aleatório (`server_random`).
 
 - **Autenticação Mútua**: Ambas as partes validam os certificados e assinaturas.
 
@@ -628,8 +628,8 @@ uma boa segurança, adaptando-se a diferentes requisitos de performance e resili
 
 - **Negociação Dinâmica**: O servidor escolhe uma *cipher suite* com base na disponibilidade do cliente.
 
-4. **Certificados e AC Própria**
-A autenticação é realizada com **certificados X.509** emitidos por uma **Autoridade Certificadora (AC) própria**.
+4. **Certificados e CA Própria**
+A autenticação é realizada com **certificados X.509** emitidos por uma **Autoridade Certificadora (CA) própria**.
 
 Apesar de ser uma implementação personalizada, o sistema segue os princípios principais do TLS:
 
@@ -657,8 +657,9 @@ notificação de partilha.
 
 - replace: O proprietário é notificado se outro utilizador substituir o conteúdo do ficheiro.
 
-As notificações são armazenadas cifradas e apenas marcadas como "lidas" após serem consultadas pelo
-cliente, garantindo rastreabilidade e evitando perda de contexto. Implementado com JSON para
+- details: O proprietário é notificado quando outro utilizador consulta os detalhes do ficheiro.
+
+As notificações são armazenadas cifradas e apenas marcadas como "lidas" após serem enviadas pelo servidor ao cliente, garantindo rastreabilidade e evitando perda de contexto. Implementado com JSON para
 estruturação e integrado ao protocolo seguro, o sistema reforça a transparência das operações
 sem comprometer a privacidade.
 
